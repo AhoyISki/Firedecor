@@ -22,7 +22,8 @@ class decoration_theme_t {
      * Render the given text on a cairo_surface_t with the given size.
      * The caller is responsible for freeing the memory afterwards.
      */
-    cairo_surface_t *form_text(std::string text, int width, int height) const;
+    cairo_surface_t *form_text(std::string text, int width,
+        int height, bool active) const;
 
     /**
      * Render one corner for active and inactive windows. 
@@ -76,7 +77,6 @@ class decoration_theme_t {
     wf::option_wrapper_t<wf::color_t> active_border{"firedecor/active_border"};
     wf::option_wrapper_t<wf::color_t> inactive_border{"firedecor/inactive_border"};
     wf::option_wrapper_t<int> corner_radius{"firedecor/corner_radius"};
-    wf::option_wrapper_t<bool> pad_corner_radius{"firedecor/pad_corner_radius"};
 
     wf::option_wrapper_t<int> outline_size{"firedecor/outline_size"};
     wf::option_wrapper_t<wf::color_t> active_outline{"firedecor/active_outline"};
@@ -85,6 +85,8 @@ class decoration_theme_t {
     wf::option_wrapper_t<std::string> button_order{"firedecor/button_order"};
     wf::option_wrapper_t<std::string> button_style{"firedecor/button_style"};
     wf::option_wrapper_t<bool> inactive_buttons{"firedecor/inactive_buttons"};
+    /* Eventually */
+    // wf::option_wrapper_t<std::string> layout{"firedecor/layout"};
 };
 }
 }
