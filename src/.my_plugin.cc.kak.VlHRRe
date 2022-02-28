@@ -1,0 +1,17 @@
+#include <wayfire/plugin.hpp>
+
+class my_plugin_t : public wf::plugin_interface_t
+{
+	  public:
+	      void init() override
+	          {
+		                  /* Create plugin */
+	          }
+
+          void fini() override
+              {
+                          /* Destroy plugin */
+              }
+};;
+
+DECLARE_WAYFIRE_PLUGIN(my_plugin_t);

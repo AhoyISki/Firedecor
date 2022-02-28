@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<wayfire>
+	<plugin name="firedecor">
+		<_short>Firedecor</_short>
+		<_long>Alternative decoration for wayfire windows.</_long>
+		<category>Effects</category>
+		<!-- Font -->
+		<option name="font" type="string">
+			<_short>Font</_short>
+			<_long>Sets the font to use for the title bars.</_long>
+			<default>sans-serif</default>
+		</option>
+		<option name="font_size" type="int">
+			<_short>Font size</_short>
+			<_long>Sets the font size to use for the title bars.</_long>
+			<default>15</default>
+		</option>
+		<option name="active_title" type="color">
+			<_short>Title color when window is active</_short>
+			<_long>Sets the title color when the window is active.</_long>
+			<default>#f0c674ff</default>
+		</option>
+		<option name="inactive_title" type="color">
+			<_short>Title color when window is inactive</_short>
+			<_long>Sets the title color when the window is inactive.</_long>
+			<default>#c5c8c6ff</default>
+		</option>
+		<option name="show_title_icon" type="bool">
+			<_short>Show an application icon besides the title.</_short>
+			<_long>Whether to show an icon besides the title.</_long>
+			<default>0</default>
+		</option>
+		<!-- Titlebar -->
+		<option name="titlebar_height" type="int">
+			<_short>Title bar height</_short>
+			<_long>Sets the height of the title bars in pixels.</_long>
+			<default>30</default>
+		</option>
+		<option name="titlebar_position" type="string">
+			<_short>Title bar position</_short>
+			<_long>Sets the position of the title bars in pixels.</_long>
+			<default>top</default>
+		</option>
+		<!-- Border -->
+		<option name="border_size" type="int">
+			<_short>Border size</_short>
+			<_long>Sets the border size in pixels.</_long>
+			<default>4</default>
+		</option>
+		<option name="active_border" type="color">
+			<_short>Color when window is active</_short>
+			<_long>Sets the color when the window is active.</_long>
+			<default>#222222aa</default>
+		</option>
+		<option name="inactive_border" type="color">
+			<_short>Color when window is inactive</_short>
+			<_long>Sets the color when the window is inactive.</_long>
+			<default>#333333dd</default>
+		</option>
+		<option name="corner_radius" type="int">
+			<_short>Radius of rounded corners</_short>
+			<_long>Sets the radius of the decoration corners.</_long>
+			<default>15</default>
+		</option>
+		<option name="pad_corner_radius" type="bool">
+			<_short>Padding for rounded corners</_short>
+			<_long>Tells the plugin to pad corners, in order to not clip the view.</_long>
+			<default>0</default>
+		</option>
+		<!-- Outline -->
+		<option name="outline_size" type="int">
+			<_short>Outline size</_short>
+			<_long>Sets the outline size in pixels.</_long>
+			<default>4</default>
+		</option>
+		<option name="active_outline" type="color">
+			<_short>Color when window is active</_short>
+			<_long>Sets the outline color when the window is active.</_long>
+			<default>#00ff00aa</default>
+		</option>
+		<option name="inactive_outline" type="color">
+			<_short>Color when window is inactive</_short>
+			<_long>Sets the outline color when the window is inactive.</_long>
+			<default>#ff0000dd</default>
+		</option>
+		<!-- Buttons -->
+		<option name="button_order" type="string">
+			<_short>Order of window buttons</_short>
+			<_long>Sets the order of the window buttons.</_long>
+			<default>minimize maximize close</default>
+		</option>
+		<option name="button_style" type="string">
+			<_short>Button style to be used</_short>
+			<_long>Sets the style to be used for the buttons.</_long>
+			<default>wayfire</default>
+		</option>
+		<option name="inactive_buttons" type="bool">
+			<_short>Button style to be used</_short>
+			<_long>Sets the style to be used for the buttons.</_long>
+			<default>true</default>
+		</option>
+		<!-- Other -->
+		<option name="ignore_views" type="string">
+			<_short>Decoration disabled for specified window types</_short>
+			<_long>Disables window decoration for windows matching the specified criteria.</_long>
+			<default>none</default>
+		</option>
+	</plugin>
+</wayfire>
