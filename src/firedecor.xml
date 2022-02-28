@@ -18,12 +18,12 @@
 		<option name="active_title" type="color">
 			<_short>Title color when window is active</_short>
 			<_long>Sets the title color when the window is active.</_long>
-			<default>#f0c674ff</default>
+			<default>#ffffffff</default>
 		</option>
 		<option name="inactive_title" type="color">
 			<_short>Title color when window is inactive</_short>
 			<_long>Sets the title color when the window is inactive.</_long>
-			<default>#c5c8c6ff</default>
+			<default>#ffffffff</default>
 		</option>
 		<option name="show_title_icon" type="bool">
 			<_short>Show an application icon besides the title.</_short>
@@ -60,28 +60,23 @@
 		<option name="corner_radius" type="int">
 			<_short>Radius of rounded corners</_short>
 			<_long>Sets the radius of the decoration corners.</_long>
-			<default>15</default>
-		</option>
-		<option name="pad_corner_radius" type="bool">
-			<_short>Padding for rounded corners</_short>
-			<_long>Tells the plugin to pad corners, in order to not clip the view.</_long>
 			<default>0</default>
 		</option>
 		<!-- Outline -->
 		<option name="outline_size" type="int">
 			<_short>Outline size</_short>
 			<_long>Sets the outline size in pixels.</_long>
-			<default>4</default>
+			<default>0</default>
 		</option>
 		<option name="active_outline" type="color">
 			<_short>Color when window is active</_short>
 			<_long>Sets the outline color when the window is active.</_long>
-			<default>#00ff00aa</default>
+			<default>#000000ff</default>
 		</option>
 		<option name="inactive_outline" type="color">
-			<_short>Color when window is inactive</_short>
+			<_short>Outline color when window is inactive</_short>
 			<_long>Sets the outline color when the window is inactive.</_long>
-			<default>#ff0000dd</default>
+			<default>#000000ff</default>
 		</option>
 		<!-- Buttons -->
 		<option name="button_order" type="string">

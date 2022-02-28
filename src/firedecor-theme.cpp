@@ -41,9 +41,11 @@ decoration_theme_t::edge_colors_t decoration_theme_t::get_edge_colors() const {
 }
 
 cairo_surface_t *decoration_theme_t::form_text(std::string text,
-    int width, int height) const {
+    int width, int height, bool active) const {
     const auto format = CAIRO_FORMAT_ARGB32;
     auto surface = cairo_image_surface_create(format, width, height);
+
+    wf::color_t color = active ? active_title : inactive_title;
 
     if (height == 0) {
         return surface;
@@ -51,20 +53,17 @@ cairo_surface_t *decoration_theme_t::form_text(std::string text,
 
     auto cr = cairo_create(surface);
 
-    const float font_scale = 0.8;
-    const float font_size  = height * font_scale;
-
     PangoFontDescription *font_desc;
     PangoLayout *layout;
 
     // render text
     font_desc = pango_font_description_from_string(((std::string)font).c_str());
-    pango_font_description_set_absolute_size(font_desc, font_size * PANGO_SCALE);
+    pango_font_description_set_absolute_size(font_desc, font_size);
 
     layout = pango_cairo_create_layout(cr);
     pango_layout_set_font_description(layout, font_desc);
     pango_layout_set_text(layout, text.c_str(), text.size());
-    cairo_set_source_rgba(cr, 1, 1, 1, 1);
+    cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     pango_cairo_show_layout(cr, layout);
     pango_font_description_free(font_desc);
     g_object_unref(layout);
@@ -80,10 +79,6 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active) const {
     cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius, corner_radius);
     auto cr = cairo_create(surface);
 
-	float t = 0.9; // <----------------------------------------------- Transparency
-
- 	wf::color_t back = { 0.114, 0.122, 0.129, t }; // <--------------- Background
-
 	/* Clearance */
     cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
     cairo_set_source_rgba(cr, 0, 0, 0, 0);
@@ -93,7 +88,7 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active) const {
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     /* Border */
 	wf::color_t color = active ? active_border : inactive_border;
-    cairo_set_source_rgba(cr, back.r, back.g, back.b, back.a);
+    cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     cairo_arc(cr, 0, 0, corner_radius, 0, M_PI / 2);
     cairo_line_to(cr, 0, 0);
     cairo_fill(cr);

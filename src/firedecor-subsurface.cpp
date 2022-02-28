@@ -41,7 +41,7 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
             (title_texture.tex.height != target_height) ||
             (title_texture.current_text != view->get_title())) {
             auto surface = theme.form_text(view->get_title(),
-                target_width, target_height);
+                target_width, target_height, ACTIVE);
             cairo_surface_upload_to_texture(surface, title_texture.tex);
             cairo_surface_destroy(surface);
             title_texture.current_text = view->get_title();
@@ -134,10 +134,6 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 		int outline_size = theme.get_outline_size();
 
 		bottom_right = bottom_right + origin;
-
-		float t = 0.9; // <----------------------------------------------- Transparency
-
-	 	wf::color_t back = { 0.114 * t, 0.122 * t, 0.129 * t, t }; // <--- Background
 
 		/** Non corner background */
 		OpenGL::render_begin(fb);
