@@ -114,23 +114,23 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 
     void render_title(const wf::framebuffer_t& fb, wf::geometry_t geometry) {
         update_title(geometry.width, geometry.height, fb.scale);
-        OpenGL::render_texture(title_texture.tex.tex, fb, geometry,
+        OpenGL::render_texture(title_texture.tex.tex, fb, geometry + (wf::point_t){geometry.width / 2, 0},
             glm::vec4(1.0f), OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
     }
 
-    void render_background(const wf::framebuffer_t& fb, 
-    	wf::geometry_t rect, const wf::geometry_t& scissor, bool active, wf::point_t origin) {
-	    auto colors = theme.get_edge_colors();
+	void render_background(const wf::framebuffer_t& fb, 
+		wf::geometry_t rect, const wf::geometry_t& scissor, bool active, wf::point_t origin) {
+		auto colors = theme.get_edge_colors();
 
-	    int r = theme.get_corner_radius();
-	    update_corners(colors, r);
-	    r = current_corner_radius;
-	    auto& corner = active ? corners.active : corners.inactive;
+		int r = theme.get_corner_radius();
+		update_corners(colors, r);
+		r = current_corner_radius;
+		auto& corner = active ? corners.active : corners.inactive;
 
-	    wf::geometry_t top_left = { rect.x, rect.y, r, r };
-	    wf::geometry_t top_right = { rect.width - r + origin.x, rect.y, r, r };
-	    wf::geometry_t bottom_left = { rect.x, rect.height - r + origin.y, r, r };
-	    wf::geometry_t bottom_right = { rect.width - r, rect.height - r, r, r };
+		wf::geometry_t top_left = { rect.x, rect.y, r, r };
+		wf::geometry_t top_right = { rect.width - r + origin.x, rect.y, r, r };
+		wf::geometry_t bottom_left = { rect.x, rect.height - r + origin.y, r, r };
+		wf::geometry_t bottom_right = { rect.width - r, rect.height - r, r, r };
 		int outline_size = theme.get_outline_size();
 
 		bottom_right = bottom_right + origin;
@@ -141,16 +141,16 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 
 		/** Non corner background */
 		OpenGL::render_begin(fb);
-	    fb.logic_scissor(scissor);
+		fb.logic_scissor(scissor);
 
-		/** Middle rectangle and central outlines */
+		/* Middle rectangle and central outlines */
 		OpenGL::render_rectangle(
 			{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
-			/*active ? colors.active_border : colors.inactive_border*/ back,
+			active ? colors.active_border : colors.inactive_border,
 			fb.get_orthographic_projection());
 		OpenGL::render_rectangle(
 			{ rect.x + r, rect.y, rect.width - 2 * r, outline_size},
-			active ? colors.active_outline : colors.inactive_outline,
+			  active ? colors.active_outline : colors.inactive_outline,
 			fb.get_orthographic_projection());
 		OpenGL::render_rectangle(
 			{ rect.x + r, rect.height - outline_size + origin.y,
@@ -158,48 +158,48 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 			active ? colors.active_outline : colors.inactive_outline,
 			fb.get_orthographic_projection());
 
-		/** Left border and outline */
+		/* Left border and outline */
 		OpenGL::render_rectangle(
 			{ rect.x, rect.y + r, r, rect.height - 2 * r },
-			/*active ? colors.active_border : colors.inactive_border*/ back,
+			active ? colors.active_border : colors.inactive_border,
 			fb.get_orthographic_projection());
 		OpenGL::render_rectangle(
 			{ rect.x, rect.y + r, outline_size, rect.height - 2 * r },
-			active ? colors.active_outline : colors.inactive_outline,
+			  active ? colors.active_outline : colors.inactive_outline,
 			fb.get_orthographic_projection());
 
-		/** Right border and outline */
+		/* Right border and outline */
 		OpenGL::render_rectangle(
 			{ rect.width - r + origin.x, rect.y + r, r, rect.height - 2 * r },
-			/*active ? colors.active_border : colors.inactive_border*/ back,
+			active ? colors.active_border : colors.inactive_border,
 			fb.get_orthographic_projection());
 		OpenGL::render_rectangle(
 			{ rect.width - outline_size + origin.x, 
 			  rect.y + r, outline_size, rect.height - 2 * r },
 			active ? colors.active_outline : colors.inactive_outline,
 			fb.get_orthographic_projection());
-		/** Corner background */
+		/* Corner background */
 
-		/* Top left corner */
+		/** Top left corner */
 		OpenGL::render_texture(corner.tex, fb, top_left, glm::vec4(1.0f),
 			OpenGL::TEXTURE_TRANSFORM_INVERT_X);
 
-		/* Top right corner */
+		/** Top right corner */
 		OpenGL::render_texture(corner.tex, fb, top_right, glm::vec4(1.0f));
 
-		/* Bottom left corner */
+		/** Bottom left corner */
 		OpenGL::render_texture(corner.tex, fb, bottom_left, glm::vec4(1.0f),
 			OpenGL::TEXTURE_TRANSFORM_INVERT_X | OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
 
-		/* Bottom right corner */
+		/** Bottom right corner */
 		OpenGL::render_texture(corner.tex, fb, bottom_right, glm::vec4(1.0f),
 			OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
 		OpenGL::render_end();
-    }
+	}
 
     void render_scissor_box(const wf::framebuffer_t& fb, wf::point_t origin,
         const wlr_box& scissor) {
-        /* Clear background */
+	    /* Draw the background (corners and border) */
         wlr_box geometry{origin.x, origin.y, size.width, size.height};
         render_background(fb, geometry, scissor, view->activated, origin);
 
