@@ -135,7 +135,9 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 
 		bottom_right = bottom_right + origin;
 
-	 	wf::color_t back = { 0.114 * 0.9, 0.122 * 0.9, 0.129 * 0.9, 0.9 };
+		float t = 0.9; // <----------------------------------------------- Transparency
+
+	 	wf::color_t back = { 0.114 * t, 0.122 * t, 0.129 * t, t }; // <--- Background
 
 		/** Non corner background */
 		OpenGL::render_begin(fb);

@@ -80,7 +80,9 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active) const {
     cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius, corner_radius);
     auto cr = cairo_create(surface);
 
- 	wf::color_t back = { 0.114, 0.122, 0.129, 0.9 };
+	float t = 0.9; // <----------------------------------------------- Transparency
+
+ 	wf::color_t back = { 0.114, 0.122, 0.129, t }; // <--------------- Background
 
 	/* Clearance */
     cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
