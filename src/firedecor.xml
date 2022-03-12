@@ -25,27 +25,11 @@
 			<_long>Sets the title color when the window is inactive.</_long>
 			<default>#ffffffff</default>
 		</option>
-		<option name="show_title_icon" type="bool">
-			<_short>Show an application icon besides the title.</_short>
-			<_long>Whether to show an icon besides the title.</_long>
-			<default>0</default>
-		</option>
 		<!-- Titlebar -->
-		<option name="titlebar_height" type="int">
-			<_short>Title bar height</_short>
-			<_long>Sets the height of the title bars in pixels.</_long>
-			<default>30</default>
-		</option>
-		<option name="titlebar_position" type="string">
-			<_short>Title bar position</_short>
-			<_long>Sets the position of the title bars in pixels.</_long>
-			<default>top</default>
-		</option>
-		<!-- Border -->
-		<option name="border_size" type="int">
+		<option name="border_size" type="string">
 			<_short>Border size</_short>
 			<_long>Sets the border size in pixels.</_long>
-			<default>4</default>
+			<default>15 10 10 10</default>
 		</option>
 		<option name="active_border" type="color">
 			<_short>Color when window is active</_short>
@@ -79,15 +63,15 @@
 			<default>#000000ff</default>
 		</option>
 		<!-- Buttons -->
-		<option name="button_order" type="string">
-			<_short>Order of window buttons</_short>
-			<_long>Sets the order of the window buttons.</_long>
-			<default>minimize maximize close</default>
-		</option>
 		<option name="button_style" type="string">
 			<_short>Button style to be used</_short>
 			<_long>Sets the style to be used for the buttons.</_long>
 			<default>wayfire</default>
+		</option>
+		<option name="button_padding" type="int">
+			<_short>Button padding to be used</_short>
+			<_long>Sets the padding to be used for the buttons.</_long>
+			<default>5</default>
 		</option>
 		<option name="inactive_buttons" type="bool">
 			<_short>Button style to be used</_short>
@@ -99,6 +83,11 @@
 			<_short>Decoration disabled for specified window types</_short>
 			<_long>Disables window decoration for windows matching the specified criteria.</_long>
 			<default>none</default>
+		</option>
+		<option name="layout" type="string">
+			<_short>The layout to be used for decoration placement</_short>
+			<_long>Sets the order and positioning of title, icon and buttons</_long>
+			<default>title next next minimize maximize close -</default>
 		</option>
 	</plugin>
 </wayfire>

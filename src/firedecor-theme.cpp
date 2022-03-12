@@ -12,53 +12,75 @@ namespace firedecor {
 /** Create a new theme with the default parameters */
 decoration_theme_t::decoration_theme_t() {}
 
-/** @return The available height for displaying the title */
-int decoration_theme_t::get_titlebar_height() const {
-    return titlebar_height;
+std::string decoration_theme_t::get_layout() const {
+	return layout;
 }
 
-/** @return The available border for resizing */
-int decoration_theme_t::get_border_size() const {
+/* Size return functions */
+std::string decoration_theme_t::get_border_size() const {
     return border_size;
 }
-
-/** @return The corner radius */
+int decoration_theme_t::get_outline_size() const {
+    return outline_size;
+}
+int decoration_theme_t::get_font_size()const {
+	return font_size;
+}
 int decoration_theme_t::get_corner_radius() const {
 	return corner_radius;
 }
 
-/** @return The available outline for resizing */
-int decoration_theme_t::get_outline_size() const {
-    return outline_size;
+/* Color return functions */
+color_set_t decoration_theme_t::get_border_colors() const {
+	return { active_border, inactive_border };
+}
+color_set_t decoration_theme_t::get_outline_colors() const {
+	return { active_outline, inactive_outline };
+}
+color_set_t decoration_theme_t::get_title_colors() const {
+	return { active_title, inactive_title };
 }
 
-/** @return The updated color list for the edges of the decoration */
-decoration_theme_t::edge_colors_t decoration_theme_t::get_edge_colors() const {
-	return { 
-		active_border, inactive_border,
-		active_outline, inactive_outline
-	};
-}
-
-cairo_surface_t *decoration_theme_t::form_text(std::string text,
-    int width, int height, bool active) const {
+wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) const {
     const auto format = CAIRO_FORMAT_ARGB32;
-    auto surface = cairo_image_surface_create(format, width, height);
+    auto surface = cairo_image_surface_create(format, width, font_size);
+    auto cr = cairo_create(surface);
+	
+    PangoFontDescription *font_desc;
+    PangoLayout *layout;
+    PangoRectangle text_size;
 
-    wf::color_t color = active ? active_title : inactive_title;
+    font_desc = pango_font_description_from_string(((std::string)font).c_str());
+    pango_font_description_set_absolute_size(font_desc, font_size * PANGO_SCALE);
 
-    if (height == 0) {
-        return surface;
-    }
+    layout = pango_cairo_create_layout(cr);
+    pango_layout_set_font_description(layout, font_desc);
+    pango_layout_set_text(layout, text.c_str(), text.size());
+    pango_layout_get_pixel_extents(layout, NULL, &text_size);
+    pango_font_description_free(font_desc);
+    g_object_unref(layout);
+    cairo_destroy(cr);
+    cairo_surface_destroy(surface);
+
+    return { text_size.width, text_size.height };
+}
+
+cairo_surface_t*decoration_theme_t::form_title(std::string text,
+    wf::dimensions_t title_size, bool active) const {
+    const auto format = CAIRO_FORMAT_ARGB32;
+    auto surface = cairo_image_surface_create(
+	    format, title_size.width, title_size.height);
+
+    wf::color_t color = (active) ? active_title : inactive_title;
 
     auto cr = cairo_create(surface);
 
     PangoFontDescription *font_desc;
     PangoLayout *layout;
-
+    
     // render text
     font_desc = pango_font_description_from_string(((std::string)font).c_str());
-    pango_font_description_set_absolute_size(font_desc, font_size);
+    pango_font_description_set_absolute_size(font_desc, font_size * PANGO_SCALE);
 
     layout = pango_cairo_create_layout(cr);
     pango_layout_set_font_description(layout, font_desc);
@@ -78,12 +100,6 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active) const {
     const auto format = CAIRO_FORMAT_ARGB32;
     cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius, corner_radius);
     auto cr = cairo_create(surface);
-
-	/* Clearance */
-    cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
-    cairo_set_source_rgba(cr, 0, 0, 0, 0);
-    cairo_rectangle(cr, 0, 0, corner_radius, corner_radius);
-    cairo_fill(cr);
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     /* Border */
