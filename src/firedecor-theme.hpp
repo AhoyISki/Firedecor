@@ -5,41 +5,62 @@
 
 namespace wf {
 namespace firedecor {
+
+struct color_set_t {
+	color_t active, inactive;
+
+	bool operator ==(const color_set_t& other) const {
+		return (this->active == other.active) && (this->inactive == other.inactive);
+	};
+
+	bool operator !=(const color_set_t& other) const {
+		return !(this->active == other.active) || !(this->inactive == other.inactive);
+	};
+};
+
 class decoration_theme_t {
   public:
 	decoration_theme_t();
 
-    /** @return The available height for displaying the title */
-    int get_titlebar_height() const;
+	/** @return The theme's layout */
+	std::string get_layout() const;
+
+	/* Size return functions */
     /** @return The available border for resizing */
-    int get_border_size() const;
-    /** @return The corner radius */
-    int get_corner_radius() const;
+    std::string get_border_size() const;
+    /** @return The font size */
+    int get_font_size() const;
 	/** @return The available outline for resizing */
 	int get_outline_size() const;
+    /** @return The corner radius */
+    int get_corner_radius() const;
+
+	/* Color return functions */
+	/** @return The active and inactive colors for the border */
+	color_set_t get_border_colors() const;
+	/** @return The active and inactive colors for the outline */
+	color_set_t get_outline_colors() const;
+	/** @return The acntive and inactive colors for the title */
+	color_set_t get_title_colors() const;
+
+	/**
+     * Get what the title size should be, given a text for the title, useful for
+     * centered and right positioned layouts on an edge.
+     */
+	wf::dimensions_t get_text_size(std::string title, int width) const;
 
     /**
      * Render the given text on a cairo_surface_t with the given size.
      * The caller is responsible for freeing the memory afterwards.
      */
-    cairo_surface_t *form_text(std::string text, int width,
-        int height, bool active) const;
+    cairo_surface_t *form_title(
+	    std::string text, wf::dimensions_t title_size, bool active) const;
 
     /**
      * Render one corner for active and inactive windows. 
      * It will be used for all 4 corners of the decoration.
      */
     cairo_surface_t *form_corner(bool active) const;
-
-    struct edge_colors_t {
-	    color_t active_border;
-	    color_t inactive_border;
-	    color_t active_outline;
-	    color_t inactive_outline;
-    };
-
-    /** @return The updated color list for the edges of the decoration */
-    edge_colors_t get_edge_colors() const;
 
     struct button_state_t {
         /** Button width */
@@ -68,12 +89,8 @@ class decoration_theme_t {
     wf::option_wrapper_t<int> font_size{"firedecor/font_size"};
 	wf::option_wrapper_t<wf::color_t> active_title{"firedecor/active_title"};
 	wf::option_wrapper_t<wf::color_t> inactive_title{"firedecor/inactive_title"};
-	wf::option_wrapper_t<bool> show_title_icon{"firedecor/show_title_icon"};
 
-    wf::option_wrapper_t<int> titlebar_height{"firedecor/titlebar_height"};
-    wf::option_wrapper_t<std::string> titlebar_position{"firedecor/titlebar_position"};
-
-    wf::option_wrapper_t<int> border_size{"firedecor/border_size"};
+    wf::option_wrapper_t<std::string> border_size{"firedecor/border_size"};
     wf::option_wrapper_t<wf::color_t> active_border{"firedecor/active_border"};
     wf::option_wrapper_t<wf::color_t> inactive_border{"firedecor/inactive_border"};
     wf::option_wrapper_t<int> corner_radius{"firedecor/corner_radius"};
@@ -82,11 +99,12 @@ class decoration_theme_t {
     wf::option_wrapper_t<wf::color_t> active_outline{"firedecor/active_outline"};
     wf::option_wrapper_t<wf::color_t> inactive_outline{"firedecor/inactive_outline"};
 
-    wf::option_wrapper_t<std::string> button_order{"firedecor/button_order"};
     wf::option_wrapper_t<std::string> button_style{"firedecor/button_style"};
+    wf::option_wrapper_t<int> button_padding{"firedecor/button_padding"};
     wf::option_wrapper_t<bool> inactive_buttons{"firedecor/inactive_buttons"};
-    /* Eventually */
-    // wf::option_wrapper_t<std::string> layout{"firedecor/layout"};
+
+	wf::option_wrapper_t<std::string> ignore_views{"firedecor/ignore_views"};
+    wf::option_wrapper_t<std::string> layout{"firedecor/layout"};
 };
 }
 }

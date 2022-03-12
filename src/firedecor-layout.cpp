@@ -13,7 +13,8 @@ namespace firedecor {
 /**
  * Represents an area of the decoration which reacts to input events.
  */
-decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t g) {
+decoration_area_t::decoration_area_t(
+	decoration_area_type_t type, wf::geometry_t g, edge_t edge) {
     this->type     = type;
     this->geometry = g;
 
@@ -23,14 +24,13 @@ decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t
 /**
  * Initialize a new decoration area holding a button
  */
-decoration_area_t::decoration_area_t(wf::geometry_t g,
-                                     std::function<void(wlr_box)> damage_callback,
-								     const decoration_theme_t& theme) {
+decoration_area_t::decoration_area_t(
+	wf::geometry_t g, std::function<void(wlr_box)> damage_callback,
+	const decoration_theme_t& theme, edge_t edge) {
     this->type     = DECORATION_AREA_BUTTON;
     this->geometry = g;
 
-    this->button = std::make_unique<button_t>(theme,
-        std::bind(damage_callback, g));
+    this->button = std::make_unique<button_t>(theme, std::bind(damage_callback, g));
 }
 
 wf::geometry_t decoration_area_t::get_geometry() const {
@@ -43,112 +43,205 @@ button_t& decoration_area_t::as_button() {
     return *button;
 }
 
-
 decoration_area_type_t decoration_area_t::get_type() const {
     return type;
+}
+
+border_size_t decoration_layout_t::parse_border(const std::string border_size_str) {
+	std::stringstream stream((std::string)border_size_str);
+	int current_size;
+	int border_size[4];
+	int indices = 0;
+
+	while (stream >> current_size) {
+		border_size[indices] = current_size;
+		indices++;
+	}
+
+	if (indices == 1 || indices == 3) {
+		return { border_size[0], border_size[0], border_size[0], border_size[0] };
+	} else if (indices == 2) {
+		return { border_size[0], border_size[1], border_size[0], border_size[1] };
+	} else if (indices == 4) {
+		return { border_size[0], border_size[1], border_size[2], border_size[3] };
+	}
 }
 
 decoration_layout_t::decoration_layout_t(const decoration_theme_t& theme,
     std::function<void(wlr_box)> callback) :
 
-    titlebar_size(theme.get_titlebar_height()),
-    border_size(theme.get_border_size()),
-    /**
-     * This is necessary. Otherwise, we will draw an
-     * overly huge button. 70% of the titlebar height
-     * is a decent size. (Equals 21 px by default)
-     */
-    button_width(titlebar_size * BUTTON_HEIGHT_PC),
-    button_height(titlebar_size * BUTTON_HEIGHT_PC),
-    button_padding((titlebar_size - button_height) / 2),
+	layout(theme.get_layout()),
+	border_size_str(theme.get_border_size()),
+	border_size(parse_border(border_size_str)),
+	outline_size(theme.get_outline_size()),
     theme(theme),
     damage_callback(callback)
-{}
+	{}
 
-wf::geometry_t decoration_layout_t::create_buttons(int width, int) {
-    std::stringstream stream((std::string)button_order);
-    std::vector<button_type_t> buttons;
-    std::string button_name;
-    while (stream >> button_name) {
-        if (button_name == "minimize") {
-            buttons.push_back(BUTTON_MINIMIZE);
-        }
+void decoration_layout_t::create_areas(int width, int height, wf::dimensions_t title_size) {
+	/** Clear the areas beforehand, and set the new title size, based on
+     * the current title.
+     */
+    this->layout_areas.clear();
 
-        if (button_name == "maximize") {
-            buttons.push_back(BUTTON_TOGGLE_MAXIMIZE);
-        }
+    std::stringstream stream((std::string)layout);
+    std::vector<std::string> left, center, right;
+    std::string current_symbol;
 
-        if (button_name == "close") {
-            buttons.push_back(BUTTON_CLOSE);
+    //title_size.height = theme.get_font_size();
+
+    edge_t current_edge = EDGE_TOP;
+    std::string current_position = "left";
+    wf::point_t g = { 0, border_size.top - title_size.height };
+
+	/** The value that's used to determine the updated geometry for areas */
+    int shift = 0;
+    /** Shift values that point to <shift>, depending on the orientation of the edge */
+    int& x_shift = shift, y_shift = 0;
+
+    /** The "width" used for positioning of areas, can be vertical */
+    int& edge_width = width;
+
+	/** References for the standard size, depending on orientation */
+	int& std_size = title_size.height;
+	/** References for the title width and height when taking position into account */
+	int& title_area_width = title_size.width, title_area_height = title_size.height;
+
+    while (stream >> current_symbol) {
+        if (current_symbol == "|") {
+	        current_position = (current_position == "left") ? "center" : "right";
+        } else if (current_symbol == "-") {
+	        for (auto vec : { left, center, right }) {
+				if (vec != left) {
+			        int region_width = 0;
+
+			        for (auto type : vec) {
+				       if (type == "title")	{
+					       region_width += title_size.width;
+				       } else if (type == "p") {
+					       region_width += padding_size;
+				       } else if (type[0] == "P") {
+					       int delta;
+					       std::stringstream num;
+					       num << type.substr(1);
+					       num >> delta;
+					       region_width += delta;
+				       } else {
+					       region_width += std_size;
+				       }
+			        }
+
+					if (vec == center) {
+				        x_shift = (width - region_width) / 2;
+					} else {
+				        x_shift = width - region_width;
+					}
+				}
+
+		        for (auto type : vec) {
+			        wf::geometry_t cur_g;
+			        int delta;
+
+			        if (type == "title") {
+				        cur_g = { 
+					        g.x + x_shift, g.y + y_shift,
+				            title_area_width, title_area_height
+				        };
+				        delta = title_size.width;
+
+				        this->layout_areas.push_back(
+					        std::make_unique<decoration_area_t>(
+						        DECORATION_AREA_TITLE, cur_g, current_edge));
+			        } else if (type == "icon") {
+				        cur_g = { g.x + x_shift, g.y + y_shift, std_size, std_size };
+				        delta = std_size;
+
+				        this->layout_areas.push_back(
+					        std::make_unique<decoration_area_t>(
+						        DECORATION_AREA_ICON, cur_g, current_edge));
+			        } else {
+				        cur_g = { g.x + x_shift, g.y + y_shift, std_size, std_size };
+				        delta = std_size;
+
+				        button_type_t button = (type == "minimize") ? BUTTON_MINIMIZE :
+				        	((type == "maximize") ? BUTTON_TOGGLE_MAXIMIZE : 
+				        	BUTTON_CLOSE);
+
+				        this->layout_areas.push_back(
+					        std::make_unique<decoration_area_t>(
+						        cur_g, damage_callback, theme, current_edge));
+				        this->layout_areas.back()->as_button().set_button_type(button);
+					}			        
+
+					// TODO: Implement different button and icon sizes
+					shift += delta;
+		        }
+	        }
+
+			/** The total size of the central areas, necessary before placement */
+
+	        if (current_edge == EDGE_TOP) {
+		        current_edge = EDGE_LEFT;
+		        x_shift = 0;
+		        y_shift = -shift;
+		        edge_width = height;
+		        title_area_width = title_size.height;
+		        title_area_height = title_size.width;
+	        } else if (current_edge == EDGE_LEFT) {
+		        current_edge = EDGE_BOTTOM;
+		        x_shift = shift;
+		        y_shift = 0;
+		        edge_width = width;
+		        title_area_width = title_size.width;
+		        title_area_height = title_size.height;
+	        } else {
+		        current_edge = EDGE_RIGHT;
+		        x_shift = 0;
+		        y_shift = shift;
+		        edge_width = height;
+		        title_area_width = title_size.height;
+		        title_area_height = title_size.width;
+	        }
+
+	        left.clear();
+	        center.clear();
+	        right.clear();
+		        
+        } else {
+	        if (current_position == "left") {
+		        left.push_back(current_symbol);
+	        } else if (current_position == "center") {
+		        center.push_back(current_symbol);
+	        } else {
+		        right.push_back(current_symbol);
+	        }
         }
     }
-
-    int per_button = 2 * button_padding + button_width;
-    // Iplement alternate positioning
-    wf::geometry_t button_geometry = {
-        width - border_size + button_padding, /* 1 more padding initially */
-        button_padding + border_size,
-        button_width,
-        button_height,
-    };
-
-    for (auto type : wf::reverse(buttons)) {
-        button_geometry.x -= per_button;
-        this->layout_areas.push_back(std::make_unique<decoration_area_t>(
-            button_geometry, damage_callback, theme));
-        this->layout_areas.back()->as_button().set_button_type(type);
-    }
-
-    int total_width = -button_padding + buttons.size() * per_button;
-
-    return {
-        button_geometry.x, border_size,
-        total_width, titlebar_size
-    };
 }
 
 /** Regenerate layout using the new size */
-void decoration_layout_t::resize(int width, int height) {
-    this->layout_areas.clear();
-    if (this->titlebar_size > 0) {
-        auto button_geometry_expanded = create_buttons(width, height);
-
-        /* Padding around the button, allows move */
-        this->layout_areas.push_back(std::make_unique<decoration_area_t>(
-            DECORATION_AREA_MOVE, button_geometry_expanded));
-
-        /* Titlebar dragging area (for move) */
-        wf::geometry_t title_geometry = {
-            border_size,
-            border_size,
-            /* Up to the button, but subtract the padding to the left of the
-             * title and the padding between title and button */
-            button_geometry_expanded.x - border_size,
-            titlebar_size,
-        };
-        this->layout_areas.push_back(std::make_unique<decoration_area_t>(
-            DECORATION_AREA_TITLE, title_geometry));
-    }
+void decoration_layout_t::resize(int width, int height, wf::dimensions_t title_size) {
+    create_areas(width, height, title_size);
 
     /* Resizing edges - left */
-    wf::geometry_t border_geometry = {0, 0, border_size, height};
+    wf::geometry_t border_geometry = { 0, 0, border_size.left, height };
     this->layout_areas.push_back(std::make_unique<decoration_area_t>(
-        DECORATION_AREA_RESIZE_LEFT, border_geometry));
+        DECORATION_AREA_RESIZE_LEFT, border_geometry, EDGE_LEFT));
 
     /* Resizing edges - right */
-    border_geometry = {width - border_size, 0, border_size, height};
+    border_geometry = { width - border_size.right, 0, border_size.right, height };
     this->layout_areas.push_back(std::make_unique<decoration_area_t>(
-        DECORATION_AREA_RESIZE_RIGHT, border_geometry));
+        DECORATION_AREA_RESIZE_RIGHT, border_geometry, EDGE_RIGHT));
 
     /* Resizing edges - top */
-    border_geometry = {0, 0, width, border_size};
+    border_geometry = { 0, 0, width, border_size.top };
     this->layout_areas.push_back(std::make_unique<decoration_area_t>(
-        DECORATION_AREA_RESIZE_TOP, border_geometry));
+        DECORATION_AREA_RESIZE_TOP, border_geometry, EDGE_TOP));
 
     /* Resizing edges - bottom */
-    border_geometry = {0, height - border_size, width, border_size};
+    border_geometry = { 0, height - border_size.bottom, width, border_size.bottom };
     this->layout_areas.push_back(std::make_unique<decoration_area_t>(
-        DECORATION_AREA_RESIZE_BOTTOM, border_geometry));
+        DECORATION_AREA_RESIZE_BOTTOM, border_geometry, EDGE_BOTTOM));
 }
 
 /**
@@ -204,7 +297,7 @@ decoration_layout_t::action_response_t decoration_layout_t::handle_motion(
     this->current_input = {x, y};
     update_cursor();
 
-    return {DECORATION_ACTION_NONE, 0};
+    return { DECORATION_ACTION_NONE, 0 };
 }
 
 /**
@@ -240,27 +333,24 @@ decoration_layout_t::action_response_t decoration_layout_t::handle_press_event(
 
     if (!pressed && double_click_at_release) {
         double_click_at_release = false;
-        return {DECORATION_ACTION_TOGGLE_MAXIMIZE, 0};
+        return { DECORATION_ACTION_TOGGLE_MAXIMIZE, 0 };
     } else if (!pressed && is_grabbed) {
         is_grabbed = false;
         auto begin_area = find_area_at(grab_origin);
         auto end_area   = find_area_at(current_input);
 
-        if (begin_area && (begin_area->get_type() == DECORATION_AREA_BUTTON))
-        {
+        if (begin_area && (begin_area->get_type() == DECORATION_AREA_BUTTON)) {
             begin_area->as_button().set_pressed(false);
-            if (end_area && (begin_area == end_area))
-            {
-                switch (begin_area->as_button().get_button_type())
-                {
+            if (end_area && (begin_area == end_area)) {
+                switch (begin_area->as_button().get_button_type()) {
                   case BUTTON_CLOSE:
-                    return {DECORATION_ACTION_CLOSE, 0};
+                    return { DECORATION_ACTION_CLOSE, 0 };
 
                   case BUTTON_TOGGLE_MAXIMIZE:
-                    return {DECORATION_ACTION_TOGGLE_MAXIMIZE, 0};
+                    return { DECORATION_ACTION_TOGGLE_MAXIMIZE, 0 };
 
                   case BUTTON_MINIMIZE:
-                    return {DECORATION_ACTION_MINIMIZE, 0};
+                    return { DECORATION_ACTION_MINIMIZE, 0 };
 
                   default:
                     break;

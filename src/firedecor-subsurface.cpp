@@ -21,7 +21,8 @@
 #define ACTIVE true
 #define INACTIVE false
 
-class simple_decoration_surface : public wf::surface_interface_t, public wf::compositor_surface_t {
+class simple_decoration_surface : public wf::surface_interface_t,
+	public wf::compositor_surface_t {
 	bool _mapped = true;
     wayfire_view view;
 
@@ -33,50 +34,61 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
     };
 
 	// Uploads a new title surface to the OpenGL texture, doesn't do any rendering.
-    void update_title(int width, int height, double scale) {
-        int target_width  = width * scale;
-        int target_height = height * scale;
+    void update_title(int width, double scale) {
+        auto title_colors = theme.get_title_colors();
 
-        if ((title_texture.tex.width != target_width) ||
-            (title_texture.tex.height != target_height) ||
-            (title_texture.current_text != view->get_title())) {
-            auto surface = theme.form_text(view->get_title(),
-                target_width, target_height, ACTIVE);
-            cairo_surface_upload_to_texture(surface, title_texture.tex);
+        if ((title_texture.colors != title_colors) ||
+            (title_texture.current_text != view->get_title()) ||
+            (title_texture.active.width != title_size.width)) {
+	        title_size = theme.get_text_size(view->get_title(), size.width);
+
+	        /* Target width of the new title, based on fb scale */
+	        int target_width  = title_size.width * scale;
+
+            auto surface = theme.form_title(view->get_title(), title_size, ACTIVE);
+            cairo_surface_upload_to_texture(surface, title_texture.active);
+            surface = theme.form_title(view->get_title(), title_size, INACTIVE);
+            cairo_surface_upload_to_texture(surface, title_texture.inactive);
             cairo_surface_destroy(surface);
+
+            /* Updating the cached variables */
             title_texture.current_text = view->get_title();
+            title_texture.colors = title_colors;
+
+            /* Necessary in order to immediately place areas correctly */
+			layout.resize(size.width, size.height, title_size);
         }
     }
 
     struct {
-        wf::simple_texture_t tex;
+        wf::simple_texture_t active, inactive;
         std::string current_text = "";
+        wf::firedecor::color_set_t colors;
     } title_texture;
 
     struct corner_textures_t {
 	    wf::simple_texture_t active, inactive;
     } corners;
 
-    wf::firedecor::decoration_theme_t::edge_colors_t current_edge;
+    struct edge_colors_t {
+	    wf::firedecor::color_set_t border, outline;
+    } current_edge;
 
-	void update_corners(
-		wf::firedecor::decoration_theme_t::edge_colors_t colors, int corner_radius) {
+	void update_corners(edge_colors_t colors, int corner_radius) {
 		if ((current_corner_radius != corner_radius) ||
-			!(current_edge.active_border == colors.active_border) ||
-			!(current_edge.active_border == colors.inactive_border) ||
-			!(current_edge.active_outline == colors.active_outline) ||
-		    !(current_edge.inactive_outline == colors.inactive_outline)) {
+			(current_edge.border != colors.border) ||
+			(current_edge.outline != colors.outline)) {
 			auto surface = theme.form_corner(ACTIVE);
 			cairo_surface_upload_to_texture(surface, corners.active);
 			surface = theme.form_corner(INACTIVE);
 			cairo_surface_upload_to_texture(surface, corners.inactive);
-			current_edge.active_border = colors.active_border;
-			current_edge.inactive_border = colors.inactive_border;
-			current_edge.active_outline = colors.active_outline;
-			current_edge.inactive_outline = colors.inactive_outline;
-			current_corner_radius = corner_radius;
+			current_edge.border.active    = colors.border.active;
+			current_edge.border.inactive  = colors.border.inactive;
+			current_edge.outline.active   = colors.outline.active;
+			current_edge.outline.inactive = colors.outline.inactive;
+			current_corner_radius         = corner_radius;
 		}
-	};
+	}
 
     wf::firedecor::decoration_theme_t theme;
     wf::firedecor::decoration_layout_t layout;
@@ -84,11 +96,13 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 
     wf::dimensions_t size;
 
+    int title_update_count = 0;
+
   public:
 	// Variables with more descriptive names.
-    int current_border_size;
-    int current_titlebar_height;
+    wf::firedecor::border_size_t current_border_size;
     int current_corner_radius;
+    wf::dimensions_t title_size;
 
     simple_decoration_surface(wayfire_view view) : theme{}, 
     	layout{theme, [=] (wlr_box box) {this->damage_surface_box(box); }} {
@@ -105,33 +119,50 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 
     // TODO: Make it possible for the titlebar to be positioned at any edge.
     wf::point_t get_offset() final {
-        return {-current_border_size, -current_titlebar_height};
+        return { -current_border_size.left, -current_border_size.top };
     }
 
     virtual wf::dimensions_t get_size() const final {
         return size;
     }
 
-    void render_title(const wf::framebuffer_t& fb, wf::geometry_t geometry) {
-        update_title(geometry.width, geometry.height, fb.scale);
-        OpenGL::render_texture(title_texture.tex.tex, fb, geometry + (wf::point_t){geometry.width / 2, 0},
-            glm::vec4(1.0f), OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+    void render_title(const wf::framebuffer_t& fb, wf::geometry_t geometry,
+        bool active) {
+        update_title(geometry.width, fb.scale);
+        if (active) {
+	        OpenGL::render_texture(
+		        title_texture.active.tex, fb, geometry,
+	            glm::vec4(1.0f), OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+        } else {
+	        OpenGL::render_texture(
+		        title_texture.inactive.tex, fb, geometry,
+		        glm::vec4(1.0f), OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+        }
+    }
+
+    wf::color_t alpha_transform(wf::color_t c) {
+	    return { c.r * c.a, c.g * c.a, c.b * c.a, c.a };
     }
 
 	void render_background(const wf::framebuffer_t& fb, 
 		wf::geometry_t rect, const wf::geometry_t& scissor, bool active, wf::point_t origin) {
-		auto colors = theme.get_edge_colors();
+		edge_colors_t colors = {
+			theme.get_border_colors(), theme.get_outline_colors()
+		};
+
+		colors.border.active = alpha_transform(colors.border.active);
+		colors.border.inactive = alpha_transform(colors.border.inactive);
 
 		int r = theme.get_corner_radius();
 		update_corners(colors, r);
-		r = current_corner_radius;
+
 		auto& corner = active ? corners.active : corners.inactive;
 
-		wf::geometry_t top_left = { rect.x, rect.y, r, r };
-		wf::geometry_t top_right = { rect.width - r + origin.x, rect.y, r, r };
-		wf::geometry_t bottom_left = { rect.x, rect.height - r + origin.y, r, r };
+		wf::geometry_t top_left     = { rect.x, rect.y, r, r };
+		wf::geometry_t top_right    = { rect.width - r + origin.x, rect.y, r, r };
+		wf::geometry_t bottom_left  = { rect.x, rect.height - r + origin.y, r, r };
 		wf::geometry_t bottom_right = { rect.width - r, rect.height - r, r, r };
-		int outline_size = theme.get_outline_size();
+		int outline_size            = theme.get_outline_size();
 
 		bottom_right = bottom_right + origin;
 
@@ -139,41 +170,36 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 		OpenGL::render_begin(fb);
 		fb.logic_scissor(scissor);
 
-		/* Middle rectangle and central outlines */
-		OpenGL::render_rectangle(
-			{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
-			active ? colors.active_border : colors.inactive_border,
-			fb.get_orthographic_projection());
-		OpenGL::render_rectangle(
-			{ rect.x + r, rect.y, rect.width - 2 * r, outline_size},
-			  active ? colors.active_outline : colors.inactive_outline,
-			fb.get_orthographic_projection());
+		/* Middle rectangle and top outline  */
+		for (int height : { rect.height, outline_size }) {
+			OpenGL::render_rectangle(
+				{ rect.x + r, rect.y, rect.width - 2 * r, height },
+				active ? colors.border.active : colors.border.inactive,
+				fb.get_orthographic_projection());
+		}
+
+		/* Left and right borders */
+		for (int x : { rect.x, rect.width + origin.x - r }) {
+			OpenGL::render_rectangle(
+				{ x, rect.y + r, r, rect.height - 2 * r },
+				active ? colors.border.active : colors.border.inactive,
+				fb.get_orthographic_projection());
+		}
+
+		/* Bottom outline */
 		OpenGL::render_rectangle(
 			{ rect.x + r, rect.height - outline_size + origin.y,
 			  rect.width - 2 * r, outline_size },
-			active ? colors.active_outline : colors.inactive_outline,
+			active ? colors.outline.active : colors.outline.inactive,
 			fb.get_orthographic_projection());
 
-		/* Left border and outline */
+		/* Left and right outlines */
+		for (int x : { rect.x, rect.width + origin.x - outline_size }) {
 		OpenGL::render_rectangle(
-			{ rect.x, rect.y + r, r, rect.height - 2 * r },
-			active ? colors.active_border : colors.inactive_border,
+			{ x, rect.y + r, outline_size, rect.height - 2 * r },
+			active ? colors.outline.active : colors.outline.inactive,
 			fb.get_orthographic_projection());
-		OpenGL::render_rectangle(
-			{ rect.x, rect.y + r, outline_size, rect.height - 2 * r },
-			  active ? colors.active_outline : colors.inactive_outline,
-			fb.get_orthographic_projection());
-
-		/* Right border and outline */
-		OpenGL::render_rectangle(
-			{ rect.width - r + origin.x, rect.y + r, r, rect.height - 2 * r },
-			active ? colors.active_border : colors.inactive_border,
-			fb.get_orthographic_projection());
-		OpenGL::render_rectangle(
-			{ rect.width - outline_size + origin.x, 
-			  rect.y + r, outline_size, rect.height - 2 * r },
-			active ? colors.active_outline : colors.inactive_outline,
-			fb.get_orthographic_projection());
+		}
 		/* Corner background */
 
 		/** Top left corner */
@@ -199,25 +225,26 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
         wlr_box geometry{origin.x, origin.y, size.width, size.height};
         render_background(fb, geometry, scissor, view->activated, origin);
 
-        /* Draw title & buttons */
         auto renderables = layout.get_renderable_areas();
         for (auto item : renderables) {
-            if (item->get_type() == wf::firedecor::DECORATION_AREA_TITLE) {
+	        if (item->get_type() == wf::firedecor::DECORATION_AREA_TITLE) {
                 OpenGL::render_begin(fb);
                 fb.logic_scissor(scissor);
-                render_title(fb, item->get_geometry() + origin);
+                render_title(fb, item->get_geometry() + origin, view->activated);
                 OpenGL::render_end();
-            } else if 
-            	(item->get_type() == wf::firedecor::DECORATION_AREA_BUTTON) { // button
+            } else if (item->get_type() == wf::firedecor::DECORATION_AREA_BUTTON) {
                 item->as_button().render(fb, item->get_geometry() + origin, scissor);
             }
         }
     }
-
+    
     virtual void simple_render(const wf::framebuffer_t& fb, int x, int y,
 					           const wf::region_t& damage) override {
+		//update_title(size.width, fb.scale);
         wf::region_t frame = this->cached_region + wf::point_t{x, y};
         frame &= damage;
+
+		update_title(size.width, fb.scale);
 
         for (const auto& box : frame) {
             render_scissor_box(fb, {x, y}, wlr_box_from_pixman_box(box));
@@ -301,7 +328,7 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
     void resize(wf::dimensions_t dims) {
         view->damage();
         size = dims;
-        layout.resize(size.width, size.height);
+        layout.resize(size.width, size.height, title_size);
         if (!view->fullscreen) {
             this->cached_region = layout.calculate_region();
         }
@@ -311,13 +338,10 @@ class simple_decoration_surface : public wf::surface_interface_t, public wf::com
 
     void update_decoration_size() {
         if (view->fullscreen) {
-            current_border_size = 0;
-            current_titlebar_height  = 0;
+            current_border_size = { 0, 0, 0, 0 };
             this->cached_region.clear();
         } else {
-            current_border_size = theme.get_border_size();
-            current_titlebar_height  =
-                theme.get_titlebar_height() + theme.get_border_size();
+            current_border_size = layout.parse_border(theme.get_border_size());
             this->cached_region = layout.calculate_region();
         }
     }
@@ -358,20 +382,22 @@ class simple_decorator_t : public wf::decorator_frame_t_t {
         }
     };
 
-    // TODO: Make it possible for the titlebar to be positioned at any edge.
     virtual wf::geometry_t expand_wm_geometry( wf::geometry_t contained_wm_geometry) override {
-        contained_wm_geometry.x     -= deco->current_border_size;
-        contained_wm_geometry.y     -= deco->current_titlebar_height;
-        contained_wm_geometry.width += 2 * deco->current_border_size;
-        contained_wm_geometry.height += deco->current_border_size + deco->current_titlebar_height;
+        contained_wm_geometry.x     -= deco->current_border_size.left;
+        contained_wm_geometry.y     -= deco->current_border_size.top;
+        contained_wm_geometry.width += deco->current_border_size.left +
+        	deco->current_border_size.right;
+        contained_wm_geometry.height += deco->current_border_size.top +
+        	deco->current_border_size.bottom;
 
         return contained_wm_geometry;
     }
 
-    // TODO: Make it possible for the titlebar to be positioned at any edge.
+    // TODO: Minimum size must fit buttons, icon, a truncated title, and corners.
     virtual void calculate_resize_size( int& target_width, int& target_height) override {
-        target_width  -= 2 * deco->current_border_size;
-        target_height -= deco->current_border_size + deco->current_titlebar_height;
+        target_width  -= deco->current_border_size.left +
+        	deco->current_border_size.right;
+        target_height -= deco->current_border_size.top + deco->current_border_size.bottom;
 
         target_width  = std::max(target_width, 1);
         target_height = std::max(target_height, 1);

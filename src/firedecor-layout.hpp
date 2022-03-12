@@ -4,27 +4,31 @@
 #include <wayfire/region.hpp>
 
 #include "firedecor-buttons.hpp"
+#include "firedecor-theme.hpp"
 
-namespace wf
-{
-namespace firedecor
-{
+namespace wf {
+namespace firedecor {
+
 static constexpr uint32_t DECORATION_AREA_RENDERABLE_BIT = (1 << 16);
 static constexpr uint32_t DECORATION_AREA_RESIZE_BIT     = (1 << 17);
 static constexpr uint32_t DECORATION_AREA_MOVE_BIT = (1 << 18);
 
-
 /** Different types of areas around the decoration */
-enum decoration_area_type_t
-{
-    DECORATION_AREA_MOVE          = DECORATION_AREA_MOVE_BIT,
-    DECORATION_AREA_TITLE         = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT,
-    DECORATION_AREA_BUTTON        = DECORATION_AREA_RENDERABLE_BIT,
+enum decoration_area_type_t {
+    DECORATION_AREA_TITLE  = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT,
+    DECORATION_AREA_ICON   = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT,
+    DECORATION_AREA_BUTTON = DECORATION_AREA_RENDERABLE_BIT,
     DECORATION_AREA_RESIZE_LEFT   = WLR_EDGE_LEFT | DECORATION_AREA_RESIZE_BIT,
     DECORATION_AREA_RESIZE_RIGHT  = WLR_EDGE_RIGHT | DECORATION_AREA_RESIZE_BIT,
     DECORATION_AREA_RESIZE_TOP    = WLR_EDGE_TOP | DECORATION_AREA_RESIZE_BIT,
     DECORATION_AREA_RESIZE_BOTTOM = WLR_EDGE_BOTTOM | DECORATION_AREA_RESIZE_BIT,
-    DECORATION_AREA_RESIZE_TL = WLR_EDGE_TOP | WLR_EDGE_LEFT | DECORATION_AREA_RESIZE_BIT
+};
+
+enum edge_t {
+	EDGE_TOP    = 0,
+	EDGE_LEFT   = 1,
+	EDGE_BOTTOM = 2,
+	EDGE_RIGHT  = 3
 };
 
 /**
@@ -33,9 +37,13 @@ enum decoration_area_type_t
 struct decoration_area_t {
   public:
     /**
-     * Initialize a new decoration area with the given type and geometry
+     * Initialize a new decoration area holding the title.
+     * 
+     * @param type The type of the area.
+     * @param g The geometry of the area.
+     * @param edge The edge where this area is placed.
      */
-    decoration_area_t(decoration_area_type_t type, wf::geometry_t g);
+    decoration_area_t(decoration_area_type_t type, wf::geometry_t g, edge_t edge);
 
     /**
      * Initialize a new decoration area holding a button.
@@ -44,9 +52,9 @@ struct decoration_area_t {
      * @param damage_callback Callback to execute when button needs repaint.
      * @param theme The theme to use for the button.
      */
-    decoration_area_t(wf::geometry_t g,
-        std::function<void(wlr_box)> damage_callback,
-        const decoration_theme_t& theme);
+    decoration_area_t(
+	    wf::geometry_t g, std::function<void(wlr_box)> damage_callback,
+	    const decoration_theme_t& theme, edge_t edge);
 
     /** @return The geometry of the decoration area, relative to the layout */
     wf::geometry_t get_geometry() const;
@@ -60,16 +68,19 @@ struct decoration_area_t {
   private:
     decoration_area_type_t type;
     wf::geometry_t geometry;
+    edge_t edge;
 
     /* For buttons only */
     std::unique_ptr<button_t> button;
+
+    /* For icons only */
+    std::unique_ptr<std::string> icon_path;
 };
 
 /**
  * Action which needs to be taken in response to an input event
  */
-enum decoration_layout_action_t
-{
+enum decoration_layout_action_t {
     DECORATION_ACTION_NONE            = 0,
     /* Drag actions */
     DECORATION_ACTION_MOVE            = 1,
@@ -77,7 +88,19 @@ enum decoration_layout_action_t
     /* Button actions */
     DECORATION_ACTION_CLOSE           = 3,
     DECORATION_ACTION_TOGGLE_MAXIMIZE = 4,
-    DECORATION_ACTION_MINIMIZE        = 5,
+    DECORATION_ACTION_MINIMIZE        = 5
+};
+
+enum position_t {
+	POS_LEFT   = 0,
+	POS_CENTER = 1,
+	POS_RIGHT  = 2,
+};
+
+struct border_size_t {
+	int top, left, bottom, right;
+
+	border_size_t& operator =(const border_size_t& other) = default;
 };
 
 class decoration_theme_t;
@@ -99,8 +122,16 @@ class decoration_layout_t {
     decoration_layout_t(const decoration_theme_t& theme,
         std::function<void(wlr_box)> damage_callback);
 
+    /** 
+     * Translate the border into four numbers, representing the top, left, bottom, and right border sizes, respectively.
+     */
+    border_size_t parse_border(std::string border_size);
+
+    /** Create buttons in the layout, and return their total geometry */
+    void create_areas(int width, int height, wf::dimensions_t title_size);
+
     /** Regenerate layout using the new size */
-    void resize(int width, int height);
+    void resize(int width, int height, wf::dimensions_t title_size);
 
     /**
      * @return The decoration areas which need to be rendered, in top to bottom
@@ -135,12 +166,13 @@ class decoration_layout_t {
     void handle_focus_lost();
 
   private:
-    const int titlebar_size;
-    const int border_size;
-    const int button_width;
-    const int button_height;
-    const int button_padding;
+	const std::string layout;
+	const std::string border_size_str;
+	const border_size_t border_size;
+	const int outline_size;
+	const std::vector<decoration_area_t> defined_layout[4][3];
     const decoration_theme_t& theme;
+
 
     std::function<void(wlr_box)> damage_callback;
 
@@ -155,9 +187,6 @@ class decoration_layout_t {
     wf::wl_timer timer;
     bool double_click_at_release = false;
 
-    /** Create buttons in the layout, and return their total geometry */
-    wf::geometry_t create_buttons(int width, int height);
-
     /** Calculate resize edges based on @current_input */
     uint32_t calculate_resize_edges() const;
     /** Update the cursor based on @current_input */
@@ -171,7 +200,6 @@ class decoration_layout_t {
 
     /** Unset hover state of hovered button at @position, if any */
     void unset_hover(wf::point_t position);
-    wf::option_wrapper_t<std::string> button_order{"decoration/button_order"};
 };
 }
 }
