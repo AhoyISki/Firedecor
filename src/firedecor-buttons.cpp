@@ -24,6 +24,14 @@ button_type_t button_t::get_button_type() const {
     return this->type;
 }
 
+void button_t::set_active(bool active) {
+	if (this->active != active) {
+	    update_texture();
+	    add_idle_damage();
+	}
+	this->active = active;
+}
+
 void button_t::set_hover(bool is_hovered) {
     this->is_hovered = is_hovered;
     if (!this->is_pressed) {
@@ -67,13 +75,13 @@ void button_t::render(const wf::framebuffer_t& fb, wf::geometry_t geometry,
 
 void button_t::update_texture() {
     decoration_theme_t::button_state_t state = {
-        .width  = 20,
-        .height = 20,
+        .width  = (double)theme.get_button_size(),
+        .height = (double)theme.get_button_size(),
         .border = 1.0,
         .hover_progress = hover,
     };
 
-    auto surface = theme.get_button_surface(type, state);
+    auto surface = theme.get_button_surface(type, state, active);
     OpenGL::render_begin();
     cairo_surface_upload_to_texture(surface, this->button_texture);
     OpenGL::render_end();

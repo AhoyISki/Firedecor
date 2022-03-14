@@ -26,29 +26,36 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	bool _mapped = true;
     wayfire_view view;
 
-	// Re-renders after a title change.
     wf::signal_connection_t title_set = [=] (wf::signal_data_t *data) {
         if (get_signaled_view(data) == view) {
             view->damage(); // trigger re-render
         }
     };
 
-	// Uploads a new title surface to the OpenGL texture, doesn't do any rendering.
-    void update_title(int width, double scale) {
+    void update_layout(double scale) {
         auto title_colors = theme.get_title_colors();
 
         if ((title_texture.colors != title_colors) ||
             (title_texture.current_text != view->get_title()) ||
-            (title_texture.active.width != title_size.width)) {
+            (title_texture.hor_active.width != title_size.width)) {
 	        title_size = theme.get_text_size(view->get_title(), size.width);
+	        title_size = {
+		        (int)(title_size.width * scale), (int)(title_size.height * scale)
+	        };
 
-	        /* Target width of the new title, based on fb scale */
-	        int target_width  = title_size.width * scale;
-
-            auto surface = theme.form_title(view->get_title(), title_size, ACTIVE);
-            cairo_surface_upload_to_texture(surface, title_texture.active);
-            surface = theme.form_title(view->get_title(), title_size, INACTIVE);
-            cairo_surface_upload_to_texture(surface, title_texture.inactive);
+			cairo_surface_t *surface;
+			if (auto o = wf::firedecor::HORIZONTAL; theme.has_title_orientation(o)) {
+	            surface = theme.form_title(view->get_title(), title_size, ACTIVE, o);
+	            cairo_surface_upload_to_texture(surface, title_texture.hor_active);
+	            surface = theme.form_title(view->get_title(), title_size, INACTIVE, o);
+	            cairo_surface_upload_to_texture(surface, title_texture.hor_inactive);
+			}
+			if (auto o = wf::firedecor::VERTICAL; theme.has_title_orientation(o)) {
+	            surface = theme.form_title(view->get_title(), title_size, ACTIVE, o);
+	            cairo_surface_upload_to_texture(surface, title_texture.ver_active);
+	            surface = theme.form_title(view->get_title(), title_size, INACTIVE, o);
+	            cairo_surface_upload_to_texture(surface, title_texture.ver_inactive);
+			}
             cairo_surface_destroy(surface);
 
             /* Updating the cached variables */
@@ -61,7 +68,8 @@ class simple_decoration_surface : public wf::surface_interface_t,
     }
 
     struct {
-        wf::simple_texture_t active, inactive;
+        wf::simple_texture_t hor_active, hor_inactive;
+        wf::simple_texture_t ver_active, ver_inactive;
         std::string current_text = "";
         wf::firedecor::color_set_t colors;
     } title_texture;
@@ -96,10 +104,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     wf::dimensions_t size;
 
-    int title_update_count = 0;
-
   public:
-	// Variables with more descriptive names.
     wf::firedecor::border_size_t current_border_size;
     int current_corner_radius;
     wf::dimensions_t title_size;
@@ -126,18 +131,34 @@ class simple_decoration_surface : public wf::surface_interface_t,
         return size;
     }
 
-    void render_title(const wf::framebuffer_t& fb, wf::geometry_t geometry,
-        bool active) {
-        update_title(geometry.width, fb.scale);
-        if (active) {
-	        OpenGL::render_texture(
-		        title_texture.active.tex, fb, geometry,
-	            glm::vec4(1.0f), OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
-        } else {
-	        OpenGL::render_texture(
-		        title_texture.inactive.tex, fb, geometry,
-		        glm::vec4(1.0f), OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
-        }
+    void render_title(
+	    const wf::framebuffer_t& fb, wf::geometry_t geometry,
+        bool active, wf::firedecor::edge_t edge) {
+	    wf::simple_texture_t *texture;
+	    uint32_t bits = 0;
+	    if (edge == wf::firedecor::EDGE_TOP || edge == wf::firedecor::EDGE_BOTTOM) {
+	        if (active) {
+		        texture = &title_texture.hor_active;
+	        } else {
+		        texture = &title_texture.hor_inactive;
+	        }
+	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y;
+	    } else if (edge == wf::firedecor::EDGE_LEFT) {
+	        if (active) {
+		        texture = &title_texture.ver_active;
+	        } else {
+		        texture = &title_texture.ver_inactive;
+	        }
+	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y;
+	    } else {
+	        if (active) {
+		        texture = &title_texture.ver_active;
+	        } else {
+		        texture = &title_texture.ver_inactive;
+	        }
+	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_X;
+	    } 
+        OpenGL::render_texture(texture->tex, fb, geometry, glm::vec4(1.0f), bits);
     }
 
     wf::color_t alpha_transform(wf::color_t c) {
@@ -230,9 +251,12 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	        if (item->get_type() == wf::firedecor::DECORATION_AREA_TITLE) {
                 OpenGL::render_begin(fb);
                 fb.logic_scissor(scissor);
-                render_title(fb, item->get_geometry() + origin, view->activated);
+                render_title(
+	                fb, item->get_geometry() + origin,
+	                view->activated, item->get_edge());
                 OpenGL::render_end();
             } else if (item->get_type() == wf::firedecor::DECORATION_AREA_BUTTON) {
+	            item->as_button().set_active(view->activated);
                 item->as_button().render(fb, item->get_geometry() + origin, scissor);
             }
         }
@@ -240,11 +264,10 @@ class simple_decoration_surface : public wf::surface_interface_t,
     
     virtual void simple_render(const wf::framebuffer_t& fb, int x, int y,
 					           const wf::region_t& damage) override {
-		//update_title(size.width, fb.scale);
-        wf::region_t frame = this->cached_region + wf::point_t{x, y};
-        frame &= damage;
+		update_layout(fb.scale);
 
-		update_title(size.width, fb.scale);
+        wf::region_t frame = this->cached_region + (wf::point_t){x, y};
+        frame &= damage;
 
         for (const auto& box : frame) {
             render_scissor_box(fb, {x, y}, wlr_box_from_pixman_box(box));

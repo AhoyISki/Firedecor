@@ -48,6 +48,9 @@ class button_t {
     /** @return The type of the button */
     button_type_t get_button_type() const;
 
+    /** Set the activation status of the button's view */
+    void set_active(bool active);
+
     /**
      * Set the button hover state.
      * Affects appearance.
@@ -72,7 +75,7 @@ class button_t {
         wf::geometry_t scissor);
 
   private:
-    const decoration_theme_t& theme;
+ 	const decoration_theme_t& theme;
 
     /* Whether the button needs repaint */
     button_type_t type;
@@ -82,6 +85,8 @@ class button_t {
     bool is_hovered = false;
     /* Whether the button is currently being held */
     bool is_pressed = false;
+    /* Whether the button's view is active or not */
+    bool active = true;
     /* The shade of button background to use. */
     wf::animation::simple_animation_t hover{wf::create_option(100)};
 
