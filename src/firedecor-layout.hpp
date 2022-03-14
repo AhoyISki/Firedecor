@@ -15,6 +15,7 @@ static constexpr uint32_t DECORATION_AREA_MOVE_BIT = (1 << 18);
 
 /** Different types of areas around the decoration */
 enum decoration_area_type_t {
+    DECORATION_AREA_MOVE   = DECORATION_AREA_MOVE_BIT,
     DECORATION_AREA_TITLE  = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT,
     DECORATION_AREA_ICON   = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT,
     DECORATION_AREA_BUTTON = DECORATION_AREA_RENDERABLE_BIT,
@@ -22,13 +23,6 @@ enum decoration_area_type_t {
     DECORATION_AREA_RESIZE_RIGHT  = WLR_EDGE_RIGHT | DECORATION_AREA_RESIZE_BIT,
     DECORATION_AREA_RESIZE_TOP    = WLR_EDGE_TOP | DECORATION_AREA_RESIZE_BIT,
     DECORATION_AREA_RESIZE_BOTTOM = WLR_EDGE_BOTTOM | DECORATION_AREA_RESIZE_BIT,
-};
-
-enum edge_t {
-	EDGE_TOP    = 0,
-	EDGE_LEFT   = 1,
-	EDGE_BOTTOM = 2,
-	EDGE_RIGHT  = 3
 };
 
 /**
@@ -54,16 +48,25 @@ struct decoration_area_t {
      */
     decoration_area_t(
 	    wf::geometry_t g, std::function<void(wlr_box)> damage_callback,
-	    const decoration_theme_t& theme, edge_t edge);
+	    const decoration_theme_t& theme);
+
+    /**
+     * Initialize a new decoration area where the edge does not matter
+     * @param g The geometry of the area.
+     */
+    decoration_area_t(decoration_area_type_t type, wf::geometry_t g);
+
+    /** @return The type of the decoration area */
+    decoration_area_type_t get_type() const;
 
     /** @return The geometry of the decoration area, relative to the layout */
     wf::geometry_t get_geometry() const;
 
+    /** @return The edge of the decoration area */
+    edge_t get_edge() const;
+
     /** @return The area's button, if the area is a button. Otherwise UB */
     button_t& as_button();
-
-    /** @return The type of the decoration area */
-    decoration_area_type_t get_type() const;
 
   private:
     decoration_area_type_t type;
@@ -168,11 +171,17 @@ class decoration_layout_t {
   private:
 	const std::string layout;
 	const std::string border_size_str;
+	
 	const border_size_t border_size;
+
 	const int outline_size;
-	const std::vector<decoration_area_t> defined_layout[4][3];
+	const int button_size;
+	const int icon_size;
+	const int padding_size;
+
     const decoration_theme_t& theme;
 
+    int content_height;
 
     std::function<void(wlr_box)> damage_callback;
 

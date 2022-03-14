@@ -18,6 +18,18 @@ struct color_set_t {
 	};
 };
 
+enum orientation_t {
+	HORIZONTAL = 0,
+	VERTICAL = 1
+};
+
+enum edge_t {
+	EDGE_TOP    = 0,
+	EDGE_LEFT   = 1,
+	EDGE_BOTTOM = 2,
+	EDGE_RIGHT  = 3
+};
+
 class decoration_theme_t {
   public:
 	decoration_theme_t();
@@ -34,6 +46,12 @@ class decoration_theme_t {
 	int get_outline_size() const;
     /** @return The corner radius */
     int get_corner_radius() const;
+    /** @return The equal width and height of the button */
+    int get_button_size() const;
+    /** @return The icon size */
+    int get_icon_size() const;
+    /** @return The padding size */
+    int get_padding_size() const;
 
 	/* Color return functions */
 	/** @return The active and inactive colors for the border */
@@ -42,6 +60,10 @@ class decoration_theme_t {
 	color_set_t get_outline_colors() const;
 	/** @return The acntive and inactive colors for the title */
 	color_set_t get_title_colors() const;
+
+	/* Other return functions */
+	/** @return True if there is a title of said orientation in the layout */
+	bool has_title_orientation(orientation_t orientation) const;
 
 	/**
      * Get what the title size should be, given a text for the title, useful for
@@ -53,8 +75,8 @@ class decoration_theme_t {
      * Render the given text on a cairo_surface_t with the given size.
      * The caller is responsible for freeing the memory afterwards.
      */
-    cairo_surface_t *form_title(
-	    std::string text, wf::dimensions_t title_size, bool active) const;
+    cairo_surface_t *form_title(std::string text, wf::dimensions_t title_size,
+                                bool active, orientation_t orientation) const;
 
     /**
      * Render one corner for active and inactive windows. 
@@ -82,7 +104,8 @@ class decoration_theme_t {
      * @param state The button state.
      */
     cairo_surface_t *get_button_surface(button_type_t button,
-        const button_state_t& state) const;
+                                        const button_state_t& state,
+                                        bool active) const;
 
   private:
     wf::option_wrapper_t<std::string> font{"firedecor/font"};
@@ -99,10 +122,12 @@ class decoration_theme_t {
     wf::option_wrapper_t<wf::color_t> active_outline{"firedecor/active_outline"};
     wf::option_wrapper_t<wf::color_t> inactive_outline{"firedecor/inactive_outline"};
 
+	wf::option_wrapper_t<int> button_size{"firedecor/button_size"};
     wf::option_wrapper_t<std::string> button_style{"firedecor/button_style"};
-    wf::option_wrapper_t<int> button_padding{"firedecor/button_padding"};
     wf::option_wrapper_t<bool> inactive_buttons{"firedecor/inactive_buttons"};
 
+	wf::option_wrapper_t<int> icon_size{"firedecor/icon_size"};
+	wf::option_wrapper_t<int> padding_size{"firedecor/padding_size"};
 	wf::option_wrapper_t<std::string> ignore_views{"firedecor/ignore_views"};
     wf::option_wrapper_t<std::string> layout{"firedecor/layout"};
 };

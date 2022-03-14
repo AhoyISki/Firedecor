@@ -3,6 +3,7 @@
 #include <wayfire/config.h>
 
 #include <map>
+#include <string>
 
 #include "firedecor-theme.hpp"
 #include "firedecor-buttons.hpp"
@@ -29,6 +30,15 @@ int decoration_theme_t::get_font_size()const {
 int decoration_theme_t::get_corner_radius() const {
 	return corner_radius;
 }
+int decoration_theme_t::get_button_size() const {
+	return button_size;
+}
+int decoration_theme_t::get_icon_size() const {
+	return icon_size;
+}
+int decoration_theme_t::get_padding_size() const {
+	return padding_size;
+}
 
 /* Color return functions */
 color_set_t decoration_theme_t::get_border_colors() const {
@@ -39,6 +49,34 @@ color_set_t decoration_theme_t::get_outline_colors() const {
 }
 color_set_t decoration_theme_t::get_title_colors() const {
 	return { active_title, inactive_title };
+}
+
+/* Other return functions */
+bool decoration_theme_t::has_title_orientation(orientation_t orientation) const {
+	std::stringstream stream((std::string)layout);
+	std::string current_symbol;
+	
+	edge_t current_edge = EDGE_TOP;
+
+	while (stream >> current_symbol) {
+		if (current_symbol == "-") {
+	        if (current_edge == EDGE_TOP) {
+		        current_edge = EDGE_LEFT;
+	        } else if (current_edge == EDGE_LEFT) {
+		        current_edge = EDGE_BOTTOM;
+	        } else {
+		        current_edge = EDGE_RIGHT;
+	        }
+		} else if (current_symbol == "title") {
+			if (((current_edge == EDGE_TOP || current_edge == EDGE_BOTTOM) &&
+			    orientation == HORIZONTAL) ||
+			    ((current_edge == EDGE_LEFT || current_edge == EDGE_RIGHT) &&
+			    orientation == VERTICAL)) {
+				    return true;
+			}
+		}
+	}
+	return false;
 }
 
 wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) const {
@@ -66,14 +104,26 @@ wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) 
 }
 
 cairo_surface_t*decoration_theme_t::form_title(std::string text,
-    wf::dimensions_t title_size, bool active) const {
+    wf::dimensions_t title_size, bool active, orientation_t orientation) const {
     const auto format = CAIRO_FORMAT_ARGB32;
-    auto surface = cairo_image_surface_create(
-	    format, title_size.width, title_size.height);
+    cairo_surface_t* surface;
+    if (orientation == HORIZONTAL) {
+	    surface = cairo_image_surface_create(
+		    format, title_size.width, title_size.height);
+    } else {
+	    surface = cairo_image_surface_create(
+		    format, title_size.height, title_size.width);
+    }
 
     wf::color_t color = (active) ? active_title : inactive_title;
 
     auto cr = cairo_create(surface);
+    if (orientation == VERTICAL) { 
+	    double radius = (double)title_size.width / 2;;
+	    cairo_translate(cr, radius, radius);
+	    cairo_rotate(cr, -M_PI / 2);
+	    cairo_translate(cr, -radius, -radius);
+    }
 
     PangoFontDescription *font_desc;
     PangoLayout *layout;
@@ -121,7 +171,33 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active) const {
 }
 
 cairo_surface_t *decoration_theme_t::get_button_surface(button_type_t button,
-    const button_state_t& state) const {
+    													const button_state_t& state,
+                                                        bool active) const {
+	if ((std::string)button_style != "wayfire" &&
+		(std::string)button_style != "firedecor" &&
+	    (std::string)button_style != "minimal") {
+		cairo_surface_t *button_surface;
+		std::string path = (std::string)getenv("HOME") + "/.config/firedecor/" +
+						   (std::string)button_style + "/";
+        switch (button) {
+          case BUTTON_CLOSE:
+	        button_surface = cairo_image_surface_create_from_png((path +
+	        													 "close.png").c_str());
+            break;
+          case BUTTON_TOGGLE_MAXIMIZE:
+	        button_surface = cairo_image_surface_create_from_png((path +
+	        													 "max.png").c_str());
+            break;
+          case BUTTON_MINIMIZE:
+	        button_surface = cairo_image_surface_create_from_png((path +
+	        													 "min.png").c_str());
+            break;
+          default:
+            assert(false);
+        }
+        return button_surface;
+	}
+		
     cairo_surface_t *button_surface = cairo_image_surface_create(
         CAIRO_FORMAT_ARGB32, state.width, state.height);
 
@@ -136,44 +212,40 @@ cairo_surface_t *decoration_theme_t::get_button_surface(button_type_t button,
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
-    /** A gray that looks good on light and dark themes */
-    color_t base = {0.60, 0.60, 0.63, 0.36};
-
-    /**
-     * We just need the alpha component.
-     * r == g == b == 0.0 will be directly set
-     */
-    double line  = 0.27;
-    double hover = 0.27;
+	color_t base;
+    double line;
+    double base_qty;
 
     /** Coloured base on hover/press. Don't compare float to 0 */
-    if (fabs(state.hover_progress) > 1e-3) {
+    if (fabs(state.hover_progress) > 1e-3 || (inactive_buttons && active)) {
         switch (button) {
           case BUTTON_CLOSE:
-            base = {242.0 / 255.0, 80.0 / 255.0, 86.0 / 255.0, 0.63};
+            base = { 242.0 / 255.0, 80.0 / 255.0, 86.0 / 255.0, 1.0 };
             break;
-
           case BUTTON_TOGGLE_MAXIMIZE:
-            base = {57.0 / 255.0, 234.0 / 255.0, 73.0 / 255.0, 0.63};
+            base = { 57.0 / 255.0, 234.0 / 255.0, 73.0 / 255.0, 1.0 };
             break;
-
           case BUTTON_MINIMIZE:
-            base = {250.0 / 255.0, 198.0 / 255.0, 54.0 / 255.0, 0.63};
+            base = { 250.0 / 255.0, 198.0 / 255.0, 54.0 / 255.0, 1.0 };
             break;
-
           default:
             assert(false);
         }
-
-        line *= 2.0;
+        line = 0.54;
+        base_qty = 0.6;
+    } else {
+	    base = { 0.40, 0.40, 0.43, 1.0 };
+	    line = 0.27;
+	    base_qty = 1.0;
     }
+	    
 
     /** Draw the base */
     cairo_set_source_rgba(cr,
-        base.r + 0.0 * state.hover_progress,
-        base.g + 0.0 * state.hover_progress,
-        base.b + 0.0 * state.hover_progress,
-        base.a + hover * state.hover_progress);
+        base.r * (base_qty + (1.0 - base_qty) * state.hover_progress),
+        base.g * (base_qty + (1.0 - base_qty) * state.hover_progress),
+        base.b * (base_qty + (1.0 - base_qty) * state.hover_progress),
+        base.a);
     cairo_arc(cr, state.width / 2, state.height / 2,
         state.width / 2, 0, 2 * M_PI);
     cairo_fill(cr);
@@ -181,8 +253,6 @@ cairo_surface_t *decoration_theme_t::get_button_surface(button_type_t button,
     /** Draw the border */
     cairo_set_line_width(cr, state.border);
     cairo_set_source_rgba(cr, 0.00, 0.00, 0.00, line);
-    // This renders great on my screen (110 dpi 1376x768 lcd screen)
-    // How this would appear on a Hi-DPI screen is questionable
     double r = state.width / 2 - 0.5 * state.border;
     cairo_arc(cr, state.width / 2, state.height / 2, r, 0, 2 * M_PI);
     cairo_stroke(cr);
@@ -190,41 +260,74 @@ cairo_surface_t *decoration_theme_t::get_button_surface(button_type_t button,
     /** Draw the icon  */
     cairo_set_source_rgba(cr, 0.00, 0.00, 0.00, line / 2);
     cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
-    switch (button) {
-      case BUTTON_CLOSE:
-        cairo_set_line_width(cr, 1.5 * state.border);
-        cairo_move_to(cr, 1.0 * state.width / 4.0,
-            1.0 * state.height / 4.0);
-        cairo_line_to(cr, 3.0 * state.width / 4.0,
-            3.0 * state.height / 4.0); // '\' part of x
-        cairo_move_to(cr, 3.0 * state.width / 4.0,
-            1.0 * state.height / 4.0);
-        cairo_line_to(cr, 1.0 * state.width / 4.0,
-            3.0 * state.height / 4.0); // '/' part of x
-        cairo_stroke(cr);
-        break;
-
-      case BUTTON_TOGGLE_MAXIMIZE:
-        cairo_set_line_width(cr, 1.5 * state.border);
-        cairo_rectangle(
-            cr, // Context
-            state.width / 4.0, state.height / 4.0, // (x, y)
-            state.width / 2.0, state.height / 2.0 // w x h
-        );
-        cairo_stroke(cr);
-        break;
-
-      case BUTTON_MINIMIZE:
-        cairo_set_line_width(cr, 1.75 * state.border);
-        cairo_move_to(cr, 1.0 * state.width / 4.0,
-            state.height / 2.0);
-        cairo_line_to(cr, 3.0 * state.width / 4.0,
-            state.height / 2.0);
-        cairo_stroke(cr);
-        break;
-
-      default:
-        assert(false);
+    if ((std::string)button_style == "wayfire") {
+	    switch (button) {
+	      case BUTTON_CLOSE:
+	        cairo_set_line_width(cr, 1.5 * state.border);
+	        cairo_move_to(cr, 1.0 * state.width / 4.0, 1.0 * state.height / 4.0);
+	        cairo_line_to(cr, 3.0 * state.width / 4.0, 3.0 * state.height / 4.0);
+	        cairo_move_to(cr, 3.0 * state.width / 4.0, 1.0 * state.height / 4.0);
+	        cairo_line_to(cr, 1.0 * state.width / 4.0, 3.0 * state.height / 4.0);
+	        cairo_stroke(cr);
+	        break;
+	      case BUTTON_TOGGLE_MAXIMIZE:
+	        cairo_set_line_width(cr, 1.5 * state.border);
+	        cairo_rectangle(cr, state.width / 4.0, state.height / 4.0,
+	            			state.width / 2.0, state.height / 2.0);
+	        cairo_stroke(cr);
+	        break;
+	      case BUTTON_MINIMIZE:
+	        cairo_set_line_width(cr, 1.75 * state.border);
+	        cairo_move_to(cr, 1.0 * state.width / 4.0, state.height / 2.0);
+	        cairo_line_to(cr, 3.0 * state.width / 4.0, state.height / 2.0);
+	        cairo_stroke(cr);
+	        break;
+	      default:
+	        assert(false);
+	    }
+    } else if ((std::string)button_style == "firedecor") {
+	    switch (button) {
+		  case BUTTON_CLOSE:
+			cairo_set_line_width(cr, 1.5 * state.border);
+			/* Line from top left to bottom right */
+			cairo_move_to(cr, state.width / 2, state.height / 2);
+			cairo_rel_move_to(cr, -0.25 * state.width * state.hover_progress,
+			                  -0.25 * state.height * state.hover_progress);
+	        cairo_rel_line_to(cr, 0.5 * state.width * state.hover_progress,
+	                      	  0.5 * state.height * state.hover_progress);
+	        /* Line from bottom left to top right */
+			cairo_move_to(cr, state.width / 2, state.height / 2);
+			cairo_rel_move_to(cr, -0.25 * state.width * state.hover_progress,
+			                  0.25 * state.height * state.hover_progress);
+	        cairo_rel_line_to(cr, 0.5 * state.width * state.hover_progress,
+	                      	  -0.5 * state.height * state.hover_progress);
+	        cairo_stroke(cr);
+	        break;
+	      case BUTTON_TOGGLE_MAXIMIZE:
+		    /* Top right arrow */
+			cairo_move_to(cr, 0.563 * state.width, 0.437 * state.height);
+			cairo_rel_line_to(cr, -0.2 * state.width * state.hover_progress,
+			                  -0.2 * state.height * state.hover_progress);
+			cairo_rel_line_to(cr, 0.4 * state.width * state.hover_progress, 0);
+			cairo_rel_line_to(cr, 0, 0.4 * state.height * state.hover_progress);
+			cairo_line_to(cr, 0.563 * state.width, 0.437 * state.height);
+			/* Bottom left arrow */
+			cairo_move_to(cr, 0.437 * state.height, 0.563 * state.width);
+			cairo_rel_line_to(cr, -0.2 * state.width * state.hover_progress,
+			                  -0.2 * state.height * state.hover_progress);
+			cairo_rel_line_to(cr, 0, 0.4 * state.height * state.hover_progress);
+			cairo_rel_line_to(cr, 0.4 * state.width * state.hover_progress, 0);
+			cairo_line_to(cr, 0.437 * state.height, 0.563 * state.width);
+			cairo_fill(cr);
+			break;
+		  case BUTTON_MINIMIZE:
+	        cairo_set_line_width(cr, 2.0 * state.border);
+			cairo_move_to(cr, state.width / 2, state.height / 2);
+			cairo_rel_move_to(cr, -0.25 * state.width * state.hover_progress, 0);
+			cairo_rel_line_to(cr, 0.5 * state.width * state.hover_progress, 0);
+			cairo_stroke(cr);
+			break;
+	    }
     }
 
     cairo_fill(cr);

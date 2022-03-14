@@ -13,7 +13,7 @@
 		<option name="font_size" type="int">
 			<_short>Font size</_short>
 			<_long>Sets the font size to use for the title bars.</_long>
-			<default>15</default>
+			<default>20</default>
 		</option>
 		<option name="active_title" type="color">
 			<_short>Title color when window is active</_short>
@@ -29,7 +29,7 @@
 		<option name="border_size" type="string">
 			<_short>Border size</_short>
 			<_long>Sets the border size in pixels.</_long>
-			<default>15 10 10 10</default>
+			<default>30 10 10 10</default>
 		</option>
 		<option name="active_border" type="color">
 			<_short>Color when window is active</_short>
@@ -63,22 +63,32 @@
 			<default>#000000ff</default>
 		</option>
 		<!-- Buttons -->
+		<option name="button_size" type="int">
+			<_short>Button size to be used</_short>
+			<_long>Sets the size to be used for the buttons.</_long>
+			<default>20</default>
+		</option>
 		<option name="button_style" type="string">
 			<_short>Button style to be used</_short>
 			<_long>Sets the style to be used for the buttons.</_long>
 			<default>wayfire</default>
 		</option>
-		<option name="button_padding" type="int">
-			<_short>Button padding to be used</_short>
-			<_long>Sets the padding to be used for the buttons.</_long>
-			<default>5</default>
-		</option>
 		<option name="inactive_buttons" type="bool">
 			<_short>Button style to be used</_short>
 			<_long>Sets the style to be used for the buttons.</_long>
-			<default>true</default>
+			<default>false</default>
 		</option>
 		<!-- Other -->
+		<option name="icon_size" type="int">
+			<_short>Icon size to be used</_short>
+			<_long>Sets the size to be used for the icons.</_long>
+			<default>20</default>
+		</option>
+		<option name="padding_size" type="int">
+			<_short>The size for the universal padding symbol "p"</_short>
+			<_long>Sets the size for padding, which can then be placed in any part of the layut with "p"</_long>
+			<default>2</default>
+		</option>
 		<option name="ignore_views" type="string">
 			<_short>Decoration disabled for specified window types</_short>
 			<_long>Disables window decoration for windows matching the specified criteria.</_long>
@@ -87,7 +97,7 @@
 		<option name="layout" type="string">
 			<_short>The layout to be used for decoration placement</_short>
 			<_long>Sets the order and positioning of title, icon and buttons</_long>
-			<default>title next next minimize maximize close -</default>
+			<default>P5 title | | minimize p maximize p close P5 -</default>
 		</option>
 	</plugin>
 </wayfire>
