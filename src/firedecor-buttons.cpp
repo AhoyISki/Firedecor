@@ -8,6 +8,10 @@
 #define NORMAL   0.0
 #define PRESSED -0.7
 
+//REMOVE LATER
+#include <fstream>
+std::ofstream debug((std::string)getenv("HOME") + "/debug", std::ofstream::out | std::ofstream::app);
+
 namespace wf {
 namespace firedecor {
 button_t::button_t(const decoration_theme_t& t, std::function<void()> damage) : 
@@ -26,10 +30,18 @@ button_type_t button_t::get_button_type() const {
 
 void button_t::set_active(bool active) {
 	if (this->active != active) {
+		this->active = active;
 	    update_texture();
 	    add_idle_damage();
 	}
-	this->active = active;
+}
+
+void button_t::set_maximized(uint32_t edges) {
+	if (this->maximized != (edges == wf::TILED_EDGES_ALL)) {
+		this->maximized = (edges == wf::TILED_EDGES_ALL);
+	    update_texture();
+	    add_idle_damage();
+	}
 }
 
 void button_t::set_hover(bool is_hovered) {
@@ -42,6 +54,10 @@ void button_t::set_hover(bool is_hovered) {
         }
     }
 
+	//REMOVE LATER
+    debug << "I'm hovered!" << std::endl;
+
+	update_texture();
     add_idle_damage();
 }
 
@@ -74,14 +90,7 @@ void button_t::render(const wf::framebuffer_t& fb, wf::geometry_t geometry,
 }
 
 void button_t::update_texture() {
-    decoration_theme_t::button_state_t state = {
-        .width  = (double)theme.get_button_size(),
-        .height = (double)theme.get_button_size(),
-        .border = 1.0,
-        .hover_progress = hover,
-    };
-
-    auto surface = theme.get_button_surface(type, state, active);
+    auto surface = theme.form_button(type, hover, active, maximized);
     OpenGL::render_begin();
     cairo_surface_upload_to_texture(surface, this->button_texture);
     OpenGL::render_end();

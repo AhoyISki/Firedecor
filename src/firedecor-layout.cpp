@@ -6,13 +6,9 @@
 #include "firedecor-layout.hpp"
 #include "firedecor-theme.hpp"
 
-#define BUTTON_HEIGHT_PC 0.7
-
 namespace wf {
 namespace firedecor {
-/**
- * Initialize a new decoration area holding a title
- */
+/** Initialize a new decoration area holding a title or icon */
 decoration_area_t::decoration_area_t(
 	decoration_area_type_t type, wf::geometry_t g, edge_t edge) {
     this->type     = type;
@@ -20,9 +16,7 @@ decoration_area_t::decoration_area_t(
     this->edge     = edge;
 }
 
-/**
- * Initialize a new decoration area holding a button
- */
+/** Initialize a new decoration area holding a button */
 decoration_area_t::decoration_area_t(
 	wf::geometry_t g, std::function<void(wlr_box)> damage_callback,
 	const decoration_theme_t& theme) {
@@ -32,9 +26,7 @@ decoration_area_t::decoration_area_t(
     this->button = std::make_unique<button_t>(theme, std::bind(damage_callback, g));
 }
 
-/**
- * Initialize a new decoration area where the edge does not matter
- */
+/** Initialize a new decoration area where the edge does not matter */
 decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t g) {
     this->type     = type;
     this->geometry = g;
@@ -72,7 +64,7 @@ border_size_t decoration_layout_t::parse_border(const std::string border_size_st
 	if (indices == 1 || indices == 3) {
 		return { border_size[0], border_size[0], border_size[0], border_size[0] };
 	} else if (indices == 2) {
-		return { border_size[0], border_size[1], border_size[0], border_size[1] };
+		return { border_size[0], border_size[1], border_size[1], border_size[1] };
 	} else {
 		return { border_size[0], border_size[1], border_size[2], border_size[3] };
 	}
