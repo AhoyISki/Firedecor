@@ -1,4 +1,4 @@
 build/
 metadata/
-.**
+.*
 !.gitignore
