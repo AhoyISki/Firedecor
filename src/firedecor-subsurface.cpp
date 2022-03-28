@@ -222,12 +222,10 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		fb.logic_scissor(scissor);
 
 		/* Middle rectangle and top outline  */
-		for (int height : { rect.height, outline_size }) {
-			OpenGL::render_rectangle(
-				{ rect.x + r, rect.y, rect.width - 2 * r, height },
-				active ? colors.border.active : colors.border.inactive,
-				fb.get_orthographic_projection());
-		}
+		OpenGL::render_rectangle(
+			{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
+			active ? colors.border.active : colors.border.inactive,
+			fb.get_orthographic_projection());
 
 		/* Left and right borders */
 		for (int x : { rect.x, rect.width + origin.x - r }) {
@@ -237,12 +235,13 @@ class simple_decoration_surface : public wf::surface_interface_t,
 				fb.get_orthographic_projection());
 		}
 
-		/* Bottom outline */
-		OpenGL::render_rectangle(
-			{ rect.x + r, rect.height - outline_size + origin.y,
-			  rect.width - 2 * r, outline_size },
-			active ? colors.outline.active : colors.outline.inactive,
-			fb.get_orthographic_projection());
+		/* Bottom and top outline */
+		for (auto y : { origin.y, rect.height - outline_size + origin.y }) {
+    		OpenGL::render_rectangle(
+    			{ rect.x + r, y, rect.width - 2 * r, outline_size },
+    			active ? colors.outline.active : colors.outline.inactive,
+    			fb.get_orthographic_projection());
+		}
 
 		/* Left and right outlines */
 		for (int x : { rect.x, rect.width + origin.x - outline_size }) {
