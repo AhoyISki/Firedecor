@@ -5,13 +5,12 @@
 #include <wayfire/opengl.hpp>
 #include <wayfire/surface.hpp>
 #include <wayfire/render-manager.hpp>
+#include <wayfire/view.hpp>
 #include <wayfire/util/duration.hpp>
 #include <wayfire/plugins/common/simple-texture.hpp>
 #include <wayfire/plugins/common/cairo-util.hpp>
 
 #include <cairo/cairo.h>
-#include <pango/pango.h>
-#include <pango/pangocairo.h>
 
 namespace wf {
 namespace firedecor {
@@ -50,6 +49,8 @@ class button_t {
 
     /** Set the activation status of the button's view */
     void set_active(bool active);
+    /** Set the maximized status of the button's view */
+    void set_maximized(uint32_t edges);
 
     /**
      * Set the button hover state.
@@ -87,6 +88,9 @@ class button_t {
     bool is_pressed = false;
     /* Whether the button's view is active or not */
     bool active = true;
+    /* Whether the button's view is maximized or not */
+    bool maximized = false;
+    
     /* The shade of button background to use. */
     wf::animation::simple_animation_t hover{wf::create_option(100)};
 

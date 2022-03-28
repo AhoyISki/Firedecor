@@ -16,7 +16,7 @@
 
 #include <wayfire/plugins/common/cairo-util.hpp>
 
-#include <cairo.h>
+//#include <cairo.h>
 
 #define ACTIVE true
 #define INACTIVE false
@@ -35,35 +35,50 @@ class simple_decoration_surface : public wf::surface_interface_t,
     void update_layout(double scale) {
         auto title_colors = theme.get_title_colors();
 
-        if ((title_texture.colors != title_colors) ||
-            (title_texture.current_text != view->get_title()) ||
-            (title_texture.hor_active.width != title_size.width)) {
-	        title_size = theme.get_text_size(view->get_title(), size.width);
+        if ((title.colors != title_colors) ||
+            (!theme.get_debug_mode() && title.current_text != view->get_title()) ||
+            (theme.get_debug_mode() && title.current_text != view->get_app_id()) ||
+            (title.current_text != view->get_title())) {
+            /* Updating the cached variables */
+            title.colors = title_colors;
+	        title.current_text = (theme.get_debug_mode()) ? view->get_app_id() :
+	        												view->get_title();
+
+	        title_size = theme.get_text_size(title.current_text, size.width);
 	        title_size = {
 		        (int)(title_size.width * scale), (int)(title_size.height * scale)
 	        };
 
 			cairo_surface_t *surface;
 			if (auto o = wf::firedecor::HORIZONTAL; theme.has_title_orientation(o)) {
-	            surface = theme.form_title(view->get_title(), title_size, ACTIVE, o);
-	            cairo_surface_upload_to_texture(surface, title_texture.hor_active);
-	            surface = theme.form_title(view->get_title(), title_size, INACTIVE, o);
-	            cairo_surface_upload_to_texture(surface, title_texture.hor_inactive);
+	            surface = theme.form_title(title.current_text, title_size, ACTIVE, o);
+    	        OpenGL::render_begin();
+	            cairo_surface_upload_to_texture(surface, title.hor_active);
+	            surface = theme.form_title(title.current_text, title_size, INACTIVE, o);
+	            cairo_surface_upload_to_texture(surface, title.hor_inactive);
+    	        OpenGL::render_end();
 			}
 			if (auto o = wf::firedecor::VERTICAL; theme.has_title_orientation(o)) {
-	            surface = theme.form_title(view->get_title(), title_size, ACTIVE, o);
-	            cairo_surface_upload_to_texture(surface, title_texture.ver_active);
-	            surface = theme.form_title(view->get_title(), title_size, INACTIVE, o);
-	            cairo_surface_upload_to_texture(surface, title_texture.ver_inactive);
+	            surface = theme.form_title(title.current_text, title_size, ACTIVE, o);
+    	        OpenGL::render_begin();
+	            cairo_surface_upload_to_texture(surface, title.ver_active);
+	            surface = theme.form_title(title.current_text, title_size, INACTIVE, o);
+	            cairo_surface_upload_to_texture(surface, title.ver_inactive);
+    	        OpenGL::render_end();
 			}
             cairo_surface_destroy(surface);
 
-            /* Updating the cached variables */
-            title_texture.current_text = view->get_title();
-            title_texture.colors = title_colors;
-
             /* Necessary in order to immediately place areas correctly */
 			layout.resize(size.width, size.height, title_size);
+        }
+
+        if (view->get_app_id() != icon_texture.app_id) {
+	        icon_texture.app_id = view->get_app_id();
+	        auto surface = theme.form_icon(icon_texture.app_id);
+	        OpenGL::render_begin();
+	        cairo_surface_upload_to_texture(surface, icon_texture.texture);
+	        OpenGL::render_end();
+            cairo_surface_destroy(surface);
         }
     }
 
@@ -72,7 +87,12 @@ class simple_decoration_surface : public wf::surface_interface_t,
         wf::simple_texture_t ver_active, ver_inactive;
         std::string current_text = "";
         wf::firedecor::color_set_t colors;
-    } title_texture;
+    } title;
+
+    struct {
+	    wf::simple_texture_t texture;
+	    std::string app_id = "";
+    } icon_texture;
 
     struct corner_textures_t {
 	    wf::simple_texture_t active, inactive;
@@ -87,9 +107,11 @@ class simple_decoration_surface : public wf::surface_interface_t,
 			(current_edge.border != colors.border) ||
 			(current_edge.outline != colors.outline)) {
 			auto surface = theme.form_corner(ACTIVE);
+			OpenGL::render_begin();
 			cairo_surface_upload_to_texture(surface, corners.active);
 			surface = theme.form_corner(INACTIVE);
 			cairo_surface_upload_to_texture(surface, corners.inactive);
+			OpenGL::render_end();
 			current_edge.border.active    = colors.border.active;
 			current_edge.border.inactive  = colors.border.inactive;
 			current_edge.outline.active   = colors.outline.active;
@@ -138,27 +160,35 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	    uint32_t bits = 0;
 	    if (edge == wf::firedecor::EDGE_TOP || edge == wf::firedecor::EDGE_BOTTOM) {
 	        if (active) {
-		        texture = &title_texture.hor_active;
+		        texture = &title.hor_active;
 	        } else {
-		        texture = &title_texture.hor_inactive;
+		        texture = &title.hor_inactive;
 	        }
 	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y;
 	    } else if (edge == wf::firedecor::EDGE_LEFT) {
 	        if (active) {
-		        texture = &title_texture.ver_active;
+		        texture = &title.ver_active;
 	        } else {
-		        texture = &title_texture.ver_inactive;
+		        texture = &title.ver_inactive;
 	        }
 	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y;
 	    } else {
 	        if (active) {
-		        texture = &title_texture.ver_active;
+		        texture = &title.ver_active;
 	        } else {
-		        texture = &title_texture.ver_inactive;
+		        texture = &title.ver_inactive;
 	        }
 	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_X;
 	    } 
         OpenGL::render_texture(texture->tex, fb, geometry, glm::vec4(1.0f), bits);
+    }
+
+    void render_icon(const wf::framebuffer_t& fb, wf::geometry_t g, const wf::geometry_t& scissor) {
+		OpenGL::render_begin(fb);
+		fb.logic_scissor(scissor);
+		OpenGL::render_texture(icon_texture.texture.tex, fb, g, glm::vec4(1.0f),
+		                       OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+		OpenGL::render_end();
     }
 
     wf::color_t alpha_transform(wf::color_t c) {
@@ -257,14 +287,17 @@ class simple_decoration_surface : public wf::surface_interface_t,
                 OpenGL::render_end();
             } else if (item->get_type() == wf::firedecor::DECORATION_AREA_BUTTON) {
 	            item->as_button().set_active(view->activated);
+	            item->as_button().set_maximized(view->tiled_edges);
                 item->as_button().render(fb, item->get_geometry() + origin, scissor);
+            } else if (item->get_type() == wf::firedecor::DECORATION_AREA_ICON) {
+	            render_icon(fb, item->get_geometry() + origin, scissor);
             }
         }
     }
     
     virtual void simple_render(const wf::framebuffer_t& fb, int x, int y,
 					           const wf::region_t& damage) override {
-		update_layout(fb.scale);
+		//update_layout(fb.scale);
 
         wf::region_t frame = this->cached_region + (wf::point_t){x, y};
         frame &= damage;
@@ -351,6 +384,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
     void resize(wf::dimensions_t dims) {
         view->damage();
         size = dims;
+        update_layout(1.0);
         layout.resize(size.width, size.height, title_size);
         if (!view->fullscreen) {
             this->cached_region = layout.calculate_region();

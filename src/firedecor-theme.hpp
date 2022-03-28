@@ -30,6 +30,31 @@ enum edge_t {
 	EDGE_RIGHT  = 3
 };
 
+/**
+ * Checks if a file exists in storage
+ * @param path The path of the file to find
+ */
+bool exists(std::string path);
+
+/**
+ * Gets the real name of a file, dealing with capitalization, for example.
+ * @param path The path to be corrected.
+ */
+std::string get_real_name(std::string path);
+
+/**
+ * Gets a vector containing al the .desktop files in a specifi path.
+ * @param path The path where the .desktop files will be searched.
+ */
+std::vector<std::string> get_desktops(std::string path);
+
+/**
+ * Gets a value from a .desktop file.
+ * @param path The path to the .desktop file.
+ * @var The variable to be returned.
+ */
+std::string get_from_desktop(std::string path, std::string var);
+
 class decoration_theme_t {
   public:
 	decoration_theme_t();
@@ -64,6 +89,8 @@ class decoration_theme_t {
 	/* Other return functions */
 	/** @return True if there is a title of said orientation in the layout */
 	bool has_title_orientation(orientation_t orientation) const;
+	/** @return True if debug_mode is on */
+	bool get_debug_mode() const;
 
 	/**
      * Get what the title size should be, given a text for the title, useful for
@@ -84,18 +111,6 @@ class decoration_theme_t {
      */
     cairo_surface_t *form_corner(bool active) const;
 
-    struct button_state_t {
-        /** Button width */
-        double width;
-        /** Button height */
-        double height;
-        /** Button outline size */
-        double border;
-        /** Progress of button hover, in range [-1, 1].
-         * Negative numbers are usually used for pressed state. */
-        double hover_progress;
-    };
-
     /**
      * Get the icon for the given button.
      * The caller is responsible for freeing the memory afterwards.
@@ -103,9 +118,20 @@ class decoration_theme_t {
      * @param button The button type.
      * @param state The button state.
      */
-    cairo_surface_t *get_button_surface(button_type_t button,
-                                        const button_state_t& state,
-                                        bool active) const;
+    cairo_surface_t *form_button(button_type_t button, double hover,
+                                 bool active, bool maximized) const;
+
+	/**
+	 * Gets a cairo surface with an svg texture.
+	 * @param path The path to said the svg file, must contain .svg at the end.
+	 */
+	cairo_surface_t *surface_from_svg(std::string path) const;
+
+    /**
+     * Get the icon for the given application icon.
+     * @param title The icon for the window.
+     */
+    cairo_surface_t *form_icon(std::string app_id) const;
 
   private:
     wf::option_wrapper_t<std::string> font{"firedecor/font"};
@@ -127,9 +153,12 @@ class decoration_theme_t {
     wf::option_wrapper_t<bool> inactive_buttons{"firedecor/inactive_buttons"};
 
 	wf::option_wrapper_t<int> icon_size{"firedecor/icon_size"};
+	wf::option_wrapper_t<std::string> icon_theme{"firedecor/icon_theme"};
+	
 	wf::option_wrapper_t<int> padding_size{"firedecor/padding_size"};
 	wf::option_wrapper_t<std::string> ignore_views{"firedecor/ignore_views"};
     wf::option_wrapper_t<std::string> layout{"firedecor/layout"};
+    wf::option_wrapper_t<bool> debug_mode{"firedecor/debug_mode"};
 };
 }
 }

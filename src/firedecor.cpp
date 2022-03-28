@@ -35,6 +35,7 @@ class wayfire_firedecor_t : public wf::plugin_interface_t {
         }
     }
 
+	// Might be useless
     /**
      * Uses view_matcher_t to match whether the given view needs to be
      * ignored for decoration
@@ -42,9 +43,9 @@ class wayfire_firedecor_t : public wf::plugin_interface_t {
      * @param view The view to match
      * @return Whether the given view should be decorated?
      */
-    bool ignore_decoration_of_view(wayfire_view view) {
-        return ignore_views.matches(view);
-    }
+    //bool ignore_decoration_of_view(wayfire_view view) {
+    //    return ignore_views.matches(view);
+    //}
 
     wf::wl_idle_call idle_deactivate;
 

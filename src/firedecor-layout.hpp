@@ -12,11 +12,13 @@ namespace firedecor {
 static constexpr uint32_t DECORATION_AREA_RENDERABLE_BIT = (1 << 16);
 static constexpr uint32_t DECORATION_AREA_RESIZE_BIT     = (1 << 17);
 static constexpr uint32_t DECORATION_AREA_MOVE_BIT = (1 << 18);
+static constexpr uint32_t DECORATION_AREA_TEXT     = (1 << 19);
 
 /** Different types of areas around the decoration */
 enum decoration_area_type_t {
     DECORATION_AREA_MOVE   = DECORATION_AREA_MOVE_BIT,
-    DECORATION_AREA_TITLE  = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT,
+    DECORATION_AREA_TITLE  = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT
+    						 | DECORATION_AREA_TEXT,
     DECORATION_AREA_ICON   = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT,
     DECORATION_AREA_BUTTON = DECORATION_AREA_RENDERABLE_BIT,
     DECORATION_AREA_RESIZE_LEFT   = WLR_EDGE_LEFT | DECORATION_AREA_RESIZE_BIT,
@@ -92,12 +94,6 @@ enum decoration_layout_action_t {
     DECORATION_ACTION_CLOSE           = 3,
     DECORATION_ACTION_TOGGLE_MAXIMIZE = 4,
     DECORATION_ACTION_MINIMIZE        = 5
-};
-
-enum position_t {
-	POS_LEFT   = 0,
-	POS_CENTER = 1,
-	POS_RIGHT  = 2,
 };
 
 struct border_size_t {
