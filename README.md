@@ -1,6 +1,11 @@
 # wayfire-firedecor
 An advanced window decoration plugin for the wayfire window manager.
 
+## Dependencies
+- `wayfire` (duh)
+- `librsvg`
+- `boost`
+
 ## Installation
 - Using the AUR:
   ```
