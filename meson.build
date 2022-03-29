@@ -32,6 +32,8 @@ add_project_link_arguments(['-rdynamic'], language:'cpp')
 subdir('src')
 subdir('metadata')
 
+install_data('src/firedecor.xml', install_dir: wayfire.get_variable(pkgconfig: 'metadatadir'))
+
 summary = [
 	'',
 	'----------------',
