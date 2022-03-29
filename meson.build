@@ -23,6 +23,7 @@ pango      = dependency('pango')
 pangocairo = dependency('pangocairo')
 glib       = dependency('glib-2.0')
 gdk_pixbuf = dependency('gdk-pixbuf-2.0')
+boost      = dependency('boost')
 
 add_project_arguments(['-DWLR_USE_UNSTABLE'], language: ['cpp', 'c'])
 add_project_arguments(['-DWAYFIRE_PLUGIN'], language: ['cpp', 'c'])
