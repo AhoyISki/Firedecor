@@ -1,6 +1,20 @@
 # wayfire-firedecor
 An advanced window decoration plugin for the wayfire window manager.
 
+## Installation
+- Using the AUR:
+  ```
+  yay -S wayfire-firedecor-git
+  ```
+- Building from source:
+  ```
+  git clone https://github.com/AhoyISki/wayfire-firedecor
+  cd wayfire-firedecor
+  meson build
+  meson compile -C build
+  sudo meson install -C build
+  ```
+
 ## Goals
 - [x] Implement rounded corners;
 - [x] Implement individual border sizes;
