@@ -36,7 +36,8 @@ An advanced window decoration plugin for the wayfire window manager.
 - `button_style` is a string that sets the style used for the buttons. By default, there are 3 styles:
   - `wayfire`, wicth is similar to the one used by wayfire by default;
   - `firedecor`, my own spin on a buttons style, with animated symbols that change in size, and a different maximize symbol;
-  - `simple`, where the buttons have no symbles inside of them, they are simple circles.
+  - `simple`, where the buttons have no symbols inside of them, they are simple circles.
+
   If you place anything else on this string, say, something like `my_theme`, you will have to provide `png`s so that the plugin can draw custom buttons. To accomplish that, do the following:
   1. Create the folder `~/.config/firedecor/button-styles/`;
   2. In it, create a folder with the name `my_theme`;
