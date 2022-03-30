@@ -91,6 +91,8 @@ class decoration_theme_t {
 	bool has_title_orientation(orientation_t orientation) const;
 	/** @return True if debug_mode is on */
 	bool get_debug_mode() const;
+	/** @return Where corners should be drawn */
+	std::string get_corners_on() const;
 
 	/**
      * Get what the title size should be, given a text for the title, useful for
@@ -143,6 +145,7 @@ class decoration_theme_t {
     wf::option_wrapper_t<wf::color_t> active_border{"firedecor/active_border"};
     wf::option_wrapper_t<wf::color_t> inactive_border{"firedecor/inactive_border"};
     wf::option_wrapper_t<int> corner_radius{"firedecor/corner_radius"};
+    wf::option_wrapper_t<std::string> corners_on{"firedecor/corners_on"};
 
     wf::option_wrapper_t<int> outline_size{"firedecor/outline_size"};
     wf::option_wrapper_t<wf::color_t> active_outline{"firedecor/active_outline"};
