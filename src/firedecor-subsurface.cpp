@@ -73,7 +73,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 			layout.resize(size.width, size.height, title_size);
 
 			c.tr = c.tl = c.bl = c.br = 0;
-    		std::stringstream corners_on_str(theme.get_corners_on());
+    		std::stringstream corners_on_str(theme.get_round_on());
     		std::string corner;
     		while (corners_on_str >> corner) {
         		if (corner == "all") {

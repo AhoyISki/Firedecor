@@ -111,7 +111,7 @@
     		<_long>Show the app_id of applications, instead of title, for icon referencing</_long>
     		<default>false</default>
 		</option>
-		<option name="corners_on" type="string">
+		<option name="round_on" type="string">
 			<_short>Radius of rounded corners</_short>
 			<_long>Sets the radius of the decoration corners.</_long>
 			<default>all</default>

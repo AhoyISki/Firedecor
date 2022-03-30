@@ -92,7 +92,7 @@ class decoration_theme_t {
 	/** @return True if debug_mode is on */
 	bool get_debug_mode() const;
 	/** @return Where corners should be drawn */
-	std::string get_corners_on() const;
+	std::string get_round_on() const;
 
 	/**
      * Get what the title size should be, given a text for the title, useful for
@@ -145,7 +145,6 @@ class decoration_theme_t {
     wf::option_wrapper_t<wf::color_t> active_border{"firedecor/active_border"};
     wf::option_wrapper_t<wf::color_t> inactive_border{"firedecor/inactive_border"};
     wf::option_wrapper_t<int> corner_radius{"firedecor/corner_radius"};
-    wf::option_wrapper_t<std::string> corners_on{"firedecor/corners_on"};
 
     wf::option_wrapper_t<int> outline_size{"firedecor/outline_size"};
     wf::option_wrapper_t<wf::color_t> active_outline{"firedecor/active_outline"};
@@ -159,9 +158,11 @@ class decoration_theme_t {
 	wf::option_wrapper_t<std::string> icon_theme{"firedecor/icon_theme"};
 	
 	wf::option_wrapper_t<int> padding_size{"firedecor/padding_size"};
-	wf::option_wrapper_t<std::string> ignore_views{"firedecor/ignore_views"};
     wf::option_wrapper_t<std::string> layout{"firedecor/layout"};
+
+	wf::option_wrapper_t<std::string> ignore_views{"firedecor/ignore_views"};
     wf::option_wrapper_t<bool> debug_mode{"firedecor/debug_mode"};
+    wf::option_wrapper_t<std::string> round_on{"firedecor/round_on"};
 };
 }
 }
