@@ -89,8 +89,8 @@ bool decoration_theme_t::has_title_orientation(orientation_t orientation) const 
 bool decoration_theme_t::get_debug_mode() const {
     return debug_mode;
 }
-std::string decoration_theme_t::get_corners_on() const {
-    return corners_on;
+std::string decoration_theme_t::get_round_on() const {
+    return round_on;
 }
 
 wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) const {

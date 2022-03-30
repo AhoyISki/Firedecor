@@ -26,7 +26,7 @@ An advanced window decoration plugin for the wayfire window manager.
 - [x] Implement app icons;
 - [x] Implement title bars on any direction;
 - [x] Implement completely modular decoration placement;
-- [x] Implement individual corner existance;
+- [x] Implement individual corner rounding;
 - [ ] multiple corner radii(radiuses?);
 - [ ] Implement shadows.
 - [ ] Implement multiple themes.
@@ -91,7 +91,7 @@ An advanced window decoration plugin for the wayfire window manager.
 ### Other
 - `ignore_views` is of `criteria` type, and determines witch windows will be ignored for decorations. In the future, I plan on adding the ability to create multiple themes and use them selectively, for example, a light and dark theme.
 - `debug_mode` turns the titles of windows into their respective `app_id`s. This is used when the plugin fails at finding the icon for an app. More in [App Icon Debugging](#app-icon-debugging). Default is `false`;
-- `corners_on` chooses which corners will be rounded. `tr` means top right, `tl` is top left, `bl` is bottom left, `br` is bottom right, and `all` is all of them, e.g. `tl br` will round the top left and bottom right corners. Default is `all`.
+- `round_on` chooses which corners will be rounded. `tr` means top right, `tl` is top left, `bl` is bottom left, `br` is bottom right, and `all` is all of them, e.g. `tl br` will round the top left and bottom right corners. Default is `all`.
 
 ### Example Config
 Here's what the default configuration would look like:
