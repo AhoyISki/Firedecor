@@ -4,5 +4,4 @@ firedecor = shared_module(
 			       'firedecor-theme.cpp' ],
     dependencies: [ wlroots, wfconfig, rsvg , pixman, glib, gdk_pixbuf, cairo, pango,
 					pangocairo],
-    install: true,
-    install_dir: join_paths(get_option('libdir'), 'wayfire'))
+    install: true, install_dir: join_paths(wayfire.get_variable(pkgconfig: 'libdir'), 'wayfire'))

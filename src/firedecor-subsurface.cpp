@@ -28,6 +28,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     wf::signal_connection_t title_set = [=] (wf::signal_data_t *data) {
         if (get_signaled_view(data) == view) {
+            update_layout(1.0);
             view->damage(); // trigger re-render
         }
     };
@@ -49,7 +50,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		        (int)(title_size.width * scale), (int)(title_size.height * scale)
 	        };
 
-			cairo_surface_t *surface;
+			cairo_surface_t *surface = NULL;
 			if (auto o = wf::firedecor::HORIZONTAL; theme.has_title_orientation(o)) {
 	            surface = theme.form_title(title.current_text, title_size, ACTIVE, o);
     	        OpenGL::render_begin();
@@ -66,10 +67,28 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	            cairo_surface_upload_to_texture(surface, title.ver_inactive);
     	        OpenGL::render_end();
 			}
-            cairo_surface_destroy(surface);
+            if (surface != NULL) { cairo_surface_destroy(surface); }
 
             /* Necessary in order to immediately place areas correctly */
 			layout.resize(size.width, size.height, title_size);
+
+			c.tr = c.tl = c.bl = c.br = 0;
+    		std::stringstream corners_on_str(theme.get_corners_on());
+    		std::string corner;
+    		while (corners_on_str >> corner) {
+        		if (corner == "all") {
+            		c.tr = c.tl = c.bl = c.br = theme.get_corner_radius();
+            		break;
+        		} else if (corner == "tr") {
+            		c.tr = theme.get_corner_radius();
+        		} else if (corner == "tl") {
+            		c.tl = theme.get_corner_radius();
+        		} else if (corner == "bl") {
+            		c.bl = theme.get_corner_radius();
+        		} else if (corner == "br") {
+            		c.br = theme.get_corner_radius();
+        		}
+    		}
         }
 
         if (view->get_app_id() != icon_texture.app_id) {
@@ -102,6 +121,16 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	    wf::firedecor::color_set_t border, outline;
     } current_edge;
 
+    struct {
+        int tr = 0, tl = 0, bl = 0, br = 0;
+    } c;
+
+    wf::firedecor::decoration_theme_t theme;
+    wf::firedecor::decoration_layout_t layout;
+    wf::region_t cached_region;
+
+    wf::dimensions_t size;
+
 	void update_corners(edge_colors_t colors, int corner_radius) {
 		if ((current_corner_radius != corner_radius) ||
 			(current_edge.border != colors.border) ||
@@ -119,12 +148,6 @@ class simple_decoration_surface : public wf::surface_interface_t,
 			current_corner_radius         = corner_radius;
 		}
 	}
-
-    wf::firedecor::decoration_theme_t theme;
-    wf::firedecor::decoration_layout_t layout;
-    wf::region_t cached_region;
-
-    wf::dimensions_t size;
 
   public:
     wf::firedecor::border_size_t current_border_size;
@@ -212,60 +235,55 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		wf::geometry_t top_left     = { rect.x, rect.y, r, r };
 		wf::geometry_t top_right    = { rect.width - r + origin.x, rect.y, r, r };
 		wf::geometry_t bottom_left  = { rect.x, rect.height - r + origin.y, r, r };
-		wf::geometry_t bottom_right = { rect.width - r, rect.height - r, r, r };
+		wf::geometry_t bottom_right = { rect.width - r + origin.x,
+		                               	rect.height - r + origin.y, r, r };
 		int outline_size            = theme.get_outline_size();
 
-		bottom_right = bottom_right + origin;
-
-		/** Non corner background */
 		OpenGL::render_begin(fb);
 		fb.logic_scissor(scissor);
 
-		/* Middle rectangle and top outline  */
-		OpenGL::render_rectangle(
-			{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
-			active ? colors.border.active : colors.border.inactive,
-			fb.get_orthographic_projection());
-
-		/* Left and right borders */
-		for (int x : { rect.x, rect.width + origin.x - r }) {
-			OpenGL::render_rectangle(
-				{ x, rect.y + r, r, rect.height - 2 * r },
-				active ? colors.border.active : colors.border.inactive,
-				fb.get_orthographic_projection());
+		/** Borders */
+		wf::color_t color = (active) ? colors.border.active : colors.border.inactive;
+		for (auto g : std::vector<wf::geometry_t>{
+    		{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
+    		{ rect.x, rect.y + c.tl, r, rect.height - (c.tl + c.bl) },
+    		{ rect.width + origin.x - r, rect.y + c.tr,
+    		  r, rect.height - (c.tr + c.br) } }) {
+        	OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
 		}
 
-		/* Bottom and top outline */
-		for (auto y : { origin.y, rect.height - outline_size + origin.y }) {
-    		OpenGL::render_rectangle(
-    			{ rect.x + r, y, rect.width - 2 * r, outline_size },
-    			active ? colors.outline.active : colors.outline.inactive,
-    			fb.get_orthographic_projection());
+		/* Outlines */
+		color = (active) ? colors.outline.active : colors.outline.inactive;
+		for (auto g : std::vector<wf::geometry_t>{
+    		{ rect.x + c.tl, rect.y, rect.width - (c.tl + c.tr), outline_size },
+    		{ rect.x + c.tr, rect.height - outline_size + origin.y,
+    		  rect.width - (c.bl + c.br), outline_size },
+    		{ rect.x, rect.y + c.tl, outline_size, rect.height - (c.tl + c.bl) },
+    		{ rect.width + origin.x - outline_size, rect.y + c.tr,
+    		  outline_size, rect.height - (c.tr + c.br) } }) {
+			OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
 		}
-
-		/* Left and right outlines */
-		for (int x : { rect.x, rect.width + origin.x - outline_size }) {
-		OpenGL::render_rectangle(
-			{ x, rect.y + r, outline_size, rect.height - 2 * r },
-			active ? colors.outline.active : colors.outline.inactive,
-			fb.get_orthographic_projection());
-		}
-		/* Corner background */
-
-		/** Top left corner */
-		OpenGL::render_texture(corner.tex, fb, top_left, glm::vec4(1.0f),
-			OpenGL::TEXTURE_TRANSFORM_INVERT_X);
 
 		/** Top right corner */
-		OpenGL::render_texture(corner.tex, fb, top_right, glm::vec4(1.0f));
-
+		if (c.tr > 0) {
+    		OpenGL::render_texture(corner.tex, fb, top_right, glm::vec4(1.0f));
+		}
+		/** Top left corner */
+		if (c.tl > 0) {
+    		OpenGL::render_texture(corner.tex, fb, top_left, glm::vec4(1.0f),
+                        		   OpenGL::TEXTURE_TRANSFORM_INVERT_X);
+		}
 		/** Bottom left corner */
-		OpenGL::render_texture(corner.tex, fb, bottom_left, glm::vec4(1.0f),
-			OpenGL::TEXTURE_TRANSFORM_INVERT_X | OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
-
+		if (c.bl > 0) {
+    		OpenGL::render_texture(corner.tex, fb, bottom_left, glm::vec4(1.0f),
+    							   OpenGL::TEXTURE_TRANSFORM_INVERT_X |
+    		                       OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+		}
 		/** Bottom right corner */
-		OpenGL::render_texture(corner.tex, fb, bottom_right, glm::vec4(1.0f),
-			OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+		if (c.br > 0) {
+    		OpenGL::render_texture(corner.tex, fb, bottom_right, glm::vec4(1.0f),
+                        		   OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+		}
 		OpenGL::render_end();
 	}
 
@@ -296,8 +314,6 @@ class simple_decoration_surface : public wf::surface_interface_t,
     
     virtual void simple_render(const wf::framebuffer_t& fb, int x, int y,
 					           const wf::region_t& damage) override {
-		//update_layout(fb.scale);
-
         wf::region_t frame = this->cached_region + (wf::point_t){x, y};
         frame &= damage;
 
@@ -383,8 +399,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
     void resize(wf::dimensions_t dims) {
         view->damage();
         size = dims;
-        update_layout(1.0);
-        layout.resize(size.width, size.height, title_size);
+		layout.resize(size.width, size.height, title_size);
         if (!view->fullscreen) {
             this->cached_region = layout.calculate_region();
         }

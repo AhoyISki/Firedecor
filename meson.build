@@ -33,6 +33,7 @@ subdir('src')
 subdir('metadata')
 
 install_data('src/firedecor.xml', install_dir: wayfire.get_variable(pkgconfig: 'metadatadir'))
+install_data('src/executable.svg', install_dir: join_paths(get_option('datadir'), 'firedecor'))
 
 summary = [
 	'',
