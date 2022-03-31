@@ -8,10 +8,6 @@
 #define NORMAL   0.0
 #define PRESSED -0.7
 
-//REMOVE LATER
-#include <fstream>
-std::ofstream debug((std::string)getenv("HOME") + "/debug", std::ofstream::out | std::ofstream::app);
-
 namespace wf {
 namespace firedecor {
 button_t::button_t(const decoration_theme_t& t, std::function<void()> damage) : 
@@ -53,9 +49,6 @@ void button_t::set_hover(bool is_hovered) {
             this->hover.animate(NORMAL);
         }
     }
-
-	//REMOVE LATER
-    debug << "I'm hovered!" << std::endl;
 
 	update_texture();
     add_idle_damage();

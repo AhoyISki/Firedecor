@@ -117,10 +117,6 @@ wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) 
     return { text_size.width, text_size.height };
 }
 
-//DELETE LATER
-std::ofstream debug((std::string)getenv("HOME") + "/debug", std::ofstream::out | std::ofstream::app); /*<------------------------------------------------------------*/
-//PLEASE
-
 cairo_surface_t*decoration_theme_t::form_title(std::string text,
     wf::dimensions_t title_size, bool active, orientation_t orientation) const {
     const auto format = CAIRO_FORMAT_ARGB32;
@@ -386,8 +382,6 @@ bool exists(std::string path) {
     }
 
     for (auto& dir_entry : std::filesystem::directory_iterator(path_head)) {
-        debug << (std::string)dir_entry.path() << std::endl;
-        debug << path << std::endl;
         if (boost::iequals(path, (std::string)dir_entry.path())) {
             return true;
         }
@@ -495,9 +489,7 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 			if (auto icon_path = path + app_id + ".desktop"; exists(icon_path)) {
     			/* This definition is here mostly to filter for capitalized names */
     			icon_path = get_real_name(icon_path);
-				debug << "icon_path " + icon_path << std::endl;
 				icon_name = get_from_desktop(icon_path, "Icon");
-				debug << "icon_name " + icon_name << std::endl;
 				found = true;
 				break;
 			}
