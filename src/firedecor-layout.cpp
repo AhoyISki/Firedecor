@@ -175,9 +175,6 @@ void decoration_layout_t::create_areas(
 				        this->layout_areas.push_back(
 					        std::make_unique<decoration_area_t>(
 						        DECORATION_AREA_ICON, cur_g, current_edge));
-			        } else if (type == "icon") {
-				        delta = icon_size;
-				        if (current_edge == EDGE_LEFT) { shift += delta; }
 			        } else if (type == "p") {
 				        delta = padding_size;
 				        if (current_edge == EDGE_LEFT) { shift += delta; }

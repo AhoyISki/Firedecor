@@ -1,17 +1,34 @@
-#include <wayfire/view-transform.hpp>
-#include <wayfire/opengl.hpp>
-#include <wayfire/plugin.hpp>
-#include <wayfire/workspace-manager.hpp>
+#include <wayfire/singleton-plugin.hpp>
+#include <wayfire/view.hpp>
 #include <wayfire/matcher.hpp>
+#include <wayfire/workspace-manager.hpp>
 #include <wayfire/output.hpp>
 #include <wayfire/signal-definitions.hpp>
-#include <wayfire/util/log.hpp>
-#include <cairo/cairo.h>
 
 #include "firedecor-subsurface.hpp"
 
 namespace {
-class wayfire_firedecor_t : public wf::plugin_interface_t {
+
+struct wayfire_decoration_global_cleanup_t {
+    wayfire_decoration_global_cleanup_t() = default;
+    ~wayfire_decoration_global_cleanup_t() {
+        for (auto view : wf::get_core().get_all_views()) {
+            deinit_view(view);
+        }
+    }
+
+    wayfire_decoration_global_cleanup_t(const wayfire_decoration_global_cleanup_t &)
+    = delete;
+    wayfire_decoration_global_cleanup_t(wayfire_decoration_global_cleanup_t &&) =
+    delete;
+    wayfire_decoration_global_cleanup_t& operator =(
+        const wayfire_decoration_global_cleanup_t&) = delete;
+    wayfire_decoration_global_cleanup_t& operator =(
+        wayfire_decoration_global_cleanup_t&&) = delete;
+};
+
+class wayfire_firedecor_t : 
+	public wf::singleton_plugin_t<wayfire_decoration_global_cleanup_t, true> {
 
     wf::view_matcher_t ignore_views{"firedecor/ignore_views"};
 
