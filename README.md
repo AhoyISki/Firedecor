@@ -27,9 +27,9 @@ An advanced window decoration plugin for the wayfire window manager.
 - [x] Implement title bars on any direction;
 - [x] Implement completely modular decoration placement;
 - [x] Implement individual corner rounding;
-- [ ] multiple corner radii(radiuses?);
+- [x] multiple corner radii(radiuses?) *Implemented as either the corner is there, or it is not;
+- [x] Implement multiple themes.
 - [ ] Implement shadows.
-- [ ] Implement multiple themes.
 
 ## Configuration
 
@@ -91,9 +91,31 @@ An advanced window decoration plugin for the wayfire window manager.
 ### Other
 - `ignore_views` is of `criteria` type, and determines witch windows will be ignored for decorations. In the future, I plan on adding the ability to create multiple themes and use them selectively, for example, a light and dark theme.
 - `debug_mode` turns the titles of windows into their respective `app_id`s. This is used when the plugin fails at finding the icon for an app. More in [App Icon Debugging](#app-icon-debugging). Default is `false`;
-- `round_on` chooses which corners will be rounded. `tr` means top right, `tl` is top left, `bl` is bottom left, `br` is bottom right, and `all` is all of them, e.g. `tl br` will round the top left and bottom right corners. Default is `all`.
+- `round_on` chooses which corners will be rounded. `tr` means top right, `tl` is top left, `bl` is bottom left, `br` is bottom right, and `all` is all of them, e.g. `tl br` will round the top left and bottom right corners. Default is `all`;
 
-### Example Config
+### Extra Themes
+- `extra_themes` will be the declaration of existance for any extra themes you want to use, e.g. `dark light discord`. If the theme is not in here, no windows will use it. The default is ``;
+- When it comes to extra themes, the configuration section will look exactly like the regular `firedecor` section, except you won't have the `ignore_views` and `extra_themes` options, and will gain the `uses_if` option;
+- `uses_if` is of `criteria` type, and will match all the windows that should use the theme of the current section. There is no defaul, so if it is not present, no window will use the theme;
+- When declaring new themes, you don't need to use every single option on the list. If the option isn't present, the theme will simply use the value from the default `firedecor` theme section, so something like:
+  ```ini
+  [firedecor]
+  border_size = 10 10 10 10
+
+  title_color = 0.0 0.0 0.0 1.0
+
+  extra_themes = white_title
+
+  [white_title]
+  uses_if = app_id is "kitty"
+
+  title_color = 1.0 1.0 1.0 1.0
+  ```
+  Will change the `title_color` on views with `app_id is "kitty"`, but the `border_size` will stay at `10 10 10 10`.
+
+### Example Configs
+
+#### Default
 Here's what the default configuration would look like:
 ```ini
 [firedecor]
@@ -125,6 +147,9 @@ ignore_views = none
 debug_mode = false
 ```
 paste this into your `wayfire.ini` and add firedecor to your active plugins to get started.
+
+#### My config
+This is my own configuration, feel free to copy it if you want
 
 ## Screenshots
 Left side decoration:

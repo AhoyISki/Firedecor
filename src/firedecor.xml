@@ -116,5 +116,10 @@
 			<_long>Sets the radius of the decoration corners.</_long>
 			<default>all</default>
 		</option>
+		<option name="extra_themes" type="string">
+			<_short>List of extra themes</_short>
+			<_long>List of extra themes to be used.</_long>
+			<default></default>
+		</option>
 	</plugin>
 </wayfire>

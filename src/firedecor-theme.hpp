@@ -175,6 +175,11 @@ class decoration_theme_t : private theme_options {
 	cairo_surface_t *surface_from_svg(std::string path) const;
 
     /**
+     * Gets a cairo surface with a png texture.
+     * @param path The path to said the png file, must contain .png at the end.
+     */
+    cairo_surface_t* surface_from_png(std::string path) const;
+    /**
      * Get the icon for the given application icon.
      * @param title The icon for the window.
      */
