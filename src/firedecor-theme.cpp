@@ -220,7 +220,7 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
           default:
             assert(false);
         }
-        return cairo_image_surface_create_from_png(full_path.c_str());
+        return surface_from_png(full_path);
 	}
 
 	auto border_color = (active) ? active_border.get_value() : inactive_border.get_value();
@@ -421,6 +421,27 @@ cairo_surface_t *decoration_theme_t::surface_from_svg(std::string path) const {
 	return icon;
 }
 
+cairo_surface_t * decoration_theme_t::surface_from_png(std::string path) const {
+    double len = icon_size.get_value();
+    auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, len, len);
+    auto cr = cairo_create(surface);
+
+    auto image = cairo_image_surface_create_from_png(path.c_str());
+    double width  = cairo_image_surface_get_width(image);
+    double height = cairo_image_surface_get_height(image);
+
+    cairo_translate(cr, len / 2, len / 2);
+    cairo_scale(cr, len / width, len / height);
+    cairo_translate(cr, -len / 2, -len / 2);
+
+    cairo_set_source_surface(cr, image, (len - width) / 2, (len - height) / 2);
+    cairo_paint(cr);
+    cairo_surface_destroy(image);
+    cairo_destroy(cr);
+
+    return surface;
+}
+
 std::vector<std::string> get_desktops( std::string path ) {
     std::vector<std::string> desktops;
 
@@ -470,7 +491,7 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 				if (line.rfind(".svg") != std::string::npos) {
 					return surface_from_svg(path);
 				} else if (line.rfind(".png") != std::string::npos) {
-					return cairo_image_surface_create_from_png(path.c_str());
+    				return surface_from_png(path);
 				}
 			}
 		}
