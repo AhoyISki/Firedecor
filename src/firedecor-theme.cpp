@@ -94,7 +94,8 @@ std::string decoration_theme_t::get_round_on() const {
     return round_on.get_value();
 }
 
-wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) const {
+wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width,
+                                                   double scale) const {
     const auto format = CAIRO_FORMAT_ARGB32;
     auto surface = cairo_image_surface_create(format, width, font_size.get_value());
     auto cr = cairo_create(surface);
@@ -103,8 +104,9 @@ wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) 
     PangoLayout *layout;
     PangoRectangle text_size;
 
-    font_desc = pango_font_description_from_string(((std::string)font.get_value()).c_str());
-    pango_font_description_set_absolute_size(font_desc, font_size.get_value() * PANGO_SCALE);
+    font_desc = pango_font_description_from_string((font.get_value()).c_str());
+    pango_font_description_set_absolute_size(font_desc, font_size.get_value() *
+                                             PANGO_SCALE * scale);
     layout = pango_cairo_create_layout(cr);
     pango_layout_set_font_description(layout, font_desc);
     pango_layout_set_text(layout, text.c_str(), text.size());
@@ -118,7 +120,9 @@ wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) 
 }
 
 cairo_surface_t*decoration_theme_t::form_title(std::string text,
-    wf::dimensions_t title_size, bool active, orientation_t orientation) const {
+                                               wf::dimensions_t title_size,
+                                               bool active, double scale,
+                                               orientation_t orientation) const {
     const auto format = CAIRO_FORMAT_ARGB32;
     cairo_surface_t* surface;
     if (orientation == HORIZONTAL) {
@@ -129,7 +133,8 @@ cairo_surface_t*decoration_theme_t::form_title(std::string text,
 		    format, title_size.height, title_size.width);
     }
 
-    wf::color_t color = (active) ? active_title.get_value() : inactive_title.get_value();
+    wf::color_t color = (active) ? active_title.get_value() : 
+                        inactive_title.get_value();
 
     auto cr = cairo_create(surface);
     if (orientation == VERTICAL) { 
@@ -142,9 +147,10 @@ cairo_surface_t*decoration_theme_t::form_title(std::string text,
     PangoFontDescription *font_desc;
     PangoLayout *layout;
     
-    // render text
-    font_desc = pango_font_description_from_string(((std::string)font.get_value()).c_str());
-    pango_font_description_set_absolute_size(font_desc, font_size.get_value() * PANGO_SCALE);
+    // form text
+    font_desc = pango_font_description_from_string(font.get_value().c_str());
+    pango_font_description_set_absolute_size(font_desc, font_size.get_value() *
+                                             PANGO_SCALE * scale);
 
     layout = pango_cairo_create_layout(cr);
     pango_layout_set_font_description(layout, font_desc);
@@ -158,18 +164,20 @@ cairo_surface_t*decoration_theme_t::form_title(std::string text,
     return surface;
 }
 
-cairo_surface_t *decoration_theme_t::form_corner(bool active) const {
-	float outline_radius = corner_radius.get_value() - (float)outline_size.get_value() / 2;
+cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale) const {
+    double corner_radius = this->corner_radius.get_value() * scale;
+	double outline_radius = corner_radius - (double)outline_size.get_value() / 2;
 
     const auto format = CAIRO_FORMAT_ARGB32;
-    cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius.get_value(), corner_radius.get_value());
+    cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius,
+                                                          corner_radius);
     auto cr = cairo_create(surface);
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     /* Border */
 	wf::color_t color = active ? active_border.get_value() : inactive_border.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
-    cairo_arc(cr, 0, 0, corner_radius.get_value(), 0, M_PI / 2);
+    cairo_arc(cr, 0, 0, corner_radius, 0, M_PI / 2);
     cairo_line_to(cr, 0, 0);
     cairo_fill(cr);
 

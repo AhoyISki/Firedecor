@@ -143,20 +143,21 @@ class decoration_theme_t : private theme_options {
      * Get what the title size should be, given a text for the title, useful for
      * centered and right positioned layouts on an edge.
      */
-	wf::dimensions_t get_text_size(std::string title, int width) const;
+	wf::dimensions_t get_text_size(std::string title, int width, double scale) const;
 
     /**
      * Render the given text on a cairo_surface_t with the given size.
      * The caller is responsible for freeing the memory afterwards.
      */
     cairo_surface_t *form_title(std::string text, wf::dimensions_t title_size,
-                                bool active, orientation_t orientation) const;
+                                bool active, double scale,
+                                orientation_t orientation) const;
 
     /**
      * Render one corner for active and inactive windows. 
      * It will be used for all 4 corners of the decoration.
      */
-    cairo_surface_t *form_corner(bool active) const;
+    cairo_surface_t *form_corner(bool active, double scale) const;
 
     /**
      * Get the icon for the given button.

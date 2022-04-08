@@ -30,7 +30,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     wf::signal_connection_t title_set = [=] (wf::signal_data_t *data) {
         if (get_signaled_view(data) == view) {
-            update_layout(FORCE);
+            title_needs_update = true;
             view->damage(); // trigger re-render
         }
     };
@@ -42,14 +42,14 @@ class simple_decoration_surface : public wf::surface_interface_t,
         };
 
 		auto o = wf::firedecor::HORIZONTAL;
-        surface = theme.form_title(title.text, title_size, ACTIVE, o);
+        surface = theme.form_title(title.text, title_size, ACTIVE, scale, o);
         cairo_surface_upload_to_texture(surface, title.hor_active);
-        surface = theme.form_title(title.text, title_size, INACTIVE, o);
+        surface = theme.form_title(title.text, title_size, INACTIVE, scale, o);
         cairo_surface_upload_to_texture(surface, title.hor_inactive);
 		o = wf::firedecor::VERTICAL;
-		surface = theme.form_title(title.text, title_size, ACTIVE, o);
+		surface = theme.form_title(title.text, title_size, ACTIVE, scale, o);
         cairo_surface_upload_to_texture(surface, title.ver_active);
-        surface = theme.form_title(title.text, title_size, INACTIVE, o);
+        surface = theme.form_title(title.text, title_size, INACTIVE, scale, o);
         cairo_surface_upload_to_texture(surface, title.ver_inactive);
         cairo_surface_destroy(surface); 
 
@@ -65,40 +65,21 @@ class simple_decoration_surface : public wf::surface_interface_t,
         }
     }
 
-    void update_layout(bool force) {
+    void update_layout(double scale) {
         auto title_colors = theme.get_title_colors();
 
-        if ((title.colors != title_colors) || force) {
+        if (title_needs_update) {
             /* Updating the cached variables */
             title.colors = title_colors;
 	        title.text = (theme.get_debug_mode()) ? view->get_app_id() :
 	        										view->get_title();
 
-	        title.dims = theme.get_text_size(title.text, size.width);
-
-		    title_needs_update = true;
+	        title.dims = theme.get_text_size(title.text, size.width, scale);
 
             /* Necessary in order to immediately place areas correctly */
     		layout.resize(size.width, size.height, title.dims);
         }
 
-		c.tr = c.tl = c.bl = c.br = 0;
-		std::stringstream round_on_str(theme.get_round_on());
-		std::string corner;
-		while (round_on_str >> corner) {
-    		if (corner == "all") {
-        		c.tr = c.tl = c.bl = c.br = theme.get_corner_radius();
-        		break;
-    		} else if (corner == "tr") {
-        		c.tr = theme.get_corner_radius();
-    		} else if (corner == "tl") {
-        		c.tl = theme.get_corner_radius();
-    		} else if (corner == "bl") {
-        		c.bl = theme.get_corner_radius();
-    		} else if (corner == "br") {
-        		c.br = theme.get_corner_radius();
-    		}
-		}
     }
 
     struct {
@@ -134,16 +115,32 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     wf::dimensions_t size;
 
-	void update_corners(edge_colors_t colors, int corner_radius) {
+	void update_corners(edge_colors_t colors, int corner_radius, double scale) {
 		if ((this->corner_radius != corner_radius) ||
 			(edges.border != colors.border) ||
 			(edges.outline != colors.outline)) {
-			auto surface = theme.form_corner(ACTIVE);
-			OpenGL::render_begin();
+    		c.tr = c.tl = c.bl = c.br = 0;
+    		std::stringstream round_on_str(theme.get_round_on());
+    		std::string corner;
+    		while (round_on_str >> corner) {
+        		if (corner == "all") {
+            		c.tr = c.tl = c.bl = c.br = theme.get_corner_radius();
+            		break;
+        		} else if (corner == "tr") {
+            		c.tr = theme.get_corner_radius() * scale;
+        		} else if (corner == "tl") {
+            		c.tl = theme.get_corner_radius() * scale;
+        		} else if (corner == "bl") {
+            		c.bl = theme.get_corner_radius() * scale;
+        		} else if (corner == "br") {
+            		c.br = theme.get_corner_radius() * scale;
+        		}
+    		}
+
+			auto surface = theme.form_corner(ACTIVE, scale);
 			cairo_surface_upload_to_texture(surface, corners.active);
-			surface = theme.form_corner(INACTIVE);
+			surface = theme.form_corner(INACTIVE, scale);
 			cairo_surface_upload_to_texture(surface, corners.inactive);
-			OpenGL::render_end();
 			edges.border.active    = colors.border.active;
 			edges.border.inactive  = colors.border.inactive;
 			edges.outline.active   = colors.outline.active;
@@ -239,7 +236,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		colors.border.inactive = alpha_transform(colors.border.inactive);
 
 		int r = theme.get_corner_radius();
-		update_corners(colors, r);
+		update_corners(colors, r, fb.scale);
 
 		auto& corner = active ? corners.active : corners.inactive;
 
@@ -324,7 +321,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
         wf::region_t frame = this->cached_region + (wf::point_t){x, y};
         frame &= damage;
 
-    	update_layout(DONT_FORCE);
+    	update_layout(fb.scale);
 
         for (const auto& box : frame) {
             render_scissor_box(fb, {x, y}, wlr_box_from_pixman_box(box));
