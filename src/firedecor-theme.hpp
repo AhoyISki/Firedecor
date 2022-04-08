@@ -55,9 +55,39 @@ std::vector<std::string> get_desktops(std::string path);
  */
 std::string get_from_desktop(std::string path, std::string var);
 
+template<typename T>
+struct theme_option_t {
+  public:
+    theme_option_t(T value) : 
+        value{value} {}
+
+    T get_value() const {
+        return value;
+    }
+
+  private:
+    T value;  
+};
+
+struct extra_options_t {
+    theme_option_t<std::string> font;
+    theme_option_t<wf::color_t> active_title;
+    theme_option_t<wf::color_t> inactive_title;
+
+    theme_option_t<std::string> border_size;
+    theme_option_t<wf::color_t> active_border;
+    theme_option_t<wf::color_t> inactive_border;
+
+    theme_option_t<wf::color_t> active_outline;
+    theme_option_t<wf::color_t> inactive_outline;
+
+    theme_option_t<std::string> round_on;
+    theme_option_t<std::string> layout;
+};
+
 class decoration_theme_t {
   public:
-	decoration_theme_t();
+	decoration_theme_t(extra_options_t extra_options);
 
 	/** @return The theme's layout */
 	std::string get_layout() const;
@@ -163,6 +193,8 @@ class decoration_theme_t {
 	wf::option_wrapper_t<std::string> ignore_views{"firedecor/ignore_views"};
     wf::option_wrapper_t<bool> debug_mode{"firedecor/debug_mode"};
     wf::option_wrapper_t<std::string> round_on{"firedecor/round_on"};
+
+    extra_options_t extra_options;
 };
 }
 }

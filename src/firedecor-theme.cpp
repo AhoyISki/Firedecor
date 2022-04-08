@@ -19,10 +19,11 @@
 namespace wf {
 namespace firedecor {
 /** Create a new theme with the default parameters */
-decoration_theme_t::decoration_theme_t() {}
+decoration_theme_t::decoration_theme_t(wf::firedecor::extra_options_t options) :
+    extra_options{options} {}
 
 std::string decoration_theme_t::get_layout() const {
-	return layout;
+	return extra_options.layout.get_value();
 }
 
 /* Size return functions */
@@ -50,7 +51,7 @@ int decoration_theme_t::get_padding_size() const {
 
 /* Color return functions */
 color_set_t decoration_theme_t::get_border_colors() const {
-	return { active_border, inactive_border };
+	return { extra_options.active_border.get_value(), inactive_border };
 }
 color_set_t decoration_theme_t::get_outline_colors() const {
 	return { active_outline, inactive_outline };
