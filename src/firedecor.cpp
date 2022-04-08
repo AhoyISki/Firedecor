@@ -7,10 +7,7 @@
 
 #include "firedecor-subsurface.hpp"
 
-#include <fstream>
-
 namespace {
-
 struct wayfire_decoration_global_cleanup_t {
     wayfire_decoration_global_cleanup_t() = default;
     ~wayfire_decoration_global_cleanup_t() {
@@ -69,8 +66,6 @@ class wayfire_firedecor_t :
     }
 
     wf::firedecor::theme_options get_options(std::string theme) {
-        std::ofstream test{"/home/mateus/Development/new/wayfire-firedecor/test", std::ofstream::app};
-
         wf::firedecor::theme_options options = {
             get_option<std::string>(theme, "font"),
             get_option<int>(theme, "font_size"),
