@@ -61,31 +61,43 @@ class wayfire_firedecor_t :
     T get_option(std::string theme, std::string option_name) {
 
         auto option = config.get_option<std::string>(theme + "/" + option_name);
-        if (option == nullptr || theme == "") {
+        if (option == nullptr || theme == "invalid") {
             return config.get_option<T>("firedecor/" + option_name)->get_value();
         } else {
             return wf::option_type::from_string<T>(option->get_value()).value();
         }
     }
 
-    wf::firedecor::extra_options_t get_options(std::string theme) {
+    wf::firedecor::theme_options get_options(std::string theme) {
         std::ofstream test{"/home/mateus/Development/new/wayfire-firedecor/test", std::ofstream::app};
 
-        test << wf::option_type::from_string<wf::color_t>(config.get_option<std::string>(theme + "/active_border")->get_value())->r;
-
-        wf::firedecor::extra_options_t options = {
-            get_option<wf::color_t>(theme, "active_title"),
-            get_option<wf::color_t>(theme, "inactive_title"),
+        wf::firedecor::theme_options options = {
+            get_option<std::string>(theme, "font"),
+            get_option<int>(theme, "font_size"),
+        	get_option<wf::color_t>(theme, "active_title"),
+        	get_option<wf::color_t>(theme, "inactive_title"),
 
             get_option<std::string>(theme, "border_size"),
             get_option<wf::color_t>(theme, "active_border"),
             get_option<wf::color_t>(theme, "inactive_border"),
+            get_option<int>(theme, "corner_radius"),
 
+            get_option<int>(theme, "outline_size"),
             get_option<wf::color_t>(theme, "active_outline"),
             get_option<wf::color_t>(theme, "inactive_outline"),
 
-            get_option<std::string>(theme, "round_on"),
-            get_option<std::string>(theme, "layout")
+        	get_option<int>(theme, "button_size"),
+            get_option<std::string>(theme, "button_style"),
+            get_option<bool>(theme, "inactive_buttons"),
+
+        	get_option<int>(theme, "icon_size"),
+        	get_option<std::string>(theme, "icon_theme"),
+        	get_option<int>(theme, "padding_size"),
+            get_option<std::string>(theme, "layout"),
+
+        	get_option<std::string>(theme, "ignore_views"),
+            get_option<bool>(theme, "debug_mode"),
+            get_option<std::string>(theme, "round_on")
         };
         return options;
     }
@@ -108,7 +120,7 @@ class wayfire_firedecor_t :
          		    } catch (...) {
          		    }
     		    }
-			    init_view(view, get_options(""));
+			    init_view(view, get_options("invalid"));
 		    }
 	    } else {
 		    deinit_view(view);

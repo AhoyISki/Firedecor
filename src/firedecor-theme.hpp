@@ -69,25 +69,40 @@ struct theme_option_t {
     T value;  
 };
 
-struct extra_options_t {
+struct theme_options {
+  public:
     theme_option_t<std::string> font;
-    theme_option_t<wf::color_t> active_title;
-    theme_option_t<wf::color_t> inactive_title;
+    theme_option_t<int> font_size;
+	theme_option_t<wf::color_t> active_title;
+	theme_option_t<wf::color_t> inactive_title;
 
     theme_option_t<std::string> border_size;
     theme_option_t<wf::color_t> active_border;
     theme_option_t<wf::color_t> inactive_border;
+    theme_option_t<int> corner_radius;
 
+    theme_option_t<int> outline_size;
     theme_option_t<wf::color_t> active_outline;
     theme_option_t<wf::color_t> inactive_outline;
 
-    theme_option_t<std::string> round_on;
+	theme_option_t<int> button_size;
+    theme_option_t<std::string> button_style;
+    theme_option_t<bool> inactive_buttons;
+
+	theme_option_t<int> icon_size;
+	theme_option_t<std::string> icon_theme;
+	
+	theme_option_t<int> padding_size;
     theme_option_t<std::string> layout;
+
+	theme_option_t<std::string> ignore_views;
+    theme_option_t<bool> debug_mode;
+    theme_option_t<std::string> round_on;
 };
 
-class decoration_theme_t {
+class decoration_theme_t : private theme_options {
   public:
-	decoration_theme_t(extra_options_t extra_options);
+	decoration_theme_t(theme_options extra_options);
 
 	/** @return The theme's layout */
 	std::string get_layout() const;
@@ -164,37 +179,6 @@ class decoration_theme_t {
      * @param title The icon for the window.
      */
     cairo_surface_t *form_icon(std::string app_id) const;
-
-  private:
-    wf::option_wrapper_t<std::string> font{"firedecor/font"};
-    wf::option_wrapper_t<int> font_size{"firedecor/font_size"};
-	wf::option_wrapper_t<wf::color_t> active_title{"firedecor/active_title"};
-	wf::option_wrapper_t<wf::color_t> inactive_title{"firedecor/inactive_title"};
-
-    wf::option_wrapper_t<std::string> border_size{"firedecor/border_size"};
-    wf::option_wrapper_t<wf::color_t> active_border{"firedecor/active_border"};
-    wf::option_wrapper_t<wf::color_t> inactive_border{"firedecor/inactive_border"};
-    wf::option_wrapper_t<int> corner_radius{"firedecor/corner_radius"};
-
-    wf::option_wrapper_t<int> outline_size{"firedecor/outline_size"};
-    wf::option_wrapper_t<wf::color_t> active_outline{"firedecor/active_outline"};
-    wf::option_wrapper_t<wf::color_t> inactive_outline{"firedecor/inactive_outline"};
-
-	wf::option_wrapper_t<int> button_size{"firedecor/button_size"};
-    wf::option_wrapper_t<std::string> button_style{"firedecor/button_style"};
-    wf::option_wrapper_t<bool> inactive_buttons{"firedecor/inactive_buttons"};
-
-	wf::option_wrapper_t<int> icon_size{"firedecor/icon_size"};
-	wf::option_wrapper_t<std::string> icon_theme{"firedecor/icon_theme"};
-	
-	wf::option_wrapper_t<int> padding_size{"firedecor/padding_size"};
-    wf::option_wrapper_t<std::string> layout{"firedecor/layout"};
-
-	wf::option_wrapper_t<std::string> ignore_views{"firedecor/ignore_views"};
-    wf::option_wrapper_t<bool> debug_mode{"firedecor/debug_mode"};
-    wf::option_wrapper_t<std::string> round_on{"firedecor/round_on"};
-
-    extra_options_t extra_options;
 };
 }
 }
