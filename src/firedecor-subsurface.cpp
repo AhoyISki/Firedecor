@@ -156,7 +156,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
     wf::firedecor::border_size_t border_size;
     int corner_radius;
 
-    simple_decoration_surface(wayfire_view view, wf::firedecor::extra_options_t options) :
+    simple_decoration_surface(wayfire_view view, wf::firedecor::theme_options options) :
         theme{options}, 
     	layout{theme, [=] (wlr_box box) {this->damage_surface_box(box); }} {
         this->view = view;
@@ -432,7 +432,7 @@ class simple_decorator_t : public wf::decorator_frame_t_t {
     nonstd::observer_ptr<simple_decoration_surface> deco;
 
   public:
-    simple_decorator_t(wayfire_view view, wf::firedecor::extra_options_t options) {
+    simple_decorator_t(wayfire_view view, wf::firedecor::theme_options options) {
         this->view = view;
 
         auto sub = std::make_unique<simple_decoration_surface>(view, options);
@@ -503,7 +503,7 @@ class simple_decorator_t : public wf::decorator_frame_t_t {
     }
 };
 
-void init_view(wayfire_view view, wf::firedecor::extra_options_t options) {
+void init_view(wayfire_view view, wf::firedecor::theme_options options) {
     auto firedecor = std::make_unique<simple_decorator_t>(view, options);
     view->set_decoration(std::move(firedecor));
 }
