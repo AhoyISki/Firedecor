@@ -455,11 +455,16 @@ std::string get_from_desktop(std::string path, std::string var) {
 cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 	std::string line;
 	std::string icons = (std::string)getenv("HOME") + "/.local/share/firedecor_icons";
-	std::ofstream output_file(icons, std::ofstream::out | std::ofstream::app);
+	std::ofstream icon_file_out(icons, std::ofstream::out | std::ofstream::app);
 
 	while (true) {
-    	std::ifstream input_file(icons);
-		while (std::getline(input_file, line)) {
+    	/** 
+         * First, check if the icon has already been found,
+         * this will be true the vast majority of the time,
+         * drastically improving speed.
+         */
+    	std::ifstream icon_file_in(icons);
+		while (std::getline(icon_file_in, line)) {
 			if (line.find(app_id + " ") == 0) {
 				std::string path = line.substr(line.find(' ') + 1);
 				if (line.rfind(".svg") != std::string::npos) {
@@ -469,7 +474,7 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 				}
 			}
 		}
-		input_file.close();
+		icon_file_in.close();
 
 		std::string icon_name = (std::string)getenv("HOME") +
 							    ".config/firedecor/executable.svg";
@@ -481,6 +486,7 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 			"/usr/share/applications/"
 		};
 
+        /** Helpful specific case for some steam games */
 		if (app_id.substr(0, 10) == "steam_app_") {
     		icon_name = "steam_icon_" + app_id.substr(10);
     		found = true;
@@ -534,8 +540,9 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 			}
 		}
 
+        /** Case for absolute paths */
 		if ((icon_name.at(0) == '/') && exists(icon_name)) {
-			 output_file << app_id + " " + icon_name << std::endl;
+			 icon_file_out << app_id + " " + icon_name << std::endl;
 			 continue;
 		}
 
@@ -555,13 +562,12 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 		std::vector<std::string> icon_themes;
 
 		/* Locations where the icon_theme.get_value() would be expected to be */
-		std::vector<std::string> icon_groups = {
+		std::vector<std::string> icon_dirs = {
     		(std::string)getenv("HOME") + "/.local/share/icons/",
     		"/usr/local/share/icons/",
     		"/usr/share/icons/"
 		};
 
-		/* Common locations, found in most systems */
 		std::vector<std::string> default_icon_themes = {
     		"/usr/share/icons/hicolor/",
     		"/usr/share/icons/Adwaita/",
@@ -569,12 +575,12 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 		};
 
 		/* Check for the existance of the icon_theme.get_value() on all reasonable locations */
-		for (auto icon_group : icon_groups) {
-    		if (auto path = icon_group + (std::string)icon_theme.get_value();
+		for (auto icon_dir : icon_dirs) {
+    		if (auto dir = icon_dir + (std::string)icon_theme.get_value();
     		    std::count(default_icon_themes.begin(), default_icon_themes.end(),
-    		               path) == 0) {
-        		if (exists(path)) {
-            		icon_themes.push_back(path + "/"); 
+    		               dir) == 0) {
+        		if (exists(dir)) {
+            		icon_themes.push_back(dir + "/"); 
         		}
     		}
 		}
@@ -585,6 +591,7 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
     		}
 		}
 
+        /** Look for the icons on every folder, on every resolution */
 		bool icon_found = false;
 		for (auto path : icon_themes) {
     		for (auto res : { 
@@ -592,17 +599,13 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
     				"128x128/", "256x256/"
     		}) {
         		for (auto icon_name : icon_names) {
-            		if (auto icon_path = path + res + "apps/" + icon_name + ".svg";
-            			exists(icon_path)) {
-                		icon_found = true;
-                		output_file << app_id + " " + icon_path << std::endl;
-                		break;
-            		} 
-            		if (auto icon_path = path + res + "apps/" + icon_name + ".png";
-            			exists(icon_path)) {
-                		icon_found = true;
-                		output_file << app_id + " " + icon_path << std::endl;
-                		break;
+            		for (auto e : { ".svg", ".exe" }) {
+                		if (auto icon_path = path + res + "apps/" + icon_name + e;
+                			exists(icon_path)) {
+                    		icon_found = true;
+                    		icon_file_out << app_id + " " + icon_path << std::endl;
+                    		break;
+                		} 
             		}
         		}
         		if (icon_found) { break; }
@@ -610,8 +613,21 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
     		if (icon_found) { break; }
 		}
 
+        /** Absolute last resorts */
+		for (auto icon_name : icon_names) {
+    		for (auto e : { ".svg", ".exe" }) {
+        		if (auto icon_path = "/usr/share/pixmaps" + icon_name + e;
+        			exists(icon_path)) {
+            		icon_found = true;
+            		icon_file_out << app_id + " " + icon_path << std::endl;
+            		break;
+        		} 
+    		}
+		}
+    		
+
 		if (!icon_found) {
-			output_file << app_id + " " + (std::string)getenv("HOME") +
+			icon_file_out << app_id + " " + (std::string)getenv("HOME") +
 						   "/.config/firedecor/executable.svg" << std::endl;
 			return surface_from_svg((std::string)getenv("HOME") +
 						   			"/.config/firedecor/executable.svg");
