@@ -7,6 +7,8 @@
 
 #include "firedecor-subsurface.hpp"
 
+#include <fstream>
+
 namespace {
 
 struct wayfire_decoration_global_cleanup_t {
@@ -31,11 +33,14 @@ class wayfire_firedecor_t :
 	public wf::singleton_plugin_t<wayfire_decoration_global_cleanup_t, true> {
 
     wf::view_matcher_t ignore_views{"firedecor/ignore_views"};
+    wf::option_wrapper_t<std::string> extra_themes{"firedecor/extra_themes"};
 
     wf::signal_connection_t view_updated{ [=] (wf::signal_data_t *data) {
 	        update_view_decoration(get_signaled_view(data));
 	    }
     };
+
+    wf::config::config_manager_t& config = wf::get_core().config;
 
   public:
 
@@ -45,34 +50,65 @@ class wayfire_firedecor_t :
 
         output->connect_signal("view-mapped", &view_updated);
         output->connect_signal("view-decoration-state-updated", &view_updated);
-        for (auto& view :
-             output->workspace->get_views_in_layer(wf::ALL_LAYERS))
-        {
+        for (auto& view : output->workspace->get_views_in_layer(wf::ALL_LAYERS)) {
             update_view_decoration(view);
         }
     }
 
-	// Might be useless
-    /**
-     * Uses view_matcher_t to match whether the given view needs to be
-     * ignored for decoration
-     *
-     * @param view The view to match
-     * @return Whether the given view should be decorated?
-     */
-    //bool ignore_decoration_of_view(wayfire_view view) {
-    //    return ignore_views.matches(view);
-    //}
-
     wf::wl_idle_call idle_deactivate;
+
+    template<typename T>
+    T get_option(std::string theme, std::string option_name) {
+
+        auto option = config.get_option<std::string>(theme + "/" + option_name);
+        if (option == nullptr || theme == "") {
+            return config.get_option<T>("firedecor/" + option_name)->get_value();
+        } else {
+            return wf::option_type::from_string<T>(option->get_value()).value();
+        }
+    }
+
+    wf::firedecor::extra_options_t get_options(std::string theme) {
+        std::ofstream test{"/home/mateus/Development/new/wayfire-firedecor/test", std::ofstream::app};
+
+        test << wf::option_type::from_string<wf::color_t>(config.get_option<std::string>(theme + "/active_border")->get_value())->r;
+
+        wf::firedecor::extra_options_t options = {
+            get_option<wf::color_t>(theme, "active_title"),
+            get_option<wf::color_t>(theme, "inactive_title"),
+
+            get_option<std::string>(theme, "border_size"),
+            get_option<wf::color_t>(theme, "active_border"),
+            get_option<wf::color_t>(theme, "inactive_border"),
+
+            get_option<wf::color_t>(theme, "active_outline"),
+            get_option<wf::color_t>(theme, "inactive_outline"),
+
+            get_option<std::string>(theme, "round_on"),
+            get_option<std::string>(theme, "layout")
+        };
+        return options;
+    }
 
     void update_view_decoration(wayfire_view view) {
 	    if (view->should_be_decorated() && !ignore_views.matches(view)) {
 		    if (output->activate_plugin(grab_interface)) {
-			    init_view(view);
 			    idle_deactivate.run_once([this] () {
 				    output->deactivate_plugin(grab_interface);
 			    });
+    		    std::stringstream themes{extra_themes.value()};
+    		    std::string theme;
+    		    while (themes >> theme) {
+        		    try {
+            		    wf::view_matcher_t matcher{theme + "/uses_if"};
+            		    if (matcher.matches(view)) {
+                		    init_view(view, get_options(theme));
+                		    return;
+            		    }
+         		    } catch (...) {
+         		    }
+    		    }
+			    init_view(view, get_options(""));
 		    }
 	    } else {
 		    deinit_view(view);
