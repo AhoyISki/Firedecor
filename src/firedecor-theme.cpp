@@ -158,25 +158,28 @@ cairo_surface_t*decoration_theme_t::form_title(std::string text,
     return surface;
 }
 
-cairo_surface_t *decoration_theme_t::form_corner(bool active) const {
-	float outline_radius = corner_radius.get_value() - (float)outline_size.get_value() / 2;
+cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale) const {
+    double corner_radius = this->corner_radius.get_value() * scale;
+	double outline_radius = corner_radius - scale * (double)outline_size.get_value() / 2;
 
     const auto format = CAIRO_FORMAT_ARGB32;
-    cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius.get_value(), corner_radius.get_value());
+    cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius,
+                                                          corner_radius);
     auto cr = cairo_create(surface);
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     /* Border */
-	wf::color_t color = active ? active_border.get_value() : inactive_border.get_value();
+	wf::color_t color = active ? active_border.get_value() :
+                        inactive_border.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
-    cairo_arc(cr, 0, 0, corner_radius.get_value(), 0, M_PI / 2);
+    cairo_arc(cr, 0, 0, corner_radius, 0, M_PI / 2);
     cairo_line_to(cr, 0, 0);
     cairo_fill(cr);
 
     /* Outline */
 	color = active ? active_outline.get_value() : inactive_outline.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
-    cairo_set_line_width(cr, outline_size.get_value());
+    cairo_set_line_width(cr, outline_size.get_value() * scale);
     cairo_arc(cr, 0, 0, outline_radius, 0, M_PI / 2);
     cairo_stroke(cr);
     cairo_destroy(cr);

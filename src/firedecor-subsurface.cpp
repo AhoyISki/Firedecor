@@ -82,23 +82,6 @@ class simple_decoration_surface : public wf::surface_interface_t,
     		layout.resize(size.width, size.height, title.dims);
         }
 
-		c.tr = c.tl = c.bl = c.br = 0;
-		std::stringstream round_on_str(theme.get_round_on());
-		std::string corner;
-		while (round_on_str >> corner) {
-    		if (corner == "all") {
-        		c.tr = c.tl = c.bl = c.br = theme.get_corner_radius();
-        		break;
-    		} else if (corner == "tr") {
-        		c.tr = theme.get_corner_radius();
-    		} else if (corner == "tl") {
-        		c.tl = theme.get_corner_radius();
-    		} else if (corner == "bl") {
-        		c.bl = theme.get_corner_radius();
-    		} else if (corner == "br") {
-        		c.br = theme.get_corner_radius();
-    		}
-		}
     }
 
     struct {
@@ -134,14 +117,32 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     wf::dimensions_t size;
 
-	void update_corners(edge_colors_t colors, int corner_radius) {
+	void update_corners(edge_colors_t colors, int corner_radius, double scale) {
 		if ((this->corner_radius != corner_radius) ||
 			(edges.border != colors.border) ||
 			(edges.outline != colors.outline)) {
-			auto surface = theme.form_corner(ACTIVE);
+    		c.tr = c.tl = c.bl = c.br = 0;
+
+    		std::stringstream round_on_str(theme.get_round_on());
+    		std::string corner;
+    		while (round_on_str >> corner) {
+        		if (corner == "all") {
+            		c.tr = c.tl = c.bl = c.br = theme.get_corner_radius();
+            		break;
+        		} else if (corner == "tr") {
+            		c.tr = (int)(theme.get_corner_radius() * scale);
+        		} else if (corner == "tl") {
+            		c.tl = (int)(theme.get_corner_radius() * scale);
+        		} else if (corner == "bl") {
+            		c.bl = (int)(theme.get_corner_radius() * scale);
+        		} else if (corner == "br") {
+            		c.br = (int)(theme.get_corner_radius() * scale);
+        		}
+    		}
+			auto surface = theme.form_corner(ACTIVE, scale);
 			OpenGL::render_begin();
 			cairo_surface_upload_to_texture(surface, corners.active);
-			surface = theme.form_corner(INACTIVE);
+			surface = theme.form_corner(INACTIVE, scale);
 			cairo_surface_upload_to_texture(surface, corners.inactive);
 			OpenGL::render_end();
 			edges.border.active    = colors.border.active;
@@ -238,8 +239,8 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		colors.border.active = alpha_transform(colors.border.active);
 		colors.border.inactive = alpha_transform(colors.border.inactive);
 
-		int r = theme.get_corner_radius();
-		update_corners(colors, r);
+		int r = theme.get_corner_radius() * fb.scale;
+		update_corners(colors, r, fb.scale);
 
 		auto& corner = active ? corners.active : corners.inactive;
 
@@ -256,7 +257,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		/** Borders */
 		wf::color_t color = (active) ? colors.border.active : colors.border.inactive;
 		for (auto g : std::vector<wf::geometry_t>{
-    		{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
+    		//{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
     		{ rect.x, rect.y + c.tl, r, rect.height - (c.tl + c.bl) },
     		{ rect.width + origin.x - r, rect.y + c.tr,
     		  r, rect.height - (c.tr + c.br) } }) {
@@ -276,25 +277,25 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		}
 
 		/** Top right corner */
-		if (c.tr > 0) {
-    		OpenGL::render_texture(corner.tex, fb, top_right, glm::vec4(1.0f));
-		}
-		/** Top left corner */
-		if (c.tl > 0) {
-    		OpenGL::render_texture(corner.tex, fb, top_left, glm::vec4(1.0f),
-                        		   OpenGL::TEXTURE_TRANSFORM_INVERT_X);
-		}
-		/** Bottom left corner */
-		if (c.bl > 0) {
-    		OpenGL::render_texture(corner.tex, fb, bottom_left, glm::vec4(1.0f),
-    							   OpenGL::TEXTURE_TRANSFORM_INVERT_X |
-    		                       OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
-		}
-		/** Bottom right corner */
-		if (c.br > 0) {
-    		OpenGL::render_texture(corner.tex, fb, bottom_right, glm::vec4(1.0f),
-                        		   OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
-		}
+		//if (c.tr > 0) {
+    		//OpenGL::render_texture(corner.tex, fb, top_right, glm::vec4(1.0f));
+		//}
+		///** Top left corner */
+		//if (c.tl > 0) {
+    		//OpenGL::render_texture(corner.tex, fb, top_left, glm::vec4(1.0f),
+                        		   //OpenGL::TEXTURE_TRANSFORM_INVERT_X);
+		//}
+		///** Bottom left corner */
+		//if (c.bl > 0) {
+    		//OpenGL::render_texture(corner.tex, fb, bottom_left, glm::vec4(1.0f),
+    							   //OpenGL::TEXTURE_TRANSFORM_INVERT_X |
+    		                       //OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+		//}
+		///** Bottom right corner */
+		//if (c.br > 0) {
+    		//OpenGL::render_texture(corner.tex, fb, bottom_right, glm::vec4(1.0f),
+                        		   //OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+		//}
 		OpenGL::render_end();
 	}
 

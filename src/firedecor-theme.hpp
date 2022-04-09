@@ -156,7 +156,7 @@ class decoration_theme_t : private theme_options {
      * Render one corner for active and inactive windows. 
      * It will be used for all 4 corners of the decoration.
      */
-    cairo_surface_t *form_corner(bool active) const;
+    cairo_surface_t *form_corner(bool active, double scale) const;
 
     /**
      * Get the icon for the given button.
