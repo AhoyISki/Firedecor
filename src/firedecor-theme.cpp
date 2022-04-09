@@ -96,8 +96,9 @@ std::string decoration_theme_t::get_round_on() const {
 
 wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width,
                                                    double scale) const {
+    double font_size = this->font_size.get_value() * scale;
     const auto format = CAIRO_FORMAT_ARGB32;
-    auto surface = cairo_image_surface_create(format, width, font_size.get_value());
+    auto surface = cairo_image_surface_create(format, width, font_size);
     auto cr = cairo_create(surface);
 	
     PangoFontDescription *font_desc;
@@ -105,8 +106,7 @@ wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width,
     PangoRectangle text_size;
 
     font_desc = pango_font_description_from_string((font.get_value()).c_str());
-    pango_font_description_set_absolute_size(font_desc, font_size.get_value() *
-                                             PANGO_SCALE * scale);
+    pango_font_description_set_absolute_size(font_desc, font_size * PANGO_SCALE);
     layout = pango_cairo_create_layout(cr);
     pango_layout_set_font_description(layout, font_desc);
     pango_layout_set_text(layout, text.c_str(), text.size());
@@ -116,7 +116,8 @@ wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width,
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
 
-    return { text_size.width, text_size.height };
+    // Idk why this fixes the title size lol.
+    return { text_size.width, (int)(text_size.height / scale) };
 }
 
 cairo_surface_t*decoration_theme_t::form_title(std::string text,
@@ -172,6 +173,12 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale) cons
     cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius,
                                                           corner_radius);
     auto cr = cairo_create(surface);
+
+    /* Clear the button background */
+    cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
+    cairo_set_source_rgba(cr, 0, 0, 0, 0);
+    cairo_rectangle(cr, 0, 0, corner_radius, corner_radius);
+    cairo_fill(cr);
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     /* Border */

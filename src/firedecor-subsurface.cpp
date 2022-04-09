@@ -226,8 +226,9 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	    return { c.r * c.a, c.g * c.a, c.b * c.a, c.a };
     }
 
-	void render_background(const wf::framebuffer_t& fb, 
-		wf::geometry_t rect, const wf::geometry_t& scissor, bool active, wf::point_t origin) {
+	void render_background(const wf::framebuffer_t& fb, wf::geometry_t rect,
+	                       const wf::geometry_t& scissor,
+	                       bool active, wf::point_t origin) {
 		edge_colors_t colors = {
 			theme.get_border_colors(), theme.get_outline_colors()
 		};
