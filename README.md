@@ -29,6 +29,7 @@ An advanced window decoration plugin for the wayfire window manager.
 - [x] Implement individual corner rounding;
 - [x] Multiple corner radii(radiuses?) *Implemented as either the corner is there, or it is not;
 - [x] Implement multiple themes.
+- [ ] Add an option for the outline color to "take over" edges.
 - [ ] Implement a maximum title size with potentially animated title scrolling;
 - [ ] Declare a minimum window size so the decorations can not look disgusting on small windows;
 - [ ] Implement shadows.
