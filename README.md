@@ -153,6 +153,43 @@ paste this into your `wayfire.ini` and add firedecor to your active plugins to g
 
 #### My config
 This is my own configuration, feel free to copy it if you want
+```ini
+[firedecor]
+font = Clear Sans
+active_title = 0.941 0.776 0.455 1.0
+inactive_title = 0.773 0.784 0.776 1.0
+
+button_style = firedecor
+inactive_buttons = true
+
+border_size = 30 12
+corner_radius = 16
+active_border = 0.113 0.121 0.139 0.9
+inactive_border = 0.113 0.121 0.129 0.9
+
+layout = | icon p title | minimize p maximize p close P7 -
+debug_mode = true
+
+extra_themes = firefox discord
+
+[firefox]
+uses_if = app_id is "firefox"
+
+active_title = 0.114 0.122 0.129 1.0
+inactive_title = 0.506 0.635 0.702 1.0
+
+active_border = 1.0 1.0 1.0 1.0
+inactive_border = 1.0 1.0 1.0 1.0
+
+round_on = tr tl bl
+
+[discord]
+uses_if = app_id is "discord"
+active_border = 0.125 0.133 0.145 1.0
+inactive_border = 0.125 0.133 0.145 1.0
+
+round_on = tr tl bl
+```
 
 ## Screenshots
 Left side decoration:
