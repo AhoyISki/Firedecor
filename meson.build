@@ -4,7 +4,7 @@ project(
 	'cpp',
 	version: '0.1',
 	license: 'MIT',
-	meson_version: '>=0.51.0',
+	meson_version: '>=0.53.0',
 	default_options: [
 		'cpp_std=c++17',
         'c_std=c11',
@@ -14,8 +14,8 @@ project(
 )
 
 wayfire    = dependency('wayfire')
-wlroots    = dependency('wlroots')
-wfconfig   = dependency('wf-config')
+wf_config  = dependency('wf-config')
+wlroots    = dependency('wlroots', version: ['>=0.16.0', '<0.17.0'])
 rsvg       = dependency('librsvg-2.0')
 pixman     = dependency('pixman-1')
 cairo      = dependency('cairo')
@@ -32,8 +32,8 @@ add_project_link_arguments(['-rdynamic'], language:'cpp')
 subdir('src')
 subdir('metadata')
 
-install_data('src/firedecor.xml', install_dir: wayfire.get_variable(pkgconfig: 'metadatadir'))
-install_data('src/executable.svg', install_dir: join_paths(get_option('datadir'), 'firedecor'))
+install_data('src/firedecor.xml', install_dir: join_paths(get_option('prefix'), 'share/wayfire/metadata'))
+install_data('src/executable.svg', install_dir: join_paths(get_option('prefix'), get_option('datadir'), 'firedecor'))
 
 summary = [
 	'',
