@@ -36,7 +36,8 @@ An advanced window decoration plugin for the wayfire window manager.
 
 ## Configuration
 
-<details><summary>### Font</summary>
+### Font
+<details><summary>Font options</summary>
 - `font` will determine what font will be used for titles. Default is `sans-serif`;
 - `font_size` will determine the font size, in pixels, for the title. Default is `20`;
 - `active_title` will determine the color for the font of active windows. Default is `1.0 1.0 1.0 1.0`;
@@ -44,17 +45,22 @@ An advanced window decoration plugin for the wayfire window manager.
 </details>
 
 ### Border
+<details><summary>Border options</summary>
 - `border_size` can take up to 4 parameters. If one is used, it will be the border size for every edge of the windows. If 2 parameters are used, the first one determines the size of the top edge, and the second one determines the size of the remaining edges. If 3 are used, the first one will be used for all edges. If 4 parameters are used, they are used in the following order: top, left, bottom, right. Default is `30 10`;
 - `active_border` will determine the color for the border of active windows. Default is `0.13 0.13 0.13 0.67`;
 - `inactive_border` will determine the color for the border of inactive windows. Default is `0.2 0.2 0.2 0.87`;
 - `corner_radius` will determine the radius for the corners of the windows. Use 0 for no radius. Default is `0`;
+</details>
 
 ### Outline
+<details><summary>Outline options</summary>
 - `outline_size` will set the size for the outline of the window. Default is 0;
 - `active_outline` will determine the color for the outline of active windows. Default is `0.0 0.0 0.0 1.0`;
 - `inactive_outline` will determine the color for the outline of inactive windows. Default is `0.0 0.0 0.0 1.0`;
+</details>
 
 ### Buttons
+<details><summary>Button options</summary>
 - `button_size` will determine the size of the buttons, in pixels. Default is 20;
 - `inactive_buttons` is a `bool` that tells the plugin to draw buttons differently, depending on them being in an active or an inactive window. Default is `false`;
 - `button_style` is a string that sets the style used for the buttons. By default, there are 3 styles:
@@ -67,12 +73,16 @@ An advanced window decoration plugin for the wayfire window manager.
   2. In it, create a folder with the name `my_theme`;
   3. Place figures for the buttons. They'll have to be called something like `type-status.png`, where `type` can be `close`, `minimize`, or `toggle-maximize`, and `status` can be `hovered`, `pressed`, or nothing. E.g. close.png, toggle-maximize-hover.png, minimize-pressed.png. Additionally, if `inactive_buttons` is set to `true`, you have to add a additional images with the `status` of `inactive`. You **Must** provide an image for each of the `type`s and `status`es listed above, so 9 images if `inactive_buttons == false`, and 12 images if `inactive_buttons == true`. The images can be equal to each other, if you don't want do differentiate between different `type`s or `status`es, just make sure that every entry is placed.
   The default is `wayfire`;
+</details>
 
 ### Icons
+<details><summary>Icon options</summary>
 - `icon_size` determined the size for the icons, in pixels. Default is `20`;
 - `icon_theme` determines the theme to be used for the icons, make sure that a folder exists on an appropriate position. Default is `hicolor`;
+</details>
 
 ### Layout
+<details><summary>Layout options</summary>
 - `layout` is a long string that determines where things should be placed on the edges of a window. Here's how it works:
   - Every symbol must be separated by a space;
   - The symbols `title`, `icon`, `maximize`, `minimize`, and `close`, will place their respective symbols on the window;
@@ -91,13 +101,17 @@ An advanced window decoration plugin for the wayfire window manager.
   Here's what this layout looks like:
   ![Default Layout](/assets/default-layout.png)
 - `padding_size` determines the size used for `p` on `layout`. Default is `2`;
+</details>
 
 ### Other
+<details><summary>Other options</summary>
 - `ignore_views` is of `criteria` type, and determines witch windows will be ignored for decorations. In the future, I plan on adding the ability to create multiple themes and use them selectively, for example, a light and dark theme.
 - `debug_mode` turns the titles of windows into their respective `app_id`s. This is used when the plugin fails at finding the icon for an app. More in [App Icon Debugging](#app-icon-debugging). Default is `false`;
 - `round_on` chooses which corners will be rounded. `tr` means top right, `tl` is top left, `bl` is bottom left, `br` is bottom right, and `all` is all of them, e.g. `tl br` will round the top left and bottom right corners. Default is `all`;
+</details>
 
 ### Extra Themes
+<details><summary>Extra theme options</summary>
 - `extra_themes` will be the declaration of existance for any extra themes you want to use, e.g. `dark light discord`. If the theme is not in here, no windows will use it. The default is ``;
 - When it comes to extra themes, the configuration section will look exactly like the regular `firedecor` section, except you won't have the `ignore_views` and `extra_themes` options, and will gain the `uses_if` option;
 - `uses_if` is of `criteria` type, and will match all the windows that should use the theme of the current section. There is no defaul, so if it is not present, no window will use the theme;
@@ -116,11 +130,13 @@ An advanced window decoration plugin for the wayfire window manager.
   title_color = 1.0 1.0 1.0 1.0
   ```
   Will change the `title_color` on views with `app_id is "kitty"`, but the `border_size` will stay at `10 10 10 10`.
+</details>
 
 ### Example Configs
 
 #### Default
 Here's what the default configuration would look like:
+<details><summary>Default config</summary>
 ```ini
 [firedecor]
 font = sans-serif
@@ -150,10 +166,12 @@ padding_size = 2
 ignore_views = none
 debug_mode = false
 ```
+</details>
 paste this into your `wayfire.ini` and add firedecor to your active plugins to get started.
 
 #### My config
 This is my own configuration, feel free to copy it if you want
+<details><summary>My own config</summary>
 ```ini
 [firedecor]
 font = Clear Sans
@@ -191,6 +209,7 @@ inactive_border = 0.125 0.133 0.145 1.0
 
 round_on = tr tl bl
 ```
+</details>
 
 ## Screenshots
 Left side decoration:
