@@ -257,7 +257,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		/** Borders */
 		wf::color_t color = (active) ? colors.border.active : colors.border.inactive;
 		for (auto g : std::vector<wf::geometry_t>{
-    		//{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
+    		{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
     		{ rect.x, rect.y + c.tl, r, rect.height - (c.tl + c.bl) },
     		{ rect.width + origin.x - r, rect.y + c.tr,
     		  r, rect.height - (c.tr + c.br) } }) {
@@ -277,25 +277,25 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		}
 
 		/** Top right corner */
-		//if (c.tr > 0) {
-    		//OpenGL::render_texture(corner.tex, fb, top_right, glm::vec4(1.0f));
-		//}
-		///** Top left corner */
-		//if (c.tl > 0) {
-    		//OpenGL::render_texture(corner.tex, fb, top_left, glm::vec4(1.0f),
-                        		   //OpenGL::TEXTURE_TRANSFORM_INVERT_X);
-		//}
-		///** Bottom left corner */
-		//if (c.bl > 0) {
-    		//OpenGL::render_texture(corner.tex, fb, bottom_left, glm::vec4(1.0f),
-    							   //OpenGL::TEXTURE_TRANSFORM_INVERT_X |
-    		                       //OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
-		//}
-		///** Bottom right corner */
-		//if (c.br > 0) {
-    		//OpenGL::render_texture(corner.tex, fb, bottom_right, glm::vec4(1.0f),
-                        		   //OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
-		//}
+		if (c.tr > 0) {
+    		OpenGL::render_texture(corner.tex, fb, top_right, glm::vec4(1.0f));
+		}
+		/** Top left corner */
+		if (c.tl > 0) {
+    		OpenGL::render_texture(corner.tex, fb, top_left, glm::vec4(1.0f),
+                        		   OpenGL::TEXTURE_TRANSFORM_INVERT_X);
+		}
+		/** Bottom left corner */
+		if (c.bl > 0) {
+    		OpenGL::render_texture(corner.tex, fb, bottom_left, glm::vec4(1.0f),
+    							   OpenGL::TEXTURE_TRANSFORM_INVERT_X |
+    		                       OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+		}
+		/** Bottom right corner */
+		if (c.br > 0) {
+    		OpenGL::render_texture(corner.tex, fb, bottom_right, glm::vec4(1.0f),
+                        		   OpenGL::TEXTURE_TRANSFORM_INVERT_Y);
+		}
 		OpenGL::render_end();
 	}
 
