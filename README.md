@@ -185,6 +185,7 @@ debug_mode = false
 ```
 
 </details>
+
 paste this into your `wayfire.ini` and add firedecor to your active plugins to get started.
 
 #### My config
