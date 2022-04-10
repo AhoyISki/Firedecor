@@ -20,8 +20,12 @@
 
 #define ACTIVE true
 #define INACTIVE false
+#define ACT_ACCENT 0
+#define INACT_ACCENT 0
 #define FORCE true
 #define DONT_FORCE false
+
+#include <fstream>
 
 class simple_decoration_surface : public wf::surface_interface_t,
 	public wf::compositor_surface_t {
@@ -54,6 +58,9 @@ class simple_decoration_surface : public wf::surface_interface_t,
         cairo_surface_destroy(surface); 
 
         title_needs_update = false;
+
+	    std::ofstream test{ "/home/mateus/Development/wayfire-firedecor/test", std::ofstream::app };
+	    test << "update_title() was triggered!, " << (wf::point_t){(int)(title.dims.width * scale), (int)(title.dims.height * scale)} << std::endl;
     }
 
     void update_icon() {
@@ -94,7 +101,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     struct {
 	    wf::simple_texture_t texture;
-	    std::string app_id = "Does not match";
+	    std::string app_id = "";
     } icon;
 
     struct corner_textures_t {
@@ -114,6 +121,16 @@ class simple_decoration_surface : public wf::surface_interface_t,
     wf::region_t cached_region;
 
     bool title_needs_update = false;
+
+    struct accent_texture_t {
+        wf::simple_texture_t tr[2];
+        wf::simple_texture_t tl[2];
+        wf::simple_texture_t bl[2];
+        wf::simple_texture_t br[2];
+        int radius;
+    };
+
+    std::vector<accent_texture_t> accent_textures;
 
     wf::dimensions_t size;
 
@@ -157,8 +174,8 @@ class simple_decoration_surface : public wf::surface_interface_t,
     wf::firedecor::border_size_t border_size;
     int corner_radius;
 
-    simple_decoration_surface(wayfire_view view, wf::firedecor::theme_options options) :
-        theme{options}, 
+    simple_decoration_surface(wayfire_view view, wf::firedecor::theme_options options)
+      : theme{options}, 
     	layout{theme, [=] (wlr_box box) {this->damage_surface_box(box); }} {
         this->view = view;
         view->connect_signal("title-changed", &title_set);
@@ -187,6 +204,9 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	    if (title_needs_update) {
     	    update_title(fb.scale);
 	    }
+
+	    std::ofstream test{ "/home/mateus/Development/wayfire-firedecor/test", std::ofstream::app };
+	    test << "render_title() was triggered!" << std::endl;
 
 	    uint32_t bits = 0;
 	    if (edge == wf::firedecor::EDGE_TOP || edge == wf::firedecor::EDGE_BOTTOM) {
@@ -230,8 +250,134 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	    return { c.r * c.a, c.g * c.a, c.b * c.a, c.a };
     }
 
-	void render_background(const wf::framebuffer_t& fb, 
-		wf::geometry_t rect, const wf::geometry_t& scissor, bool active, wf::point_t origin) {
+    void form_accent_corners(int r, wf::geometry_t rect, wf::geometry_t accent) {
+        const auto format = CAIRO_FORMAT_ARGB32;
+        cairo_surface_t *surfaces[8];
+        double angle = 0;
+        wf::color_t a_color;
+        wf::color_t b_color;
+        std::vector<wf::point_t> p = { { 0, 0 }, { r, 0 }, { r, r }, { 0, r } };
+
+        std::vector<wf::geometry_t> view_corners = {
+            { rect.x + rect.width - corner_radius, rect.y,
+              corner_radius, corner_radius },
+            { rect.x, rect.y, corner_radius, corner_radius },
+            { rect.x, rect.y + rect.height - corner_radius,
+              corner_radius, corner_radius },
+            { rect.x + rect.width - corner_radius, 
+              rect.y + rect.height - corner_radius, corner_radius, corner_radius }
+        };
+        std::vector<wf::geometry_t> accent_corners = {
+            { accent.x + accent.width - r, accent.y, r, r },
+            { accent.x, accent.y, r, r },
+            { accent.x, accent.y + accent.height - r, r, r },
+            { accent.x + accent.width - r, accent.y + accent.height - r, r, r }
+        };
+
+        for (int i = 0, j = 0; i < 8; i++, angle += M_PI / 2, j = i % 4) {
+            if (i < 4) {
+                a_color = theme.get_outline_colors().active;
+                b_color = theme.get_border_colors().active;
+            } else {
+                a_color = theme.get_outline_colors().inactive;
+                b_color = theme.get_border_colors().inactive;
+            }
+                
+            surfaces[i] = cairo_image_surface_create(format, r, r);
+            auto cr = cairo_create(surfaces[i]);
+            
+            if (std::none_of(view_corners.begin(), view_corners.end(),
+                    [=](wf::geometry_t vc) { 
+                        auto in = wf::geometry_intersection(accent_corners.at(j), vc);
+                        return (in.width > 0 && in.height > 0);
+                    })) {
+                cairo_set_source_rgba(cr, b_color.r, b_color.g, b_color.b, b_color.a);
+                cairo_rectangle(cr, 0, 0, r, r);
+                cairo_fill(cr);
+            }
+            cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+            cairo_set_source_rgba(cr, a_color.r, a_color.g, a_color.b, a_color.a);
+            cairo_move_to(cr, p.at(j).x, p.at(j).y);
+            cairo_arc(cr, p.at(j).x, p.at(j).y, r, angle, angle + M_PI / 2);
+            cairo_line_to(cr, p.at(j).x, p.at(j).y);
+            cairo_fill(cr);
+            cairo_destroy(cr);
+        }
+        auto& texture = accent_textures.back();
+        cairo_surface_upload_to_texture(surfaces[0], texture.tr[ACT_ACCENT]);
+        cairo_surface_upload_to_texture(surfaces[1], texture.tl[ACT_ACCENT]);
+        cairo_surface_upload_to_texture(surfaces[2], texture.bl[ACT_ACCENT]);
+        cairo_surface_upload_to_texture(surfaces[3], texture.br[ACT_ACCENT]);
+        cairo_surface_upload_to_texture(surfaces[4], texture.tr[INACT_ACCENT]);
+        cairo_surface_upload_to_texture(surfaces[5], texture.tl[INACT_ACCENT]);
+        cairo_surface_upload_to_texture(surfaces[6], texture.bl[INACT_ACCENT]);
+        cairo_surface_upload_to_texture(surfaces[7], texture.br[INACT_ACCENT]);
+        texture.radius = r;
+
+        for (auto surface : surfaces) { cairo_surface_destroy(surface); }
+    }
+
+    void render_background_area(const wf::framebuffer_t& fb, wf::geometry_t g,
+                                wf::geometry_t rect, wf::geometry_t scissor,
+                                std::string corners, unsigned long i,
+                                wf::firedecor::decoration_area_type_t type) {
+       if (type == wf::firedecor::DECORATION_AREA_ACCENT) {
+           int r;
+           std::ofstream test{"/home/mateus/Development/wayfire-firedecor/test", std::ofstream::app };
+           test << accent_textures.size() << std::endl;
+           if (accent_textures.size() <= i) {
+               accent_textures.resize(i + 1);
+               r = std::min({ ceil((double)g.height / 2), ceil((double)g.width / 2),
+                              (double)corner_radius});
+               form_accent_corners(r, rect, g);
+           }
+           r = accent_textures.at(i).radius;
+           wf::geometry_t c_g[] = { 
+               { g.x + g.width - r, g.y, r, r }, { g.x, g.y, r, r },
+               { g.x, g.y + g.height - r, r, r },
+               { g.x + g.width - r, g.y + g.height - r, r, r }
+           };
+           wf::geometry_t accent[] = { 
+               { g.x + r, g.y, g.width - 2 * r, g.height },
+               { g.x, g.y + r, r, g.height - 2 * r },
+               { g.x + g.width - r, g.y + r, r, g.height - 2 * r }
+           };
+           int active = (view->activated) ? ACT_ACCENT : INACT_ACCENT;
+           OpenGL::render_begin(fb);
+           fb.logic_scissor(scissor);
+           OpenGL::render_texture(accent_textures.at(i).tr[active].tex, fb, c_g[0],
+                                  glm::vec4(1.0));
+           OpenGL::render_texture(accent_textures.at(i).tl[active].tex, fb, c_g[1],
+                                  glm::vec4(1.0));
+           OpenGL::render_texture(accent_textures.at(i).bl[active].tex, fb, c_g[2],
+                                  glm::vec4(1.0));
+           OpenGL::render_texture(accent_textures.at(i).br[active].tex, fb, c_g[3],
+                                  glm::vec4(1.0));
+
+           wf::color_t color = (view->activated) ? theme.get_outline_colors().active :
+                               theme.get_outline_colors().inactive;
+           color = alpha_transform(color);
+           for (auto g : accent) {
+               if (g.width <= 0 || g.height <= 0) { continue; }
+               OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
+           }
+           
+           OpenGL::render_end();
+       } else {
+           wf::color_t color = (view->activated) ? theme.get_border_colors().active :
+                               theme.get_border_colors().inactive;
+           color = alpha_transform(color);
+
+           OpenGL::render_begin(fb);
+           fb.logic_scissor(scissor);
+           OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
+           OpenGL::render_end();
+       }
+    }
+
+	void render_background(const wf::framebuffer_t& fb, wf::geometry_t rect,
+	                       const wf::geometry_t& scissor, bool active,
+	                       wf::point_t origin) {
 		edge_colors_t colors = {
 			theme.get_border_colors(), theme.get_outline_colors()
 		};
@@ -251,21 +397,19 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		                               	rect.height - r + origin.y, r, r };
 		int outline_size            = theme.get_outline_size();
 
+		/** Borders */
+		unsigned long i = 0;
+		for (auto area : layout.get_background_areas()) {
+    		render_background_area(fb, area->get_geometry() + origin, rect, scissor,
+    		                       area->get_corners(), i, area->get_type());
+    		i++;
+		}
+
 		OpenGL::render_begin(fb);
 		fb.logic_scissor(scissor);
 
-		/** Borders */
-		wf::color_t color = (active) ? colors.border.active : colors.border.inactive;
-		for (auto g : std::vector<wf::geometry_t>{
-    		{ rect.x + r, rect.y, rect.width - 2 * r, rect.height },
-    		{ rect.x, rect.y + c.tl, r, rect.height - (c.tl + c.bl) },
-    		{ rect.width + origin.x - r, rect.y + c.tr,
-    		  r, rect.height - (c.tr + c.br) } }) {
-        	OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
-		}
-
 		/* Outlines */
-		color = (active) ? colors.outline.active : colors.outline.inactive;
+		auto color = (active) ? colors.outline.active : colors.outline.inactive;
 		for (auto g : std::vector<wf::geometry_t>{
     		{ rect.x + c.tl, rect.y, rect.width - (c.tl + c.tr), outline_size },
     		{ rect.x + c.tr, rect.height - outline_size + origin.y,

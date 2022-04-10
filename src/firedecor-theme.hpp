@@ -95,6 +95,10 @@ struct theme_options {
 	theme_option_t<int> padding_size;
     theme_option_t<std::string> layout;
 
+    //theme_option_t<bool> flat_accent_bottom;
+    //theme_option_t<wf::color_t> active_accent;
+    //theme_option_t<wf::color_t> inactive_accent;
+
 	theme_option_t<std::string> ignore_views;
     theme_option_t<bool> debug_mode;
     theme_option_t<std::string> round_on;
