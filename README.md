@@ -29,18 +29,19 @@ An advanced window decoration plugin for the wayfire window manager.
 - [x] Implement individual corner rounding;
 - [x] Multiple corner radii(radiuses?) *Implemented as either the corner is there, or it is not;
 - [x] Implement multiple themes.
-- [ ] Add an option for the outline color to "take over" edges.
+- [ ] Add accent colors to be used on some of the edges;
 - [ ] Implement a maximum title size with potentially animated title scrolling;
 - [ ] Declare a minimum window size so the decorations can not look disgusting on small windows;
 - [ ] Implement shadows.
 
 ## Configuration
 
-### Font
+<details><summary>### Font</summary>
 - `font` will determine what font will be used for titles. Default is `sans-serif`;
 - `font_size` will determine the font size, in pixels, for the title. Default is `20`;
 - `active_title` will determine the color for the font of active windows. Default is `1.0 1.0 1.0 1.0`;
 - `inactive_title` will determine the color for the font of inactive windows. Default is `1.0 1.0 1.0 1.0`;
+</details>
 
 ### Border
 - `border_size` can take up to 4 parameters. If one is used, it will be the border size for every edge of the windows. If 2 parameters are used, the first one determines the size of the top edge, and the second one determines the size of the remaining edges. If 3 are used, the first one will be used for all edges. If 4 parameters are used, they are used in the following order: top, left, bottom, right. Default is `30 10`;
