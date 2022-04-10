@@ -36,7 +36,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 ## Configuration
 
-### Font
 <details><summary>Font options</summary>
 
 - `font` will determine what font will be used for titles. Default is `sans-serif`;
@@ -46,7 +45,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 </details>
 
-### Border
 <details><summary>Border options</summary>
 
 - `border_size` can take up to 4 parameters. If one is used, it will be the border size for every edge of the windows. If 2 parameters are used, the first one determines the size of the top edge, and the second one determines the size of the remaining edges. If 3 are used, the first one will be used for all edges. If 4 parameters are used, they are used in the following order: top, left, bottom, right. Default is `30 10`;
@@ -56,7 +54,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 </details>
 
-### Outline
 <details><summary>Outline options</summary>
 
 - `outline_size` will set the size for the outline of the window. Default is 0;
@@ -65,7 +62,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 </details>
 
-### Buttons
 <details><summary>Button options</summary>
 
 - `button_size` will determine the size of the buttons, in pixels. Default is 20;
@@ -83,7 +79,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 </details>
 
-### Icons
 <details><summary>Icon options</summary>
 
 - `icon_size` determined the size for the icons, in pixels. Default is `20`;
@@ -91,7 +86,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 </details>
 
-### Layout
 <details><summary>Layout options</summary>
 
 - `layout` is a long string that determines where things should be placed on the edges of a window. Here's how it works:
@@ -115,7 +109,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 </details>
 
-### Other
 <details><summary>Other options</summary>
 
 - `ignore_views` is of `criteria` type, and determines witch windows will be ignored for decorations. In the future, I plan on adding the ability to create multiple themes and use them selectively, for example, a light and dark theme.
@@ -124,7 +117,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 </details>
 
-### Extra Themes
 <details><summary>Extra theme options</summary>
 
 - `extra_themes` will be the declaration of existance for any extra themes you want to use, e.g. `dark light discord`. If the theme is not in here, no windows will use it. The default is ``;
@@ -150,7 +142,6 @@ An advanced window decoration plugin for the wayfire window manager.
 
 ### Example Configs
 
-#### Default
 Here's what the default configuration would look like:
 <details><summary>Default config</summary>
 
@@ -188,7 +179,6 @@ debug_mode = false
 
 paste this into your `wayfire.ini` and add firedecor to your active plugins to get started.
 
-#### My config
 This is my own configuration, feel free to copy it if you want
 <details><summary>My own config</summary>
 
