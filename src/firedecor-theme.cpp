@@ -200,14 +200,14 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
 
 		if (hover == 0.0) {
 			if (!active && inactive_buttons.get_value()) {
-				status = "-inactive.png";
+				status = "-inactive.";
 			} else {
-				status = ".png";
+				status = ".";
 			}
 		} else if (hover < 0.0) {
-			status = "-pressed.png";
+			status = "-pressed.";
 		} else {
-			status = "-hovered.png";
+			status = "-hovered.";
 		}
 			
         switch (button) {
@@ -223,7 +223,11 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
           default:
             assert(false);
         }
-        return surface_from_png(full_path);
+        if (exists(full_path + "png")) {
+            return surface_from_png(full_path + "png");
+        } else if (exists(full_path + "svg")) {
+            return surface_from_svg(full_path + "svg");
+        }
 	}
 
 	auto border_color = (active) ? active_border.get_value() : inactive_border.get_value();
