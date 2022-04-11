@@ -71,7 +71,7 @@ An advanced window decoration plugin for the wayfire window manager.
   - `firedecor`, my own spin on a buttons style, with animated symbols that change in size, and a different maximize symbol;
   - `simple`, where the buttons have no symbols inside of them, they are simple circles.
 
-  If you place anything else on this string, say, something like `my_theme`, you will have to provide `png`s so that the plugin can draw custom buttons. To accomplish that, do the following:
+  If you place anything else on this string, say, something like `my_theme`, you will have to provide `png`s or `svg`s so that the plugin can draw custom buttons. To accomplish that, do the following:
   1. Create the folder `~/.config/firedecor/button-styles/`;
   2. In it, create a folder with the name `my_theme`;
   3. Place figures for the buttons. They'll have to be called something like `type-status.png`, where `type` can be `close`, `minimize`, or `toggle-maximize`, and `status` can be `hovered`, `pressed`, or nothing. E.g. close.png, toggle-maximize-hover.png, minimize-pressed.png. Additionally, if `inactive_buttons` is set to `true`, you have to add a additional images with the `status` of `inactive`. You **Must** provide an image for each of the `type`s and `status`es listed above, so 9 images if `inactive_buttons == false`, and 12 images if `inactive_buttons == true`. The images can be equal to each other, if you don't want do differentiate between different `type`s or `status`es, just make sure that every entry is placed.
