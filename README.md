@@ -27,7 +27,7 @@ An advanced window decoration plugin for the wayfire window manager.
 - [x] Implement title bars on any direction;
 - [x] Implement completely modular decoration placement;
 - [x] Implement individual corner rounding;
-- [x] Multiple corner radii(radiuses?) *Implemented as either the corner is there, or it is not;
+- [x] Multiple corner radii *Implemented as either the corner is there, or it is not;
 - [x] Implement multiple themes.
 - [ ] Add accent colors to be used on some of the edges;
 - [ ] Implement a maximum title size with potentially animated title scrolling;
@@ -38,36 +38,36 @@ An advanced window decoration plugin for the wayfire window manager.
 
 <details><summary>Font options</summary>
 
-- `font` will determine what font will be used for titles. Default is `sans-serif`;
-- `font_size` will determine the font size, in pixels, for the title. Default is `20`;
-- `active_title` will determine the color for the font of active windows. Default is `1.0 1.0 1.0 1.0`;
-- `inactive_title` will determine the color for the font of inactive windows. Default is `1.0 1.0 1.0 1.0`;
+- `font` will set what font will be used for titles. Default is `sans-serif`;
+- `font_size` will set the font size, in pixels, for the title. Default is `20`;
+- `active_title` will set the color for the font of active windows. Default is `1.0 1.0 1.0 1.0`;
+- `inactive_title` will set the color for the font of inactive windows. Default is `1.0 1.0 1.0 1.0`;
 
 </details>
 
 <details><summary>Border options</summary>
 
 - `border_size` can take up to 4 parameters. If one is used, it will be the border size for every edge of the windows. If 2 parameters are used, the first one determines the size of the top edge, and the second one determines the size of the remaining edges. If 3 are used, the first one will be used for all edges. If 4 parameters are used, they are used in the following order: top, left, bottom, right. Default is `30 10`;
-- `active_border` will determine the color for the border of active windows. Default is `0.13 0.13 0.13 0.67`;
-- `inactive_border` will determine the color for the border of inactive windows. Default is `0.2 0.2 0.2 0.87`;
-- `corner_radius` will determine the radius for the corners of the windows. Use 0 for no radius. Default is `0`;
+- `active_border` will set the color for the border of active windows. Default is `0.13 0.13 0.13 0.67`;
+- `inactive_border` will set the color for the border of inactive windows. Default is `0.2 0.2 0.2 0.87`;
+- `corner_radius` will set the radius for the corners of the windows. Use 0 for no radius. Default is `0`;
 
 </details>
 
 <details><summary>Outline options</summary>
 
 - `outline_size` will set the size for the outline of the window. Default is 0;
-- `active_outline` will determine the color for the outline of active windows. Default is `0.0 0.0 0.0 1.0`;
-- `inactive_outline` will determine the color for the outline of inactive windows. Default is `0.0 0.0 0.0 1.0`;
+- `active_outline` will set the color for the outline of active windows. Default is `0.0 0.0 0.0 1.0`;
+- `inactive_outline` will set the color for the outline of inactive windows. Default is `0.0 0.0 0.0 1.0`;
 
 </details>
 
 <details><summary>Button options</summary>
 
-- `button_size` will determine the size of the buttons, in pixels. Default is 20;
+- `button_size` will set the size of the buttons, in pixels. Default is 20;
 - `inactive_buttons` is a `bool` that tells the plugin to draw buttons differently, depending on them being in an active or an inactive window. Default is `false`;
 - `button_style` is a string that sets the style used for the buttons. By default, there are 3 styles:
-  - `wayfire`, wicth is similar to the one used by wayfire by default;
+  - `wayfire`, witch is similar to the one used by wayfire by default;
   - `firedecor`, my own spin on a buttons style, with animated symbols that change in size, and a different maximize symbol;
   - `simple`, where the buttons have no symbols inside of them, they are simple circles.
 
@@ -81,8 +81,8 @@ An advanced window decoration plugin for the wayfire window manager.
 
 <details><summary>Icon options</summary>
 
-- `icon_size` determined the size for the icons, in pixels. Default is `20`;
-- `icon_theme` determines the theme to be used for the icons, make sure that a folder exists on an appropriate position. Default is `hicolor`;
+- `icon_size` sets the size for the icons, in pixels. Default is `20`;
+- `icon_theme` sets the theme to be used for the icons, make sure that a folder exists on an appropriate position. Default is `hicolor`;
 
 </details>
 
@@ -121,7 +121,7 @@ An advanced window decoration plugin for the wayfire window manager.
 
 - `extra_themes` will be the declaration of existance for any extra themes you want to use, e.g. `dark light discord`. If the theme is not in here, no windows will use it. The default is ``;
 - When it comes to extra themes, the configuration section will look exactly like the regular `firedecor` section, except you won't have the `ignore_views` and `extra_themes` options, and will gain the `uses_if` option;
-- `uses_if` is of `criteria` type, and will match all the windows that should use the theme of the current section. There is no defaul, so if it is not present, no window will use the theme;
+- `uses_if` is of `criteria` type, and will match all the windows that should use the theme of the current section. There is no default, so if it is not present, no window will use the theme;
 - When declaring new themes, you don't need to use every single option on the list. If the option isn't present, the theme will simply use the value from the default `firedecor` theme section, so something like:
   ```ini
   [firedecor]
@@ -247,7 +247,7 @@ layout = | icon title | maximize p minimize p close P7 -
 (very laggy)
 
 ## App Icon Debugging
-The plugin will automatically try to retrieve icons from the filesystem, in order to display them on `icon` symbols on your windows. It will first look for folders matching your `icon_theme`. If it doesn't find the icons there, it will look in the remaining folders (hicolor, adwaita, breeze, in that order). However, sometimes, it just fails, and even if there is an icon for said app, the app's `app_id` is too terrible to find a suitable image, e.g. Osu!lazer has an `app_id` of "dotnet", which is completely unusable.
+The plugin will automatically try to retrieve icons from the file system, in order to display them on `icon` symbols on your windows. It will first look for folders matching your `icon_theme`. If it doesn't find the icons there, it will look in the remaining folders (hicolor, adwaita, breeze, in that order). However, sometimes, it just fails, and even if there is an icon for said app, the app's `app_id` is too terrible to find a suitable image, e.g. Osu!lazer has an `app_id` of "dotnet", which is completely unusable.
 If this ends up happening, the plugin will use a backup icon, provided by the plugin itself. But you also have the ability to manually set icons for your apps. Here's how:
 1. Set `debug_mode` to true;
 2. Open your app, this should tell you what its `app_id` is, if you have a `title` in `layout`;
