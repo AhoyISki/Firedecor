@@ -158,29 +158,48 @@ cairo_surface_t*decoration_theme_t::form_title(std::string text,
     return surface;
 }
 
-cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale) const {
-    double corner_radius = this->corner_radius.get_value() * scale;
-	double outline_radius = corner_radius - scale * (double)outline_size.get_value() / 2;
+cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale,
+                                                 double angle, int height) const {
+    double c_r = this->corner_radius.get_value() * scale;
+	double o_r = c_r - scale * (double)outline_size.get_value() / 2;
 
     const auto format = CAIRO_FORMAT_ARGB32;
-    cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius,
-                                                          corner_radius);
+    auto *surface = cairo_image_surface_create(format, c_r, height);
     auto cr = cairo_create(surface);
+
+    wf::point_t center, rectangle;;
+    if (angle == 0) {
+        rectangle = { 0, 0 };
+        center = { 0, (int)(height - c_r) };
+    } else if (angle == M_PI / 2) {
+        rectangle = { 0, 0 };
+        center = { (int)c_r, (int)(height - c_r) };
+    } else if (angle == M_PI) {
+        rectangle = { 0, (int)c_r };
+        center = { (int)c_r, (int)c_r };
+    } else {
+        rectangle = { 0, (int)c_r };
+        center = { 0, (int)c_r };
+    }
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     /* Border */
 	wf::color_t color = active ? active_border.get_value() :
                         inactive_border.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
-    cairo_arc(cr, 0, 0, corner_radius, 0, M_PI / 2);
-    cairo_line_to(cr, 0, 0);
+    cairo_move_to(cr, center.x, center.y);
+    cairo_arc(cr, center.x, center.y, c_r, angle, angle + M_PI / 2);
+    cairo_line_to(cr, center.x, center.y);
+    cairo_fill(cr);
+
+    cairo_rectangle(cr, rectangle.x, rectangle.y, c_r, height - c_r);
     cairo_fill(cr);
 
     /* Outline */
 	color = active ? active_outline.get_value() : inactive_outline.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     cairo_set_line_width(cr, outline_size.get_value() * scale);
-    cairo_arc(cr, 0, 0, outline_radius, 0, M_PI / 2);
+    cairo_arc(cr, center.x, center.y, o_r, angle, angle + M_PI / 2);
     cairo_stroke(cr);
     cairo_destroy(cr);
 

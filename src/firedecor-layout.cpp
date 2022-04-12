@@ -129,7 +129,7 @@ void decoration_layout_t::create_areas(int width, int height,
 
     /** For background geometry calculations */
     /* Background origin and the background's final point */
-    wf::point_t b_o = { 0, 0 }, b_f = { width - corner_radius, 0 };
+    wf::point_t b_o = { 0, 0 }, b_f = { width, 0 };
     /* Background points 1 and 2 */
 	wf::point_t b_p1 = { corner_radius, 0 }, b_p2;
 	/* Minimum shift needed for regular background, so it doesn't overlap corner */
@@ -296,7 +296,7 @@ void decoration_layout_t::create_areas(int width, int height,
 		        x_bshift = &shift;
 		        y_bshift = &h_shift;
 		        o.y = height - border_size.bottom;
-		        b_f = { width - corner_radius, height - border_size.bottom };
+		        b_f = { width, height - border_size.bottom };
 		        b_p1 = { corner_radius, height - border_size.bottom };
 		        edge_width = width;
 		        edge_height = border_size.bottom;
@@ -310,7 +310,7 @@ void decoration_layout_t::create_areas(int width, int height,
 		        x_bshift = &h_shift;
 		        y_bshift = &shift;
 		        b_o = o = { width - border_size.right, border_size.top };
-		        b_f = { width - border_size.right, height - cut(border_size.bottom) };
+		        b_f = { width - border_size.right, height - border_size.bottom };
 		        b_p1 = { width - border_size.right, cut(border_size.top) };
 		        edge_width = height - (border_size.top + border_size.bottom);
 		        edge_height = border_size.right;

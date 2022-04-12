@@ -157,10 +157,14 @@ class decoration_theme_t : private theme_options {
                                 bool active, orientation_t orientation) const;
 
     /**
-     * Render one corner for active and inactive windows. 
-     * It will be used for all 4 corners of the decoration.
+     * Render the corners for active and inactive windows. 
+     * @param active The activation state of the window.
+     * @param scale The scale of the framebuffer.
+     * @param angle The initial angle of the corner.
+     * @param height The height of the corner, set by radius or the border size.
      */
-    cairo_surface_t *form_corner(bool active, double scale) const;
+    cairo_surface_t *form_corner(bool active, double scale, double angle,
+                                 int height) const;
 
     /**
      * Get the icon for the given button.
