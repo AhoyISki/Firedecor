@@ -322,8 +322,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
                 auto in = wf::geometry_intersection(a_corners[j], c->g_rel);
                 if (in.width == 0 || in.height == 0) { continue; }
 
-                /** Rectangle to cut the background from the view's corner */
-
+                /**** Rectangle to cut the background from the view's corner */
                 /* View's corner position relative to the accent's corner */
                 wf::point_t v_rel_a = { 
                     c->g_rel.x - a_corners[j].x, c->g_rel.y - a_corners[j].y
@@ -332,64 +331,71 @@ class simple_decoration_surface : public wf::surface_interface_t,
                 cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
                 cairo_rectangle(cr, v_rel_a, corner_radius, h);
                 cairo_fill(cr);
+                /****/
 
                 for (auto active : { ACT_ACCENT, INACT_ACCENT }) {
 
-                    /** Removal of intersecting areas from the view corner */
+                    /**** Removal of intersecting areas from the view corner */
+                    /** Surface to remove from, the view corner in this case */
                     auto cr_c = cairo_create(c->surf[active]);
                     cairo_set_operator(cr_c, CAIRO_OPERATOR_CLEAR);
 
                     if (do_round) {
-                        /** If the corner needs rounding */
-
+                        /**** Clearing arc in case the corner needs rounding */
                         /** Radius's center relative to the view's corner */
                         wf::point_t rc_rel_v;
                         rc_rel_v.x = -v_rel_a.x + p[j].x;
                         rc_rel_v.y = v_rel_a.y + c->g_rel.height - r + p[j].y;
 
-                        /** Clearing arc */
                         cairo_move_to(cr_c, rc_rel_v);
                         cairo_arc(cr_c, rc_rel_v, r, angle, angle + M_PI / 2);
                         cairo_fill(cr_c);
+                        /****/
                     } else {
-                        /** And if it doesn't */
+                        /**** Clearing rectangle in case it doesn't */
                         /** Rectangle's origin, relative to the view's corner */
                         wf::point_t reo_rel_v;
                         reo_rel_v.x = -v_rel_a.x;
                         reo_rel_v.y = v_rel_a.y + c->g_rel.height - r;
 
-                        /** Clearing rectangle */
                         cairo_rectangle(cr_c, reo_rel_v, r, r);
                         cairo_fill(cr_c);
+                        /****/
                     }
 
                     for (auto cut : cuts) {
+                        /**** Clear the view's corner with the accent rectangles */
                         if (cut.width <= 0 || cut.height <= 0) { continue; }
+
                         /** Bottom of the rectangle relative to the view's corner */
                         wf::point_t reb_rel_v;
                         reb_rel_v.y = (c->g_rel.y + c->g_rel.height) -
                                       (cut.y + cut.height);
                         reb_rel_v.x = (cut.x - c->g_rel.x);
 
-                        /** Clearing the view's corner with the accent's area */
                         cairo_set_operator(cr_c, CAIRO_OPERATOR_CLEAR);
                         cairo_rectangle(cr_c, reb_rel_v, cut.width, cut.height);
                         cairo_fill(cr_c);
+                        /****/
                     }
+                    /****/
                             
                     cairo_surface_upload_to_texture(c->surf[active], c->tex[active]);
                     cairo_destroy(cr_c);
                 }
             }
 
+            /**** Final drawing of accent corner, overlaying the drawn rectangle */
             cairo_set_source_rgba(cr, a_color);
             cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+
             if (do_round) {
                 cairo_move_to(cr, p[j]);
                 cairo_arc(cr, p[j], r, angle, angle + M_PI / 2);
             } else {
                 cairo_rectangle(cr, 0, 0, r, r);
             }
+            /****/
             cairo_fill(cr);
             cairo_destroy(cr);
         }

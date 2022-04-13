@@ -117,9 +117,9 @@ void decoration_layout_t::create_areas(int width, int height,
     if (title_size.height == 0) { return; }
 
 	/** The values that are used to determine the updated geometry for areas */
-    int shift = 0, top_padding = 0, direction = 1;
+    int shift = 0, out_padding = 0, track = 1;
     /** Shift values that point to <shift>, depending on the orientation */
-    int *x_shift = &shift, *y_shift = &top_padding;
+    int *x_shift = &shift, *y_shift = &out_padding;
 
     /** The "width" and "height" used for positioning of areas */
     int edge_width = width, edge_height = border_size.top;
@@ -129,14 +129,17 @@ void decoration_layout_t::create_areas(int width, int height,
 
     /** For background geometry calculations */
     /* Background origin and the background's final point */
-    wf::point_t b_o = { 0, 0 }, b_f = { width, 0 };
+    wf::point_t b_o = { 0, border_size.top }, b_f = { width - corner_radius, 0 };
     /* Background points 1 and 2 */
-	wf::point_t b_p1 = { corner_radius, 0 }, b_p2;
+	wf::point_t b_p1 = { corner_radius, border_size.top }, b_p2;
 	/* Minimum shift needed for regular background, so it doesn't overlap corner */
 	int min_shift = corner_radius;
 
 	/** References for title width and height when taking position into account */
 	int title_area_width = title_size.width, title_area_height = title_size.height;
+
+    int corner_h = std::max({ border_size.top, border_size.bottom, corner_radius });
+    auto width_cut = [&](int len) { return std::max(corner_radius, len); };
 
     while (stream >> current_symbol) {
         if (current_symbol == "|") {
@@ -162,8 +165,6 @@ void decoration_layout_t::create_areas(int width, int height,
 					       num << type.substr(1);
 					       num >> delta;
 					       region_width += delta;
-				       } else if (type == "icon") {
-					       region_width += icon_size;
 				       } else if (type != "a" && type[0] != 'A') {
 					       region_width += button_size;
 				       }
@@ -184,10 +185,10 @@ void decoration_layout_t::create_areas(int width, int height,
 
 			        if (type == "title") {
 				        delta = title_size.width;
-				        top_padding = (content_height - title_size.height) / 2;
+				        out_padding = (content_height - title_size.height) / 2;
 				        if (current_edge == EDGE_LEFT) { shift += delta; }
 				        cur_g = { 
-					        o.x + *x_shift, o.y + direction * *y_shift,
+					        o.x + track * *x_shift, o.y + track * *y_shift,
 				            title_area_width, title_area_height
 				        };
 
@@ -196,10 +197,10 @@ void decoration_layout_t::create_areas(int width, int height,
 						        DECORATION_AREA_TITLE, cur_g, current_edge));
 			        } else if (type == "icon") {
 				        delta = icon_size;
-				        top_padding = (content_height - icon_size) / 2;
+				        out_padding = (content_height - icon_size) / 2;
 				        if (current_edge == EDGE_LEFT) { shift += delta; }
 				        cur_g = {
-				        	o.x + *x_shift, o.y + direction * *y_shift,
+				        	o.x + track * *x_shift, o.y + track * *y_shift,
 				        	icon_size, icon_size
 				        };
 
@@ -217,8 +218,8 @@ void decoration_layout_t::create_areas(int width, int height,
 			        } else if (type == "a" || type[0] == 'A') {
 				        counter = (counter + 1) % 2;
 				        h_shift = counter * edge_height;
-				        b_p2 = { b_o.x + *x_bshift,
-				                b_o.y + direction * *y_bshift };
+				        b_p2 = { b_o.x + track * *x_bshift,
+				                b_o.y + track * *y_bshift };
 				        cur_g = {
     				        std::min(b_p1.x, b_p2.x), std::min(b_p1.y, b_p2.y),
     				        abs(b_p2.x - b_p1.x), abs(b_p2.y - b_p1.y)
@@ -234,10 +235,10 @@ void decoration_layout_t::create_areas(int width, int height,
 				        last_accent = type;
 			        } else {
 				        delta = button_size;
-				        top_padding = (content_height - button_size) / 2;
+				        out_padding = (content_height - button_size) / 2;
 				        if (current_edge == EDGE_LEFT) { shift += delta; }
 				        cur_g = { 
-					       	o.x + *x_shift, o.y + direction * *y_shift,
+					       	o.x + track * *x_shift, o.y + track * *y_shift,
 					       	button_size, button_size
 				       	};
 
@@ -255,34 +256,31 @@ void decoration_layout_t::create_areas(int width, int height,
 		        }
 	        }
 
-	        auto cut = [&](int val) { return std::max(val, corner_radius); };
 
-	        if (b_p1.x != edge_width) {
-    	        shift = 0;
-		        counter = (counter + 1) % 2;
-		        h_shift = counter * edge_height;
-    	        b_p2 = { b_f.x + *x_bshift, b_f.y + *y_bshift };
-    	        wf::geometry_t final_g = {
-    		        std::min(b_p1.x, b_p2.x), std::min(b_p1.y, b_p2.y),
-    		        abs(b_p2.x - b_p1.x), abs(b_p2.y - b_p1.y)
-    	        };
-    	        auto area = (counter == 0) ? DECORATION_AREA_ACCENT :
-                         DECORATION_AREA_BACKGROUND;
+	        shift = 0;
+	        h_shift = counter * edge_height;
+	        b_p2 = { b_f.x + *x_bshift, b_f.y + *y_bshift };
+	        wf::geometry_t final_g = {
+		        std::min(b_p1.x, b_p2.x), std::min(b_p1.y, b_p2.y),
+		        track * (b_p2.x - b_p1.x), track * (b_p2.y - b_p1.y)
+	        };
+	        if (final_g.width > 0 && final_g.height > 0) {
+    	        auto type =  DECORATION_AREA_BACKGROUND;
     	        background_areas.push_back(
-    		        std::make_unique<decoration_area_t>(area, final_g, last_accent));
+    		        std::make_unique<decoration_area_t>(type, final_g, "lol"));
 	        }
 
 	        if (current_edge == EDGE_TOP) {
 		        current_edge = EDGE_LEFT;
-		        direction = -1;
-		        x_shift = &top_padding;
+		        track = -1;
+		        x_shift = &out_padding;
 		        y_shift = &shift;
 		        x_bshift = &h_shift;
 		        y_bshift = &shift;
-		        o = {border_size.left - content_height, height - border_size.bottom};
-		        b_p1 = { 0, height - cut(border_size.bottom) };
-                b_o = { 0, height - border_size.bottom };
-		        b_f = { 0, cut(border_size.top) };
+		        o = { border_size.left, height - border_size.bottom };
+		        b_p1 = { border_size.left, height - corner_h };
+                b_o = { border_size.left, height - border_size.bottom };
+		        b_f = { 0, corner_h };
 		        edge_width = height - (border_size.top + border_size.bottom);
 		        edge_height = border_size.left;
 		        title_area_width = title_size.height;
@@ -290,14 +288,15 @@ void decoration_layout_t::create_areas(int width, int height,
 		        min_shift = corner_radius - border_size.bottom;
 	        } else if (current_edge == EDGE_LEFT) {
 		        current_edge = EDGE_BOTTOM;
-		        direction = 1;
+		        track = 1;
 		        x_shift = &shift;
-		        y_shift = &top_padding;
+		        y_shift = &out_padding;
 		        x_bshift = &shift;
 		        y_bshift = &h_shift;
-		        o.y = height - border_size.bottom;
-		        b_f = { width, height - border_size.bottom };
-		        b_p1 = { corner_radius, height - border_size.bottom };
+		        o = { 0, height - border_size.bottom };
+                b_o = { 0, height - border_size.bottom };
+		        b_f = { width - width_cut(border_size.right), height };
+		        b_p1 = { width_cut(border_size.left), height - border_size.bottom };
 		        edge_width = width;
 		        edge_height = border_size.bottom;
 		        title_area_width = title_size.width;
@@ -305,13 +304,13 @@ void decoration_layout_t::create_areas(int width, int height,
 		        min_shift = corner_radius;
 	        } else {
 		        current_edge = EDGE_RIGHT;
-		        x_shift = &top_padding;
+		        x_shift = &out_padding;
 		        y_shift = &shift;
 		        x_bshift = &h_shift;
 		        y_bshift = &shift;
 		        b_o = o = { width - border_size.right, border_size.top };
-		        b_f = { width - border_size.right, height - border_size.bottom };
-		        b_p1 = { width - border_size.right, cut(border_size.top) };
+		        b_f = { width, height - corner_h };
+		        b_p1 = { width - border_size.right, corner_h };
 		        edge_width = height - (border_size.top + border_size.bottom);
 		        edge_height = border_size.right;
 		        title_area_width = title_size.height;
