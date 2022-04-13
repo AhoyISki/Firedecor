@@ -189,7 +189,7 @@ class decoration_layout_t {
 
     const decoration_theme_t& theme;
 
-    int content_height;
+    int max_height;
 
     std::function<void(wlr_box)> damage_callback;
 

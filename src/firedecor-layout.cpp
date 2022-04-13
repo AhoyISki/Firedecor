@@ -111,12 +111,7 @@ void decoration_layout_t::create_areas(int width, int height,
 
     edge_t current_edge = EDGE_TOP;
     std::string current_position = "left";
-    wf::point_t o = { 0, border_size.top - content_height };
-
-	// If you take this out, weird stuff might happen, if you can figure out how to 
-	// fix this, I'll give you a cookie (jk). Even if it is hacky and shouldn't be 
-	// used, it works and doesn't seem to bring any problems.
-    if (title_size.height == 0) { return; }
+    wf::point_t o = { 0, border_size.top - max_height };
 
 	/** The values that are used to determine the updated geometry for areas */
     int shift = 0, out_padding = 0;
@@ -197,31 +192,26 @@ void decoration_layout_t::create_areas(int width, int height,
 
 			        if (type == "title") {
 				        delta = title_size.width;
-				        out_padding = (content_height - title_size.height) / 2;
-				        if (current_edge == EDGE_LEFT) { shift += delta; }
+				        out_padding = (max_height - title_size.height) / 2;
 				        cur_g = { 
 					        o.x + trans(p()).x, o.y + trans(p()).y,
 				            trans(title).x, trans(title).y
 				        };
 
-				        this->layout_areas.push_back(
-					        std::make_unique<decoration_area_t>(
+				        layout_areas.push_back(std::make_unique<decoration_area_t>(
 						        DECORATION_AREA_TITLE, cur_g, current_edge));
 			        } else if (type == "icon") {
 				        delta = icon_size;
-				        out_padding = (content_height - icon_size) / 2;
-				        if (current_edge == EDGE_LEFT) { shift += delta; }
+				        out_padding = (max_height - icon_size) / 2;
 				        cur_g = {
 				        	o.x + trans(p()).x, o.y + trans(p()).y,
 				        	icon_size, icon_size
 				        };
 
-				        this->layout_areas.push_back(
-					        std::make_unique<decoration_area_t>(
+				        layout_areas.push_back(std::make_unique<decoration_area_t>(
 						        DECORATION_AREA_ICON, cur_g, current_edge));
 			        } else if (type == "p") {
 				        delta = padding_size;
-				        if (current_edge == EDGE_LEFT) { shift += delta; }
 			        } else if (type[0] == 'P') {
 					    std::stringstream num;
 					    num << type.substr(1);
@@ -246,7 +236,7 @@ void decoration_layout_t::create_areas(int width, int height,
 				        last_accent = type;
 			        } else {
 				        delta = button_size;
-				        out_padding = (content_height - button_size) / 2;
+				        out_padding = (max_height - button_size) / 2;
 				        if (current_edge == EDGE_LEFT) { shift += delta; }
 				        cur_g = { 
 					       	o.x + trans(p()).x, o.y + trans(p()).y,
@@ -263,7 +253,7 @@ void decoration_layout_t::create_areas(int width, int height,
 				        this->layout_areas.back()->as_button().set_button_type(button);
 					}			        
 
-					if (current_edge != EDGE_LEFT) { shift += delta; }
+					shift += delta;
 		        }
 	        }
 
@@ -283,11 +273,11 @@ void decoration_layout_t::create_areas(int width, int height,
 
 	        if (current_edge == EDGE_TOP) {
 		        current_edge = EDGE_LEFT;
-		        m = { 0, -1, -1, 0 };
-		        o = { border_size.left, height - border_size.bottom };
+		        m = { 0, 1, -1, 0 };
+		        o = { border_size.left - max_height, height - border_size.bottom };
+                b_o = { 0, height - border_size.bottom };
 		        b_p1 = { border_size.left, height - corner_h };
-                b_o = { border_size.left, height - border_size.bottom };
-		        b_f = { 0, corner_h };
+		        b_f = { border_size.left, corner_h };
 		        edge_height = border_size.left;
 		        min_shift = corner_radius - border_size.bottom;
 	        } else if (current_edge == EDGE_LEFT) {
@@ -295,16 +285,17 @@ void decoration_layout_t::create_areas(int width, int height,
 		        m = { 1, 0, 0, 1 };
 		        o = { 0, height - border_size.bottom };
                 b_o = { 0, height - border_size.bottom };
-		        b_f = { width - width_cut(border_size.right), height };
 		        b_p1 = { width_cut(border_size.left), height - border_size.bottom };
+		        b_f = { width - width_cut(border_size.right), height };
 		        edge_height = border_size.bottom;
 		        min_shift = corner_radius;
 	        } else {
 		        current_edge = EDGE_RIGHT;
-		        m = { 0, 1, 1, 0 };
-		        b_o = o = { width - border_size.right, border_size.top };
-		        b_f = { width, height - corner_h };
-		        b_p1 = { width - border_size.right, corner_h };
+		        m = { 0, -1, 1, 0 };
+		        o = { width - border_size.right + max_height, border_size.top };
+		        b_o = { width, border_size.top };
+		        b_p1 = { width, corner_h };
+		        b_f = { width - border_size.right, height - corner_h };
 		        edge_height = border_size.right;
 		        min_shift = corner_radius - border_size.top;
 	        }
@@ -328,20 +319,20 @@ void decoration_layout_t::create_areas(int width, int height,
 
 /** Regenerate layout using the new size */
 void decoration_layout_t::resize(int width, int height, wf::dimensions_t title_size) {
-    content_height = std::max({ title_size.height, icon_size, button_size });
+    max_height = std::max({ title_size.height, icon_size, button_size });
     this->background_areas.clear();
     this->layout_areas.clear();
 
     create_areas(width, height, title_size);
 
 	/* Areas for resizing only, used for movement area calculation */
-    int top_resize    = std::min(std::max(border_size.top - content_height, 7),
+    int top_resize    = std::min(std::max(border_size.top - max_height, 7),
                               border_size.top);
-    int left_resize   = std::min(std::max(border_size.left - content_height, 7),
+    int left_resize   = std::min(std::max(border_size.left - max_height, 7),
                                 border_size.left);
-    int bottom_resize = std::min(std::max(border_size.bottom - content_height, 7),
+    int bottom_resize = std::min(std::max(border_size.bottom - max_height, 7),
                                  border_size.bottom);
-    int right_resize  = std::min(std::max(border_size.right - content_height, 7),
+    int right_resize  = std::min(std::max(border_size.right - max_height, 7),
                                 border_size.right);
     /* Moving edges */
     for (wf::geometry_t g : {

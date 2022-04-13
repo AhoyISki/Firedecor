@@ -20,10 +20,8 @@
 
 //#include <cairo.h>
 
-#define ACTIVE true
-#define INACTIVE false
-#define INACT_ACCENT 0
-#define ACT_ACCENT 1
+#define INACTIVE 0
+#define ACTIVE 1
 #define FORCE true
 #define DONT_FORCE false
 
@@ -49,14 +47,14 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
 		auto o = wf::firedecor::HORIZONTAL;
         surface = theme.form_title(title.text, title_size, ACTIVE, o);
-        cairo_surface_upload_to_texture(surface, title.hor_active);
+        cairo_surface_upload_to_texture(surface, title.hor[ACTIVE]);
         surface = theme.form_title(title.text, title_size, INACTIVE, o);
-        cairo_surface_upload_to_texture(surface, title.hor_inactive);
+        cairo_surface_upload_to_texture(surface, title.hor[INACTIVE]);
 		o = wf::firedecor::VERTICAL;
 		surface = theme.form_title(title.text, title_size, ACTIVE, o);
-        cairo_surface_upload_to_texture(surface, title.ver_active);
+        cairo_surface_upload_to_texture(surface, title.ver[ACTIVE]);
         surface = theme.form_title(title.text, title_size, INACTIVE, o);
-        cairo_surface_upload_to_texture(surface, title.ver_inactive);
+        cairo_surface_upload_to_texture(surface, title.ver[INACTIVE]);
         cairo_surface_destroy(surface); 
 
         title_needs_update = false;
@@ -92,8 +90,8 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     /** Title variables */
     struct {
-        wf::simple_texture_t hor_active, hor_inactive;
-        wf::simple_texture_t ver_active, ver_inactive;
+        wf::simple_texture_t hor[2];
+        wf::simple_texture_t ver[2];
         std::string text = "";
         wf::firedecor::color_set_t colors;
         wf::dimensions_t dims;
@@ -167,7 +165,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
     		int height = std::max( { corner_radius, border_size.top,
     		                         border_size.bottom });
     		auto create_s_and_t = [&](corner_texture_t& t, double angle) {
-        		for (auto a : { ACT_ACCENT, INACT_ACCENT }) {
+        		for (auto a : { ACTIVE, INACTIVE }) {
             		t.surf[a] = theme.form_corner(ACTIVE, scale, angle, height);
         			cairo_surface_upload_to_texture(t.surf[a], t.tex[a]);
         		}
@@ -220,43 +218,26 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     void render_title(const wf::framebuffer_t& fb, wf::geometry_t geometry,
                       wf::firedecor::edge_t edge, wf::geometry_t scissor) {
-	    wf::simple_texture_t *texture;
-	    bool active = view->activated;
-
 	    if (title_needs_update) {
     	    update_title(fb.scale);
 	    }
 
+	    wf::simple_texture_t *texture;
 	    uint32_t bits = 0;
 	    if (edge == wf::firedecor::EDGE_TOP || edge == wf::firedecor::EDGE_BOTTOM) {
-	        if (active) {
-		        texture = &title.hor_active;
-	        } else {
-		        texture = &title.hor_inactive;
-	        }
 	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y;
-	    } else if (edge == wf::firedecor::EDGE_LEFT) {
-	        if (active) {
-		        texture = &title.ver_active;
-	        } else {
-		        texture = &title.ver_inactive;
-	        }
-	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y;
+	        texture = &title.hor[view->activated];
 	    } else {
-	        if (active) {
-		        texture = &title.ver_active;
-	        } else {
-		        texture = &title.ver_inactive;
-	        }
-	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_X;
-	    } 
+    	    texture = &title.ver[view->activated];
+	    }
 		OpenGL::render_begin(fb);
         fb.logic_scissor(scissor);
         OpenGL::render_texture(texture->tex, fb, geometry, glm::vec4(1.0f), bits);
 		OpenGL::render_end();
     }
 
-    void render_icon(const wf::framebuffer_t& fb, wf::geometry_t g, const wf::geometry_t& scissor) {
+    void render_icon(const wf::framebuffer_t& fb, wf::geometry_t g,
+                     const wf::geometry_t& scissor) {
         update_icon();
 		OpenGL::render_begin(fb);
 		fb.logic_scissor(scissor);
@@ -333,7 +314,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
                 cairo_fill(cr);
                 /****/
 
-                for (auto active : { ACT_ACCENT, INACT_ACCENT }) {
+                for (auto active : { ACTIVE, INACTIVE }) {
 
                     /**** Removal of intersecting areas from the view corner */
                     /** Surface to remove from, the view corner in this case */
@@ -400,14 +381,14 @@ class simple_decoration_surface : public wf::surface_interface_t,
             cairo_destroy(cr);
         }
         auto& texture = accent_textures.back();
-        cairo_surface_upload_to_texture(surfaces[0], texture.tr[INACT_ACCENT]);
-        cairo_surface_upload_to_texture(surfaces[1], texture.tl[INACT_ACCENT]);
-        cairo_surface_upload_to_texture(surfaces[2], texture.bl[INACT_ACCENT]);
-        cairo_surface_upload_to_texture(surfaces[3], texture.br[INACT_ACCENT]);
-        cairo_surface_upload_to_texture(surfaces[4], texture.tr[ACT_ACCENT]);
-        cairo_surface_upload_to_texture(surfaces[5], texture.tl[ACT_ACCENT]);
-        cairo_surface_upload_to_texture(surfaces[6], texture.bl[ACT_ACCENT]);
-        cairo_surface_upload_to_texture(surfaces[7], texture.br[ACT_ACCENT]);
+        cairo_surface_upload_to_texture(surfaces[0], texture.tr[INACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[1], texture.tl[INACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[2], texture.bl[INACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[3], texture.br[INACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[4], texture.tr[ACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[5], texture.tl[ACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[6], texture.bl[ACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[7], texture.br[ACTIVE]);
         texture.radius = r;
 
         for (auto surface : surfaces) { cairo_surface_destroy(surface); }
@@ -439,7 +420,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
                { g.x + g.width - r, g.y + r, r, g.height - 2 * r }
            };
            
-           int active = (view->activated) ? ACT_ACCENT : INACT_ACCENT;
+           int active = (view->activated) ? ACTIVE : INACTIVE;
            OpenGL::render_begin(fb);
            fb.logic_scissor(scissor);
            OpenGL::render_texture(accent_textures.at(i).tr[active].tex, fb,
