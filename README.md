@@ -86,6 +86,14 @@ An advanced window decoration plugin for the wayfire window manager.
 
 </details>
 
+<details><summary>Accent options</summary>
+
+- Accents are areas in the decoration's background that you want to be colored differently, they are placed in the layout, seen on the section below;
+- `active_accent` sets the color for active accents. Default is `#ffffffff`.
+- `inactive_accent` sets the color for inactive accents. Default is `#ffffffff`.
+
+</details>
+
 <details><summary>Layout options</summary>
 
 - `layout` is a long string that determines where things should be placed on the edges of a window. Here's how it works:
@@ -94,6 +102,9 @@ An advanced window decoration plugin for the wayfire window manager.
   - The symbol `p` will introduce a standardized padding, set by the `padding_size` option. The symbol `P` followed by a number, will place that many pixels of padding, for example, `P7` places 7 pixels of padding on the edge;
   - The symbol `|` changes where the symbols are being placed. Normally, they're on the left of the edge, if you place a `|`, they will be on the center, if you place another `|`, they will be placed on the right. Further `|`s will not change position;
   - The symbol `-` will change the edge the symbols are being placed in. By default, it will be the top edge, and every `-` will change the edge, counter-clockwise. You **Must** end the layout definition with one `-`, even if you don't plan on using the following edge.
+  - The symbol `a` will initiate/end an accented area, it will start one if there wasn't one already, and it will end one if there was. You can more precisely position accents by using paddings, for example `a P5 title P5 a` will place a padding between each end of the accent, giving some space for the title. All corners will be rounded with this option.
+  - The symbol `A` is much like `a`, but it is followed by a string, which tells the program what corners should be rounded in that accent. It follows the pattern of `tr tl bl br` (`t`op and `b`ottom `l`eft and `r`ight). It must be a 1 one word string, containing all the patterns for corners to be rounded. Any string will do, for example:
+  `a title A**92tl(!Ubr` will round the `tl` and `br` corners. One thing to note about corners is that they take on the last configuration used in a letter, in the above example, the first `a` could have been an `A` followed by any string, but the configuration would still follow what the second `A` does.
 
   The default layout is `P5 title | | minimize p maximize p close P5 -`. Here's what this means:
   1. Place a padding with 5 pixels of size, followed by title on the left;
@@ -185,39 +196,38 @@ This is my own configuration, feel free to copy it if you want
 ```ini
 [firedecor]
 font = Clear Sans
-active_title = 0.941 0.776 0.455 1.0
-inactive_title = 0.773 0.784 0.776 1.0
+active_title = \#1d1f21ff
+inactive_title = \#1d1f21ff
 
 button_style = firedecor
 inactive_buttons = true
 
-border_size = 30 12
-corner_radius = 16
+border_size = 30 10
+corner_radius = 15
 active_border = 0.113 0.121 0.139 0.9
 inactive_border = 0.113 0.121 0.129 0.9
 
-layout = | icon p title | minimize p maximize p close P7 -
-debug_mode = true
+active_accent = \#efedf8ee
+inactive_accent = \#aaa5b3ee
+
+layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl
 
 extra_themes = firefox discord
 
 [firefox]
 uses_if = app_id is "firefox"
 
-active_title = 0.114 0.122 0.129 1.0
-inactive_title = 0.506 0.635 0.702 1.0
-
 active_border = 1.0 1.0 1.0 1.0
 inactive_border = 1.0 1.0 1.0 1.0
 
-round_on = tr tl bl
+round_on = tr tl
 
 [discord]
 uses_if = app_id is "discord"
 active_border = 0.125 0.133 0.145 1.0
 inactive_border = 0.125 0.133 0.145 1.0
 
-round_on = tr tl bl
+round_on = tr tl
 ```
 
 </details>

@@ -253,6 +253,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
         const auto format = CAIRO_FORMAT_ARGB32;
         cairo_surface_t *surfaces[8];
         double angle = 0;
+        /** Colors of the accent and background, respectively */
         wf::color_t a_color;
         wf::color_t b_color;
         wf::point_t p[] = { { 0, 0 }, { r, 0 }, { r, r }, { 0, r } };
@@ -285,12 +286,12 @@ class simple_decoration_surface : public wf::surface_interface_t,
             }
                 
             surfaces[i] = cairo_image_surface_create(format, r, r);
-            auto cr = cairo_create(surfaces[i]);
+            auto cr_a = cairo_create(surfaces[i]);
 
             /** Background rectangle, behind the accent's corner */
-            cairo_set_source_rgba(cr, b_color);
-            cairo_rectangle(cr, 0, 0, r, r);
-            cairo_fill(cr);
+            cairo_set_source_rgba(cr_a, b_color);
+            cairo_rectangle(cr_a, 0, 0, r, r);
+            cairo_fill(cr_a);
 
             bool do_round = (round.find(to_round[j]) != std::string::npos ||
                              round == "a");
@@ -302,49 +303,45 @@ class simple_decoration_surface : public wf::surface_interface_t,
                 auto in = wf::geometry_intersection(a_corners[j], c->g_rel);
                 if (in.width == 0 || in.height == 0) { continue; }
 
-                /**** Rectangle to cut the background from the view's corner */
+                /**** Rectangle to cut the background from the accent's corner */
                 /* View's corner position relative to the accent's corner */
                 wf::point_t v_rel_a = { 
                     c->g_rel.x - a_corners[j].x, c->g_rel.y - a_corners[j].y
                 };
 
-                cairo_set_operator(cr, CAIRO_OPERATOR_CLEAR);
-                cairo_rectangle(cr, v_rel_a, corner_radius, h);
-                cairo_fill(cr);
+                cairo_set_operator(cr_a, CAIRO_OPERATOR_CLEAR);
+                cairo_rectangle(cr_a, v_rel_a, corner_radius, h);
+                cairo_fill(cr_a);
                 /****/
 
+                /** Removal of intersecting areas from the view corner */
                 for (auto active : { ACTIVE, INACTIVE }) {
 
-                    /**** Removal of intersecting areas from the view corner */
                     /** Surface to remove from, the view corner in this case */
-                    auto cr_c = cairo_create(c->surf[active]);
-                    cairo_set_operator(cr_c, CAIRO_OPERATOR_CLEAR);
+                    auto cr_v = cairo_create(c->surf[active]);
+                    cairo_set_operator(cr_v, CAIRO_OPERATOR_CLEAR);
 
                     if (do_round) {
-                        /**** Clearing arc in case the corner needs rounding */
                         /** Radius's center relative to the view's corner */
                         wf::point_t rc_rel_v;
                         rc_rel_v.x = -v_rel_a.x + p[j].x;
                         rc_rel_v.y = v_rel_a.y + c->g_rel.height - r + p[j].y;
 
-                        cairo_move_to(cr_c, rc_rel_v);
-                        cairo_arc(cr_c, rc_rel_v, r, angle, angle + M_PI / 2);
-                        cairo_fill(cr_c);
-                        /****/
+                        cairo_move_to(cr_v, rc_rel_v);
+                        cairo_arc(cr_v, rc_rel_v, r, angle, angle + M_PI / 2);
+                        cairo_fill(cr_v);
                     } else {
-                        /**** Clearing rectangle in case it doesn't */
                         /** Rectangle's origin, relative to the view's corner */
                         wf::point_t reo_rel_v;
                         reo_rel_v.x = -v_rel_a.x;
                         reo_rel_v.y = v_rel_a.y + c->g_rel.height - r;
 
-                        cairo_rectangle(cr_c, reo_rel_v, r, r);
-                        cairo_fill(cr_c);
-                        /****/
+                        cairo_rectangle(cr_v, reo_rel_v, r, r);
+                        cairo_fill(cr_v);
                     }
 
+                    /** Clear the view's corner with the accent rectangles */
                     for (auto cut : cuts) {
-                        /**** Clear the view's corner with the accent rectangles */
                         if (cut.width <= 0 || cut.height <= 0) { continue; }
 
                         /** Bottom of the rectangle relative to the view's corner */
@@ -353,31 +350,29 @@ class simple_decoration_surface : public wf::surface_interface_t,
                                       (cut.y + cut.height);
                         reb_rel_v.x = (cut.x - c->g_rel.x);
 
-                        cairo_set_operator(cr_c, CAIRO_OPERATOR_CLEAR);
-                        cairo_rectangle(cr_c, reb_rel_v, cut.width, cut.height);
-                        cairo_fill(cr_c);
-                        /****/
+                        cairo_set_operator(cr_v, CAIRO_OPERATOR_CLEAR);
+                        cairo_rectangle(cr_v, reb_rel_v, cut.width, cut.height);
+                        cairo_fill(cr_v);
                     }
-                    /****/
                             
                     cairo_surface_upload_to_texture(c->surf[active], c->tex[active]);
-                    cairo_destroy(cr_c);
+                    cairo_destroy(cr_v);
                 }
             }
 
             /**** Final drawing of accent corner, overlaying the drawn rectangle */
-            cairo_set_source_rgba(cr, a_color);
-            cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+            cairo_set_source_rgba(cr_a, a_color);
+            cairo_set_operator(cr_a, CAIRO_OPERATOR_SOURCE);
 
             if (do_round) {
-                cairo_move_to(cr, p[j]);
-                cairo_arc(cr, p[j], r, angle, angle + M_PI / 2);
+                cairo_move_to(cr_a, p[j]);
+                cairo_arc(cr_a, p[j], r, angle, angle + M_PI / 2);
             } else {
-                cairo_rectangle(cr, 0, 0, r, r);
+                cairo_rectangle(cr_a, 0, 0, r, r);
             }
             /****/
-            cairo_fill(cr);
-            cairo_destroy(cr);
+            cairo_fill(cr_a);
+            cairo_destroy(cr_a);
         }
         auto& texture = accent_textures.back();
         cairo_surface_upload_to_texture(surfaces[0], texture.tr[INACTIVE]);
@@ -397,60 +392,68 @@ class simple_decoration_surface : public wf::surface_interface_t,
                                 wf::point_t rect, wf::geometry_t scissor,
                                 std::string rounded, unsigned long i,
                                 wf::firedecor::decoration_area_type_t type) {
+        /** The view's origin */                            
+        wf::point_t o = { rect.x, rect.y };
+        bool active = view->activated;
 
-       wf::point_t o = { rect.x, rect.y };
-       if (type == wf::firedecor::DECORATION_AREA_ACCENT) {
-           int r;
-           if (accent_textures.size() <= i) {
-               accent_textures.resize(i + 1);
-               r = std::min({ ceil((double)g.height / 2), ceil((double)g.width / 2),
-                              (double)corner_radius});
-               form_accent_corners(r, g, rounded);
-           }
-           r = accent_textures.at(i).radius;
-           wf::geometry_t c_g[] = { 
-               { g.x + g.width - r, g.y, r, r }, { g.x, g.y, r, r },
-               { g.x, g.y + g.height - r, r, r },
-               { g.x + g.width - r, g.y + g.height - r, r, r }
-           };
-           wf::geometry_t accent_rects[] = { 
-               { g.x + r, g.y, g.width - 2 * r, g.height },
-               { g.x, g.y + r, r, g.height - 2 * r },
-               { g.x + g.width - r, g.y + r, r, g.height - 2 * r }
-           };
-           
-           int active = (view->activated) ? ACTIVE : INACTIVE;
-           OpenGL::render_begin(fb);
-           fb.logic_scissor(scissor);
-           OpenGL::render_texture(accent_textures.at(i).tr[active].tex, fb,
-                                  c_g[0] + o, glm::vec4(1.0));
-           OpenGL::render_texture(accent_textures.at(i).tl[active].tex, fb,
-                                  c_g[1] + o, glm::vec4(1.0));
-           OpenGL::render_texture(accent_textures.at(i).bl[active].tex, fb,
-                                  c_g[2] + o, glm::vec4(1.0));
-           OpenGL::render_texture(accent_textures.at(i).br[active].tex, fb,
-                                  c_g[3] + o, glm::vec4(1.0));
+        if (type == wf::firedecor::DECORATION_AREA_ACCENT) {
+            /**** Render the corners of an accent */
+            int r;
 
-           wf::color_t color = (view->activated) ? theme.get_accent_colors().active :
-                               theme.get_accent_colors().inactive;
-           color = alpha_transform(color);
-           for (auto a_r : accent_rects) {
-               if (a_r.width <= 0 || a_r.height <= 0) { continue; }
-               OpenGL::render_rectangle(a_r + o, color,
-                                        fb.get_orthographic_projection());
-           }
-           
-           OpenGL::render_end();
-       } else {
-           wf::color_t color = (view->activated) ? theme.get_border_colors().active :
-                               theme.get_border_colors().inactive;
-           color = alpha_transform(color);
+            /** Create the corners, it should happen once per accent */
+            if (accent_textures.size() <= i) {
+                accent_textures.resize(i + 1);
+                r = std::min({ ceil((double)g.height / 2), ceil((double)g.width / 2),
+                               (double)corner_radius});
+                form_accent_corners(r, g, rounded);
+            }
 
-           OpenGL::render_begin(fb);
-           fb.logic_scissor(scissor);
-           OpenGL::render_rectangle(g + o, color, fb.get_orthographic_projection());
-           OpenGL::render_end();
-       }
+            r = accent_textures.at(i).radius;
+
+            wf::geometry_t c_g[] = { 
+                { g.x + g.width - r, g.y, r, r }, { g.x, g.y, r, r },
+                { g.x, g.y + g.height - r, r, r },
+                { g.x + g.width - r, g.y + g.height - r, r, r }
+            };
+
+            OpenGL::render_begin(fb);
+            fb.logic_scissor(scissor);
+            for (int j = 0; j < 4; j++) {
+            OpenGL::render_texture(accent_textures.at(i).tr[active].tex, fb,
+                                   c_g[j] + o, glm::vec4(1.0));
+            }
+            /****/
+
+            /**** Render the internal rectangles of the accent */
+            wf::geometry_t accent_rects[] = { 
+                { g.x + r, g.y, g.width - 2 * r, g.height },
+                { g.x, g.y + r, r, g.height - 2 * r },
+                { g.x + g.width - r, g.y + r, r, g.height - 2 * r }
+            };
+
+            wf::color_t color = (active) ? theme.get_accent_colors().active :
+                                theme.get_accent_colors().inactive;
+            color = alpha_transform(color);
+            for (auto a_r : accent_rects) {
+                if (a_r.width <= 0 || a_r.height <= 0) { continue; }
+                OpenGL::render_rectangle(a_r + o, color,
+                                         fb.get_orthographic_projection());
+            }
+            /****/
+            OpenGL::render_end();
+        } else {
+            /**** Render a single rectangle when the area is a background */
+            wf::color_t color = (active) ? theme.get_border_colors().active :
+                                theme.get_border_colors().inactive;
+
+            color = alpha_transform(color);
+
+            OpenGL::render_begin(fb);
+            fb.logic_scissor(scissor);
+            OpenGL::render_rectangle(g + o, color, fb.get_orthographic_projection());
+            OpenGL::render_end();
+            /****/
+        }
     }
 
 	void render_background(const wf::framebuffer_t& fb, wf::geometry_t rect,
