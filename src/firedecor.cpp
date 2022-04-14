@@ -87,6 +87,10 @@ class wayfire_firedecor_t :
 
         	get_option<int>(theme, "icon_size"),
         	get_option<std::string>(theme, "icon_theme"),
+
+            get_option<wf::color_t>(theme, "active_accent"),
+            get_option<wf::color_t>(theme, "inactive_accent"),
+
         	get_option<int>(theme, "padding_size"),
             get_option<std::string>(theme, "layout"),
 

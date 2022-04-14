@@ -59,6 +59,9 @@ color_set_t decoration_theme_t::get_outline_colors() const {
 color_set_t decoration_theme_t::get_title_colors() const {
 	return { active_title.get_value(), inactive_title.get_value() };
 }
+color_set_t decoration_theme_t::get_accent_colors() const {
+	return { active_accent.get_value(), inactive_accent.get_value() };
+}
 
 /* Other return functions */
 bool decoration_theme_t::has_title_orientation(orientation_t orientation) const {
@@ -158,29 +161,48 @@ cairo_surface_t*decoration_theme_t::form_title(std::string text,
     return surface;
 }
 
-cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale) const {
-    double corner_radius = this->corner_radius.get_value() * scale;
-	double outline_radius = corner_radius - scale * (double)outline_size.get_value() / 2;
+cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale,
+                                                 double angle, int height) const {
+    double c_r = this->corner_radius.get_value() * scale;
+	double o_r = c_r - scale * (double)outline_size.get_value() / 2;
 
     const auto format = CAIRO_FORMAT_ARGB32;
-    cairo_surface_t *surface = cairo_image_surface_create(format, corner_radius,
-                                                          corner_radius);
+    auto *surface = cairo_image_surface_create(format, c_r, height);
     auto cr = cairo_create(surface);
+
+    wf::point_t center, rectangle;;
+    if (angle == 0) {
+        rectangle = { 0, 0 };
+        center = { 0, (int)(height - c_r) };
+    } else if (angle == M_PI / 2) {
+        rectangle = { 0, 0 };
+        center = { (int)c_r, (int)(height - c_r) };
+    } else if (angle == M_PI) {
+        rectangle = { 0, (int)c_r };
+        center = { (int)c_r, (int)c_r };
+    } else {
+        rectangle = { 0, (int)c_r };
+        center = { 0, (int)c_r };
+    }
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     /* Border */
 	wf::color_t color = active ? active_border.get_value() :
                         inactive_border.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
-    cairo_arc(cr, 0, 0, corner_radius, 0, M_PI / 2);
-    cairo_line_to(cr, 0, 0);
+    cairo_move_to(cr, center.x, center.y);
+    cairo_arc(cr, center.x, center.y, c_r, angle, angle + M_PI / 2);
+    cairo_line_to(cr, center.x, center.y);
+    cairo_fill(cr);
+
+    cairo_rectangle(cr, rectangle.x, rectangle.y, c_r, height - c_r);
     cairo_fill(cr);
 
     /* Outline */
 	color = active ? active_outline.get_value() : inactive_outline.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     cairo_set_line_width(cr, outline_size.get_value() * scale);
-    cairo_arc(cr, 0, 0, outline_radius, 0, M_PI / 2);
+    cairo_arc(cr, center.x, center.y, o_r, angle, angle + M_PI / 2);
     cairo_stroke(cr);
     cairo_destroy(cr);
 
@@ -196,7 +218,7 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
 								"/.config/firedecor/button-styles/" +
 						   	    (std::string)button_style.get_value() + "/";
 		std::string status;
-		std::string full_path;
+		std::string path;
 
 		if (hover == 0.0) {
 			if (!active && inactive_buttons.get_value()) {
@@ -212,21 +234,21 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
 			
         switch (button) {
           case BUTTON_CLOSE:
-	        full_path = directory + "close" + status;
+	        path = directory + "close" + status;
             break;
           case BUTTON_TOGGLE_MAXIMIZE:
-	        full_path = directory + "toggle-maximize" + status;
+	        path = directory + "toggle-maximize" + status;
             break;
           case BUTTON_MINIMIZE:
-	        full_path = directory + "minimize" + status;
+	        path = directory + "minimize" + status;
             break;
           default:
             assert(false);
         }
-        if (exists(full_path + "png")) {
-            return surface_from_png(full_path + "png");
-        } else if (exists(full_path + "svg")) {
-            return surface_from_svg(full_path + "svg");
+        if (auto full_path = path + "png"; exists(full_path)) {
+            surface_png(full_path, button_size.get_value());
+        } else if (auto full_path = path + "svg"; exists(full_path)) {
+            surface_svg(full_path, button_size.get_value());
         }
 	}
 
@@ -415,37 +437,36 @@ std::string get_real_name(std::string path) {
     return path;
 }
 
-cairo_surface_t *decoration_theme_t::surface_from_svg(std::string path) const {
-	GFile *svg_file = g_file_new_for_path(path.c_str());
-	RsvgHandle *svg = rsvg_handle_new_from_gfile_sync(svg_file, RSVG_HANDLE_FLAGS_NONE,
+cairo_surface_t *decoration_theme_t::surface_svg(std::string path, int  size) const {
+	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
+	auto cr = cairo_create(surface);
+
+	GFile *file = g_file_new_for_path(path.c_str());
+	RsvgHandle *svg = rsvg_handle_new_from_gfile_sync(file, RSVG_HANDLE_FLAGS_NONE,
 	                                                  NULL, NULL);
-	cairo_surface_t *icon = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, icon_size.get_value(),
-	                                                   icon_size.get_value());
-	auto crsvg = cairo_create(icon);
-	RsvgRectangle rect { 0, 0, (double)icon_size.get_value(), (double)icon_size.get_value() };
-	rsvg_handle_render_document(svg, crsvg, &rect, nullptr);
-	cairo_destroy(crsvg);
+	RsvgRectangle rect { 0, (double)size, (double)size, -(double)size };
+	rsvg_handle_render_document(svg, cr, &rect, nullptr);
+	cairo_destroy(cr);
 
 	g_object_unref(svg);
-	g_object_unref(svg_file);
+	g_object_unref(file);
 
-	return icon;
+	return surface;
 }
 
-cairo_surface_t * decoration_theme_t::surface_from_png(std::string path) const {
-    double len = icon_size.get_value();
-    auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, len, len);
+cairo_surface_t * decoration_theme_t::surface_png(std::string path, int size) const {
+    auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
     auto cr = cairo_create(surface);
 
     auto image = cairo_image_surface_create_from_png(path.c_str());
     double width  = cairo_image_surface_get_width(image);
     double height = cairo_image_surface_get_height(image);
 
-    cairo_translate(cr, len / 2, len / 2);
-    cairo_scale(cr, len / width, len / height);
-    cairo_translate(cr, -len / 2, -len / 2);
+    cairo_translate(cr, (double)size / 2, (double)size / 2);
+    cairo_scale(cr, (double)size / width, -(double)size / height);
+    cairo_translate(cr, -(double)size / 2, -(double)size / 2);
 
-    cairo_set_source_surface(cr, image, (len - width) / 2, (len - height) / 2);
+    cairo_set_source_surface(cr, image, (size - width) / 2, (size - height) / 2);
     cairo_paint(cr);
     cairo_surface_destroy(image);
     cairo_destroy(cr);
@@ -500,9 +521,9 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 			if (line.find(app_id + " ") == 0) {
 				std::string path = line.substr(line.find(' ') + 1);
 				if (line.rfind(".svg") != std::string::npos) {
-					return surface_from_svg(path);
+					return surface_svg(path, icon_size.get_value());
 				} else if (line.rfind(".png") != std::string::npos) {
-    				return surface_from_png(path);
+    				return surface_svg(path, icon_size.get_value());
 				}
 			}
 		}
@@ -659,10 +680,8 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
     		
 
 		if (!icon_found) {
-			icon_file_out << app_id + " " + (std::string)getenv("HOME") +
-						   "/.config/firedecor/executable.svg" << std::endl;
-			return surface_from_svg((std::string)getenv("HOME") +
-						   			"/.config/firedecor/executable.svg");
+    		std::string icon_path = " /usr/local/share/firedecor/executable.svg";
+			icon_file_out << app_id + icon_path << std::endl;
 		}
 	}
 }

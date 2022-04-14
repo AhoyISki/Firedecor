@@ -89,6 +89,17 @@
 			<_long>Sets the theme to be used for the icons.</_long>
 			<default>hicolor</default>
 		</option>
+		<!-- Accents -->
+		<option name="active_accent" type="color">
+			<_short>Color when window is active</_short>
+			<_long>Sets the outline color when the window is active.</_long>
+			<default>#ffffffff</default>
+		</option>
+		<option name="inactive_accent" type="color">
+			<_short>Outline color when window is inactive</_short>
+			<_long>Sets the outline color when the window is inactive.</_long>
+			<default>#ffffffff</default>
+		</option>
 		<!-- Layout -->
 		<option name="layout" type="string">
 			<_short>The layout to be used for decoration placement</_short>

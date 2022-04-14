@@ -92,6 +92,9 @@ struct theme_options {
 	theme_option_t<int> icon_size;
 	theme_option_t<std::string> icon_theme;
 	
+    theme_option_t<wf::color_t> active_accent;
+    theme_option_t<wf::color_t> inactive_accent;
+
 	theme_option_t<int> padding_size;
     theme_option_t<std::string> layout;
 
@@ -128,8 +131,10 @@ class decoration_theme_t : private theme_options {
 	color_set_t get_border_colors() const;
 	/** @return The active and inactive colors for the outline */
 	color_set_t get_outline_colors() const;
-	/** @return The acntive and inactive colors for the title */
+	/** @return The active and inactive colors for the title */
 	color_set_t get_title_colors() const;
+	/** @return The active and inactive colors for the title */
+	color_set_t get_accent_colors() const;
 
 	/* Other return functions */
 	/** @return True if there is a title of said orientation in the layout */
@@ -153,10 +158,14 @@ class decoration_theme_t : private theme_options {
                                 bool active, orientation_t orientation) const;
 
     /**
-     * Render one corner for active and inactive windows. 
-     * It will be used for all 4 corners of the decoration.
+     * Render the corners for active and inactive windows. 
+     * @param active The activation state of the window.
+     * @param scale The scale of the framebuffer.
+     * @param angle The initial angle of the corner.
+     * @param height The height of the corner, set by radius or the border size.
      */
-    cairo_surface_t *form_corner(bool active, double scale) const;
+    cairo_surface_t *form_corner(bool active, double scale, double angle,
+                                 int height) const;
 
     /**
      * Get the icon for the given button.
@@ -172,13 +181,13 @@ class decoration_theme_t : private theme_options {
 	 * Gets a cairo surface with an svg texture.
 	 * @param path The path to said the svg file, must contain .svg at the end.
 	 */
-	cairo_surface_t *surface_from_svg(std::string path) const;
+	cairo_surface_t *surface_svg(std::string path, int size) const;
 
     /**
      * Gets a cairo surface with a png texture.
      * @param path The path to said the png file, must contain .png at the end.
      */
-    cairo_surface_t* surface_from_png(std::string path) const;
+    cairo_surface_t* surface_png(std::string path, int size) const;
     /**
      * Get the icon for the given application icon.
      * @param title The icon for the window.

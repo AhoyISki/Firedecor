@@ -9,22 +9,25 @@
 namespace wf {
 namespace firedecor {
 
-static constexpr uint32_t DECORATION_AREA_RENDERABLE_BIT = (1 << 16);
-static constexpr uint32_t DECORATION_AREA_RESIZE_BIT     = (1 << 17);
-static constexpr uint32_t DECORATION_AREA_MOVE_BIT = (1 << 18);
-static constexpr uint32_t DECORATION_AREA_TEXT     = (1 << 19);
+static constexpr uint32_t AREA_RENDERABLE_BIT = (1 << 16);
+static constexpr uint32_t AREA_RESIZE_BIT     = (1 << 17);
+static constexpr uint32_t AREA_MOVE_BIT       = (1 << 18);
+static constexpr uint32_t AREA_TEXT_BIT       = (1 << 19);
+static constexpr uint32_t AREA_BACKGROUND_BIT = (1 << 20);
+static constexpr uint32_t AREA_ACCENT_BIT     = (1 << 21);
 
 /** Different types of areas around the decoration */
 enum decoration_area_type_t {
-    DECORATION_AREA_MOVE   = DECORATION_AREA_MOVE_BIT,
-    DECORATION_AREA_TITLE  = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT
-    						 | DECORATION_AREA_TEXT,
-    DECORATION_AREA_ICON   = DECORATION_AREA_MOVE_BIT | DECORATION_AREA_RENDERABLE_BIT,
-    DECORATION_AREA_BUTTON = DECORATION_AREA_RENDERABLE_BIT,
-    DECORATION_AREA_RESIZE_LEFT   = WLR_EDGE_LEFT | DECORATION_AREA_RESIZE_BIT,
-    DECORATION_AREA_RESIZE_RIGHT  = WLR_EDGE_RIGHT | DECORATION_AREA_RESIZE_BIT,
-    DECORATION_AREA_RESIZE_TOP    = WLR_EDGE_TOP | DECORATION_AREA_RESIZE_BIT,
-    DECORATION_AREA_RESIZE_BOTTOM = WLR_EDGE_BOTTOM | DECORATION_AREA_RESIZE_BIT,
+    DECORATION_AREA_MOVE   = AREA_MOVE_BIT,
+    DECORATION_AREA_TITLE  = AREA_MOVE_BIT | AREA_RENDERABLE_BIT | AREA_TEXT_BIT,
+    DECORATION_AREA_ICON   = AREA_MOVE_BIT | AREA_RENDERABLE_BIT,
+    DECORATION_AREA_BUTTON = AREA_RENDERABLE_BIT,
+    DECORATION_AREA_RESIZE_LEFT   = WLR_EDGE_LEFT | AREA_RESIZE_BIT,
+    DECORATION_AREA_RESIZE_RIGHT  = WLR_EDGE_RIGHT | AREA_RESIZE_BIT,
+    DECORATION_AREA_RESIZE_TOP    = WLR_EDGE_TOP | AREA_RESIZE_BIT,
+    DECORATION_AREA_RESIZE_BOTTOM = WLR_EDGE_BOTTOM | AREA_RESIZE_BIT,
+    DECORATION_AREA_BACKGROUND = AREA_BACKGROUND_BIT,
+    DECORATION_AREA_ACCENT     = AREA_ACCENT_BIT,
 };
 
 /**
@@ -33,7 +36,7 @@ enum decoration_area_type_t {
 struct decoration_area_t {
   public:
     /**
-     * Initialize a new decoration area holding the title.
+     * Initialize a new decoration area holding a title or an icon.
      * 
      * @param type The type of the area.
      * @param g The geometry of the area.
@@ -58,6 +61,9 @@ struct decoration_area_t {
      */
     decoration_area_t(decoration_area_type_t type, wf::geometry_t g);
 
+    /** Initialize a new decoration area holding background areas */
+    decoration_area_t(decoration_area_type_t type, wf::geometry_t g, std::string c);
+
     /** @return The type of the decoration area */
     decoration_area_type_t get_type() const;
 
@@ -67,19 +73,24 @@ struct decoration_area_t {
     /** @return The edge of the decoration area */
     edge_t get_edge() const;
 
+    /** @return The corners of the decoration area */
+    std::string get_corners() const;
+
     /** @return The area's button, if the area is a button. Otherwise UB */
     button_t& as_button();
 
-  private:
+    /** This needs to be public for later appendages */
     decoration_area_type_t type;
+
+  private:
     wf::geometry_t geometry;
     edge_t edge;
 
-    /* For buttons only */
+    /** For buttons only */
     std::unique_ptr<button_t> button;
 
-    /* For icons only */
-    std::unique_ptr<std::string> icon_path;
+    /** For backgrounds and accents only */
+    std::string corners;
 };
 
 /**
@@ -138,6 +149,10 @@ class decoration_layout_t {
      */
     std::vector<nonstd::observer_ptr<decoration_area_t>> get_renderable_areas();
 
+    /**
+     * @return The background areas of the decoration */
+    std::vector<nonstd::observer_ptr<decoration_area_t>> get_background_areas();
+
     /** @return The combined region of all layout areas */
     wf::region_t calculate_region() const;
 
@@ -167,9 +182,8 @@ class decoration_layout_t {
   private:
 	const std::string layout;
 	const std::string border_size_str;
-	
 	const border_size_t border_size;
-
+	const int corner_radius;
 	const int outline_size;
 	const int button_size;
 	const int icon_size;
@@ -177,11 +191,13 @@ class decoration_layout_t {
 
     const decoration_theme_t& theme;
 
-    int content_height;
+    int max_height;
 
     std::function<void(wlr_box)> damage_callback;
 
     std::vector<std::unique_ptr<decoration_area_t>> layout_areas;
+
+    std::vector<std::unique_ptr<decoration_area_t>> background_areas;
 
     bool is_grabbed = false;
     /* Position where the grab has started */
