@@ -29,7 +29,7 @@ An advanced window decoration plugin for the wayfire window manager.
 - [x] Implement individual corner rounding;
 - [x] Multiple corner radii *Implemented as either the corner is there, or it is not;
 - [x] Implement multiple themes.
-- [ ] Add accent colors to be used on some of the edges;
+- [x] Add accent colors to be used on anywhere on edges;
 - [ ] Implement a maximum title size with potentially animated title scrolling;
 - [ ] Declare a minimum window size so the decorations can not look disgusting on small windows;
 - [ ] Implement shadows.
@@ -246,7 +246,7 @@ My personal layout:
 ```ini
 border_size = 30 5
 corner_radius = 15
-layout = | icon title | maximize p minimize p close P7 -
+layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl
 ```
 
 ???:
