@@ -164,16 +164,16 @@ class simple_decoration_surface : public wf::surface_interface_t,
     		}
     		int height = std::max( { corner_radius, border_size.top,
     		                         border_size.bottom });
-    		auto create_s_and_t = [&](corner_texture_t& t, double angle) {
+    		auto create_s_and_t = [&](corner_texture_t& t, double angle, int r) {
         		for (auto a : { ACTIVE, INACTIVE }) {
-            		t.surf[a] = theme.form_corner(ACTIVE, scale, angle, height);
+            		t.surf[a] = theme.form_corner(a, r, scale, angle, height);
         			cairo_surface_upload_to_texture(t.surf[a], t.tex[a]);
         		}
     		};
-    		create_s_and_t(corners.tr, 0);
-    		create_s_and_t(corners.tl, M_PI / 2);
-    		create_s_and_t(corners.bl, M_PI);
-    		create_s_and_t(corners.br, 3 * M_PI / 2);
+    		create_s_and_t(corners.tr, 0, corners.tr.r);
+    		create_s_and_t(corners.tl, M_PI / 2, corners.tl.r);
+    		create_s_and_t(corners.bl, M_PI, corners.bl.r);
+    		create_s_and_t(corners.br, 3 * M_PI / 2, corners.br.r);
 
     		corners.tr.g_rel = { size.width - corner_radius, 0,
     		                     corner_radius, height };
@@ -418,10 +418,14 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
             OpenGL::render_begin(fb);
             fb.logic_scissor(scissor);
-            for (int j = 0; j < 4; j++) {
             OpenGL::render_texture(accent_textures.at(i).tr[active].tex, fb,
-                                   c_g[j] + o, glm::vec4(1.0));
-            }
+                                   c_g[0] + o, glm::vec4(1.0));
+            OpenGL::render_texture(accent_textures.at(i).tl[active].tex, fb,
+                                   c_g[1] + o, glm::vec4(1.0));
+            OpenGL::render_texture(accent_textures.at(i).bl[active].tex, fb,
+                                   c_g[2] + o, glm::vec4(1.0));
+            OpenGL::render_texture(accent_textures.at(i).br[active].tex, fb,
+                                   c_g[3] + o, glm::vec4(1.0));
             /****/
 
             /**** Render the internal rectangles of the accent */
@@ -500,7 +504,6 @@ class simple_decoration_surface : public wf::surface_interface_t,
         wf::point_t o = { rect.x, rect.y };
 		/** Rendering all corners */
 		for (auto *c : { &corners.tr, &corners.tl, &corners.bl, &corners.br }) {
-    		if (c->r <= 0) { continue; }
     		OpenGL::render_texture(c->tex[a].tex, fb, c->g_rel + o, glm::vec4(1.0f));
 		}
 		OpenGL::render_end();

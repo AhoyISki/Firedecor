@@ -160,11 +160,12 @@ class decoration_theme_t : private theme_options {
     /**
      * Render the corners for active and inactive windows. 
      * @param active The activation state of the window.
+     * @param r the radius of the corner.
      * @param scale The scale of the framebuffer.
      * @param angle The initial angle of the corner.
      * @param height The height of the corner, set by radius or the border size.
      */
-    cairo_surface_t *form_corner(bool active, double scale, double angle,
+    cairo_surface_t *form_corner(bool active, int r, double scale, double angle,
                                  int height) const;
 
     /**

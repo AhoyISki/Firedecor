@@ -161,9 +161,9 @@ cairo_surface_t*decoration_theme_t::form_title(std::string text,
     return surface;
 }
 
-cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale,
+cairo_surface_t *decoration_theme_t::form_corner(bool active, int r, double scale,
                                                  double angle, int height) const {
-    double c_r = this->corner_radius.get_value() * scale;
+    double c_r = corner_radius.get_value() * scale;
 	double o_r = c_r - scale * (double)outline_size.get_value() / 2;
 
     const auto format = CAIRO_FORMAT_ARGB32;
@@ -190,9 +190,13 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale,
 	wf::color_t color = active ? active_border.get_value() :
                         inactive_border.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
-    cairo_move_to(cr, center.x, center.y);
-    cairo_arc(cr, center.x, center.y, c_r, angle, angle + M_PI / 2);
-    cairo_line_to(cr, center.x, center.y);
+    if (r > 0) {
+        cairo_move_to(cr, center.x, center.y);
+        cairo_arc(cr, center.x, center.y, c_r, angle, angle + M_PI / 2);
+        cairo_line_to(cr, center.x, center.y);
+    } else {
+        cairo_rectangle(cr, 0, 0, c_r, height);
+    }
     cairo_fill(cr);
 
     cairo_rectangle(cr, rectangle.x, rectangle.y, c_r, height - c_r);
@@ -202,7 +206,11 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active, double scale,
 	color = active ? active_outline.get_value() : inactive_outline.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     cairo_set_line_width(cr, outline_size.get_value() * scale);
-    cairo_arc(cr, center.x, center.y, o_r, angle, angle + M_PI / 2);
+    if (r > 0) {
+        cairo_arc(cr, center.x, center.y, o_r, angle, angle + M_PI / 2);
+    } else {
+        cairo_rectangle(cr, 0, 0, c_r, height);
+    }
     cairo_stroke(cr);
     cairo_destroy(cr);
 

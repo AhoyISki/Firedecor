@@ -268,13 +268,14 @@ void decoration_layout_t::create_areas(int width, int height,
     	        background_areas.push_back(
     		        std::make_unique<decoration_area_t>(type, final_g, ""));
 	        }
+	        counter = 0;
 
 	        if (current_edge == EDGE_TOP) {
 		        current_edge = EDGE_LEFT;
 		        m = { 0, 1, -1, 0 };
 		        o = { border_size.left - max_height, height - border_size.bottom };
                 b_o = { 0, height - border_size.bottom };
-		        b_p1 = { border_size.left, height - corner_h };
+		        b_p1 = { 0, height - corner_h };
 		        b_f = { border_size.left, corner_h };
 		        edge_height = border_size.left;
 		        min_shift = corner_radius - border_size.bottom;
