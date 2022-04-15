@@ -215,7 +215,6 @@ void decoration_layout_t::create_areas(int width, int height,
 					    std::stringstream num;
 					    num << type.substr(1);
 					    num >> delta;
-				        if (current_edge == EDGE_LEFT) { shift += delta; }
 			        } else if (type == "a"|| type[0] == 'A' ||
 		                       type == "d" || type == "D") {
 				        counter = (counter + 1) % 2;
