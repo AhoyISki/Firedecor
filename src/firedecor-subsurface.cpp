@@ -27,12 +27,14 @@
 
 #include <fstream>
 
-class simple_decoration_surface : public wf::surface_interface_t,
-	public wf::compositor_surface_t {
+namespace wf::firedecor {
+
+class simple_decoration_surface : public surface_interface_t,
+	public compositor_surface_t {
 	bool _mapped = true;
     wayfire_view view;
 
-    wf::signal_connection_t title_set = [=] (wf::signal_data_t *data) {
+    signal_connection_t title_set = [=] (signal_data_t *data) {
         if (get_signaled_view(data) == view) {
             update_layout(FORCE);
             view->damage(); // trigger re-render
@@ -41,16 +43,16 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     void update_title(double scale) {
 		cairo_surface_t *surface;
-		wf::dimensions_t title_size = {
+		dimensions_t title_size = {
     		(int)(title.dims.width * scale), (int)(title.dims.height * scale)
         };
 
-		auto o = wf::firedecor::HORIZONTAL;
+		auto o = HORIZONTAL;
         surface = theme.form_title(title.text, title_size, ACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.hor[ACTIVE]);
         surface = theme.form_title(title.text, title_size, INACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.hor[INACTIVE]);
-		o = wf::firedecor::VERTICAL;
+		o = VERTICAL;
 		surface = theme.form_title(title.text, title_size, ACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.ver[ACTIVE]);
         surface = theme.form_title(title.text, title_size, INACTIVE, o);
@@ -90,26 +92,26 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     /** Title variables */
     struct {
-        wf::simple_texture_t hor[2];
-        wf::simple_texture_t ver[2];
+        simple_texture_t hor[2];
+        simple_texture_t ver[2];
         std::string text = "";
-        wf::firedecor::color_set_t colors;
-        wf::dimensions_t dims;
+        color_set_t colors;
+        dimensions_t dims;
     } title;
 
     bool title_needs_update = false;
 
     /** Icon variables */
     struct {
-	    wf::simple_texture_t texture;
+	    simple_texture_t texture;
 	    std::string app_id = "";
     } icon;
 
     /** Corner variables */
     struct corner_texture_t {
-	    wf::simple_texture_t tex[2];
+	    simple_texture_t tex[2];
 	    cairo_surface_t *surf[2];
-	    wf::geometry_t g_rel;
+	    geometry_t g_rel;
 	    int r;
     };
 
@@ -119,25 +121,25 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     /** Edge variables */
     struct edge_colors_t {
-	    wf::firedecor::color_set_t border, outline;
+	    color_set_t border, outline;
     } edges;
 
     /** Accent variables */
     struct accent_texture_t {
-        wf::simple_texture_t tr[2];
-        wf::simple_texture_t tl[2];
-        wf::simple_texture_t bl[2];
-        wf::simple_texture_t br[2];
+        simple_texture_t tr[2];
+        simple_texture_t tl[2];
+        simple_texture_t bl[2];
+        simple_texture_t br[2];
         int radius;
     };
 
     std::vector<accent_texture_t> accent_textures;
 
     /** Other general variables */
-    wf::firedecor::decoration_theme_t theme;
-    wf::firedecor::decoration_layout_t layout;
-    wf::region_t cached_region;
-    wf::dimensions_t size;
+    decoration_theme_t theme;
+    decoration_layout_t layout;
+    region_t cached_region;
+    dimensions_t size;
 
 	void update_corners(edge_colors_t colors, int corner_radius, double scale) {
 		if ((this->corner_radius != corner_radius) ||
@@ -164,16 +166,17 @@ class simple_decoration_surface : public wf::surface_interface_t,
     		}
     		int height = std::max( { corner_radius, border_size.top,
     		                         border_size.bottom });
-    		auto create_s_and_t = [&](corner_texture_t& t, double angle, int r) {
+    		auto create_s_and_t = [&](corner_texture_t& t, matrix<double> m, int r) {
         		for (auto a : { ACTIVE, INACTIVE }) {
-            		t.surf[a] = theme.form_corner(a, r, scale, angle, height);
+            		t.surf[a] = theme.form_corner(a, r, m, height);
         			cairo_surface_upload_to_texture(t.surf[a], t.tex[a]);
         		}
     		};
-    		create_s_and_t(corners.tr, 0, corners.tr.r);
-    		create_s_and_t(corners.tl, M_PI / 2, corners.tl.r);
-    		create_s_and_t(corners.bl, M_PI, corners.bl.r);
-    		create_s_and_t(corners.br, 3 * M_PI / 2, corners.br.r);
+    		/** The transformations are how we create 4 different corners */
+    		create_s_and_t(corners.tr, { scale, 0, 0, scale }, corners.tr.r);
+    		create_s_and_t(corners.tl, { -scale, 0, 0, scale }, corners.tl.r);
+    		create_s_and_t(corners.bl, { -scale, 0, 0, -scale }, corners.bl.r);
+    		create_s_and_t(corners.br, { scale, 0, 0, -scale }, corners.br.r);
 
     		corners.tr.g_rel = { size.width - corner_radius, 0,
     		                     corner_radius, height };
@@ -191,10 +194,10 @@ class simple_decoration_surface : public wf::surface_interface_t,
 	}
 
   public:
-    wf::firedecor::border_size_t border_size;
+    border_size_t border_size;
     int corner_radius;
 
-    simple_decoration_surface(wayfire_view view, wf::firedecor::theme_options options)
+    simple_decoration_surface(wayfire_view view, theme_options options)
       : theme{options}, 
     	layout{theme, [=] (wlr_box box) {this->damage_surface_box(box); }} {
         this->view = view;
@@ -208,23 +211,23 @@ class simple_decoration_surface : public wf::surface_interface_t,
         return _mapped;
     }
 
-    wf::point_t get_offset() final {
+    point_t get_offset() final {
         return { -border_size.left, -border_size.top };
     }
 
-    virtual wf::dimensions_t get_size() const final {
+    virtual dimensions_t get_size() const final {
         return size;
     }
 
-    void render_title(const wf::framebuffer_t& fb, wf::geometry_t geometry,
-                      wf::firedecor::edge_t edge, wf::geometry_t scissor) {
+    void render_title(const framebuffer_t& fb, geometry_t geometry,
+                      edge_t edge, geometry_t scissor) {
 	    if (title_needs_update) {
     	    update_title(fb.scale);
 	    }
 
-	    wf::simple_texture_t *texture;
+	    simple_texture_t *texture;
 	    uint32_t bits = 0;
-	    if (edge == wf::firedecor::EDGE_TOP || edge == wf::firedecor::EDGE_BOTTOM) {
+	    if (edge == EDGE_TOP || edge == EDGE_BOTTOM) {
 	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y;
 	        texture = &title.hor[view->activated];
 	    } else {
@@ -236,8 +239,8 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		OpenGL::render_end();
     }
 
-    void render_icon(const wf::framebuffer_t& fb, wf::geometry_t g,
-                     const wf::geometry_t& scissor, int32_t bits) {
+    void render_icon(const framebuffer_t& fb, geometry_t g,
+                     const geometry_t& scissor, int32_t bits) {
         update_icon();
 		OpenGL::render_begin(fb);
 		fb.logic_scissor(scissor);
@@ -245,28 +248,34 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		OpenGL::render_end();
     }
 
-    wf::color_t alpha_transform(wf::color_t c) {
+    color_t alpha_transform(color_t c) {
 	    return { c.r * c.a, c.g * c.a, c.b * c.a, c.a };
     }
 
-    void form_accent_corners(int r, wf::geometry_t accent, std::string round) {
+    void form_accent_corners(int r, geometry_t accent, std::string corner_style,
+                             matrix<int> m) {
         const auto format = CAIRO_FORMAT_ARGB32;
         cairo_surface_t *surfaces[8];
         double angle = 0;
+
         /** Colors of the accent and background, respectively */
-        wf::color_t a_color;
-        wf::color_t b_color;
-        wf::point_t p[] = { { 0, 0 }, { r, 0 }, { r, r }, { 0, r } };
+        color_t a_color;
+        color_t b_color;
+        point_t p[] = { { 0, 0 }, { r, 0 }, { r, r }, { 0, r } };
+
+        wf::point_t a_origin = { accent.x, accent.y };
 
         int h = std::max({ corner_radius, border_size.top, border_size.bottom });
-        wf::geometry_t a_corners[] = {
-            { accent.x + accent.width - r, accent.y, r, r },
-            { accent.x, accent.y, r, r },
-            { accent.x, accent.y + accent.height - r, r, r },
-            { accent.x + accent.width - r, accent.y + accent.height - r, r, r }
-        };
+        geometry_t a_corners[2];
+        if (m.xx == 1) {
+            a_corners[0] = { 0, 0, r, accent.height };
+            a_corners[1] = { accent.width - r, 0, r, accent.height };
+        } else {
+            a_corners[0] = { 0, 0, accent.width, r };
+            a_corners[1] = { 0, accent.height - r, accent.width, r };
+        }
 
-        wf::geometry_t cuts[] = { 
+        geometry_t cuts[] = { 
            { accent.x + r, accent.y,
              accent.width - 2 * r, accent.height },
            { accent.x, accent.y + r, r, accent.height - 2 * r },
@@ -274,8 +283,88 @@ class simple_decoration_surface : public wf::surface_interface_t,
              accent.height - 2 * r }
         };
 
-        std::string to_round[] = { "tr", "tl", "bl", "br" };
+        /**** Creation of the master path, containing all accent edge textures */
+        const cairo_matrix_t matrix = {
+            (double)m.xx, (double)m.yx, (double)m.yx, (double)m.yy, 0, 0
+        };
 
+        /** Array used to determine if a line starts on the corner or not */
+        struct { int tr = 0, br = 0, bl = 0, tl = 0; } retract;
+
+        /** Calculate where to retract, based on diagonality */
+        for (int i = 0; auto c : corner_style) {
+            if (c == '/') {
+                if (i == 0) { 
+                    retract.tl = r ;
+                } else {
+                    retract.br = r;
+                }
+                i++;
+            } else if (c == '\\') {
+                if (i == 0) { 
+                    retract.bl = r ;
+                } else {
+                    retract.tr = r;
+                }
+                i++;
+            }
+        }
+
+        /** "Untransformed" accent area, used for correct transformations later on */
+        const wf::dimensions_t mod_a = {
+            abs(accent.width * m.xx + accent.height * m.xy),
+            abs(accent.width * m.yx + accent.height * m.yy)
+        };
+        
+        auto full_surface = cairo_image_surface_create(format, accent.width,
+                                                       accent.height);
+        auto cr = cairo_create(full_surface);
+
+        /** This array will be depleted by the absense of a rounded corner */
+        std::string was_rounded[] = { "tr", "br", "bl", "tl" };
+        if (corner_style != "a") {
+            for (int j = 0; j < 4; j++) {
+               if (corner_style.find(was_rounded[j]) == std::string::npos) {
+                   was_rounded[j] = "";
+               }
+            }
+        }
+
+        /** Rotation depending on the edge */
+        cairo_translate(cr, (double)accent.width / 2, (double)accent.height / 2); 
+        cairo_transform(cr, &matrix);
+        cairo_translate(cr, -(double)accent.width / 2, -(double)accent.height / 2); 
+
+        /** Function that creates a rounded or flat corner */
+        auto create_corner = [&](int w, int h, int i) {
+            if (was_rounded[i] != "") {
+                cairo_arc(cr, w + ((i < 2) ? -r : r), h + ((i % 2 == 0) ? r : -r), r,
+                          M_PI * (i - 1) / 2, M_PI * i / 2);
+            } else {
+                cairo_line_to(cr, w, h + ((i == 0) ? r : ((i == 2) ? -r : 0)));
+            }
+        };
+
+        if (was_rounded[0] == "") { cairo_move_to(cr, mod_a.width - retract.br, 0); }
+        if (was_rounded[0] == "" && was_rounded[1] == "") {
+            cairo_line_to(cr, mod_a.width - retract.tr, mod_a.height);
+        } else {
+            create_corner(mod_a.width, 0, 0);
+            create_corner(mod_a.width, mod_a.height, 1);
+        }
+        if (was_rounded[1] == "" && was_rounded[2] == "") {
+            cairo_line_to(cr, retract.tl, mod_a.height);
+            cairo_line_to(cr, retract.bl, 0);
+        } else {
+            create_corner(0, mod_a.height, 2);
+            create_corner(0, 0, 3);
+        }
+        cairo_close_path(cr);
+        auto master_path = cairo_copy_path(cr);
+        cairo_destroy(cr);
+        cairo_surface_destroy(full_surface);
+        /****/
+        
         for (int i = 0, j = 0; i < 8; i++, angle += M_PI / 2, j = i % 4) {
             if (i < 4) {
                 a_color = theme.get_accent_colors().inactive;
@@ -293,20 +382,23 @@ class simple_decoration_surface : public wf::surface_interface_t,
             cairo_rectangle(cr_a, 0, 0, r, r);
             cairo_fill(cr_a);
 
-            bool do_round = (round.find(to_round[j]) != std::string::npos ||
-                             round == "a");
+            bool do_round = (corner_style.find(was_rounded[j]) != std::string::npos ||
+                             corner_style == "a");
 
             /** Dealing with intersection between the view's corners and accent */
             for (auto *c : { &corners.tr, &corners.tl, &corners.bl, &corners.br } ) {
 
+                /** Accent corner translated by the accent's origin */
+                wf::geometry_t a_corner = a_corners[j] + a_origin;
+
                 /** Skip everything, if the areas don't intersect */
-                auto in = wf::geometry_intersection(a_corners[j], c->g_rel);
+                auto in = geometry_intersection(a_corner, c->g_rel);
                 if (in.width == 0 || in.height == 0) { continue; }
 
                 /**** Rectangle to cut the background from the accent's corner */
                 /* View's corner position relative to the accent's corner */
-                wf::point_t v_rel_a = { 
-                    c->g_rel.x - a_corners[j].x, c->g_rel.y - a_corners[j].y
+                point_t v_rel_a = { 
+                    c->g_rel.x - a_corner.x, c->g_rel.y - a_corner.y
                 };
 
                 cairo_set_operator(cr_a, CAIRO_OPERATOR_CLEAR);
@@ -323,7 +415,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
                     if (do_round) {
                         /** Radius's center relative to the view's corner */
-                        wf::point_t rc_rel_v;
+                        point_t rc_rel_v;
                         rc_rel_v.x = -v_rel_a.x + p[j].x;
                         rc_rel_v.y = v_rel_a.y + c->g_rel.height - r + p[j].y;
 
@@ -332,7 +424,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
                         cairo_fill(cr_v);
                     } else {
                         /** Rectangle's origin, relative to the view's corner */
-                        wf::point_t reo_rel_v;
+                        point_t reo_rel_v;
                         reo_rel_v.x = -v_rel_a.x;
                         reo_rel_v.y = v_rel_a.y + c->g_rel.height - r;
 
@@ -345,7 +437,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
                         if (cut.width <= 0 || cut.height <= 0) { continue; }
 
                         /** Bottom of the rectangle relative to the view's corner */
-                        wf::point_t reb_rel_v;
+                        point_t reb_rel_v;
                         reb_rel_v.y = (c->g_rel.y + c->g_rel.height) -
                                       (cut.y + cut.height);
                         reb_rel_v.x = (cut.x - c->g_rel.x);
@@ -388,15 +480,15 @@ class simple_decoration_surface : public wf::surface_interface_t,
         for (auto surface : surfaces) { cairo_surface_destroy(surface); }
     }
 
-    void render_background_area(const wf::framebuffer_t& fb, wf::geometry_t g,
-                                wf::point_t rect, wf::geometry_t scissor,
+    void render_background_area(const framebuffer_t& fb, geometry_t g,
+                                point_t rect, geometry_t scissor,
                                 std::string rounded, unsigned long i,
-                                wf::firedecor::decoration_area_type_t type) {
+                                decoration_area_type_t type, matrix<int> m) {
         /** The view's origin */                            
-        wf::point_t o = { rect.x, rect.y };
+        point_t o = { rect.x, rect.y };
         bool active = view->activated;
 
-        if (type == wf::firedecor::DECORATION_AREA_ACCENT) {
+        if (type == DECORATION_AREA_ACCENT) {
             /**** Render the corners of an accent */
             int r;
 
@@ -405,12 +497,12 @@ class simple_decoration_surface : public wf::surface_interface_t,
                 accent_textures.resize(i + 1);
                 r = std::min({ ceil((double)g.height / 2), ceil((double)g.width / 2),
                                (double)corner_radius});
-                form_accent_corners(r, g, rounded);
+                form_accent_corners(r, g, rounded, m);
             }
 
             r = accent_textures.at(i).radius;
 
-            wf::geometry_t c_g[] = { 
+            geometry_t c_g[] = { 
                 { g.x + g.width - r, g.y, r, r }, { g.x, g.y, r, r },
                 { g.x, g.y + g.height - r, r, r },
                 { g.x + g.width - r, g.y + g.height - r, r, r }
@@ -429,13 +521,13 @@ class simple_decoration_surface : public wf::surface_interface_t,
             /****/
 
             /**** Render the internal rectangles of the accent */
-            wf::geometry_t accent_rects[] = { 
+            geometry_t accent_rects[] = { 
                 { g.x + r, g.y, g.width - 2 * r, g.height },
                 { g.x, g.y + r, r, g.height - 2 * r },
                 { g.x + g.width - r, g.y + r, r, g.height - 2 * r }
             };
 
-            wf::color_t color = (active) ? theme.get_accent_colors().active :
+            color_t color = (active) ? theme.get_accent_colors().active :
                                 theme.get_accent_colors().inactive;
             color = alpha_transform(color);
             for (auto a_r : accent_rects) {
@@ -447,7 +539,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
             OpenGL::render_end();
         } else {
             /**** Render a single rectangle when the area is a background */
-            wf::color_t color = (active) ? theme.get_border_colors().active :
+            color_t color = (active) ? theme.get_border_colors().active :
                                 theme.get_border_colors().inactive;
 
             color = alpha_transform(color);
@@ -460,8 +552,8 @@ class simple_decoration_surface : public wf::surface_interface_t,
         }
     }
 
-	void render_background(const wf::framebuffer_t& fb, wf::geometry_t rect,
-	                       const wf::geometry_t& scissor) {
+	void render_background(const framebuffer_t& fb, geometry_t rect,
+	                       const geometry_t& scissor) {
 		edge_colors_t colors = {
 			theme.get_border_colors(), theme.get_outline_colors()
 		};
@@ -476,10 +568,11 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
 		/** Borders */
 		unsigned long i = 0;
-		wf::point_t rect_o = { rect.x, rect.y };
+		point_t rect_o = { rect.x, rect.y };
 		for (auto area : layout.get_background_areas()) {
     		render_background_area(fb, area->get_geometry(), rect_o, scissor,
-    		                       area->get_corners(), i, area->get_type());
+    		                       area->get_corners(), i, area->get_type(),
+    		                       area->get_m());
     		i++;
 		}
 
@@ -489,7 +582,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		/* Outlines */
 		auto color = (view->activated) ? colors.outline.active :
 	                 colors.outline.inactive;
-		for (auto g : std::vector<wf::geometry_t>{
+		for (auto g : std::vector<geometry_t>{
     		{ rect.x + corners.tl.r, rect.y,
     		  rect.width - (corners.tl.r + corners.tr.r), outline_size },
     		{ rect.x + corners.tr.r, rect.x + rect.height - outline_size ,
@@ -501,7 +594,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 			OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
 		}
         bool a = view->activated;
-        wf::point_t o = { rect.x, rect.y };
+        point_t o = { rect.x, rect.y };
 		/** Rendering all corners */
 		for (auto *c : { &corners.tr, &corners.tl, &corners.bl, &corners.br }) {
     		OpenGL::render_texture(c->tex[a].tex, fb, c->g_rel + o, glm::vec4(1.0f));
@@ -509,7 +602,7 @@ class simple_decoration_surface : public wf::surface_interface_t,
 		OpenGL::render_end();
 	}
 
-    void render_scissor_box(const wf::framebuffer_t& fb, wf::point_t origin,
+    void render_scissor_box(const framebuffer_t& fb, point_t origin,
                             const wlr_box& scissor) {
 	    /* Draw the background (corners and border) */
         wlr_box geometry{origin.x, origin.y, size.width, size.height};
@@ -518,27 +611,27 @@ class simple_decoration_surface : public wf::surface_interface_t,
         auto renderables = layout.get_renderable_areas();
         for (auto item : renderables) {
             int32_t bits;
-            if (item->get_edge() == wf::firedecor::EDGE_LEFT) {
+            if (item->get_edge() == EDGE_LEFT) {
                 bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y; 
-            } else if (item->get_edge() == wf::firedecor::EDGE_RIGHT) {
+            } else if (item->get_edge() == EDGE_RIGHT) {
                 bits = OpenGL::TEXTURE_TRANSFORM_INVERT_X;
             }
-	        if (item->get_type() == wf::firedecor::DECORATION_AREA_TITLE) {
+	        if (item->get_type() == DECORATION_AREA_TITLE) {
                 render_title(fb, item->get_geometry() + origin, 
                 			 item->get_edge(), scissor);
-            } else if (item->get_type() == wf::firedecor::DECORATION_AREA_BUTTON) {
+            } else if (item->get_type() == DECORATION_AREA_BUTTON) {
 	            item->as_button().set_active(view->activated);
 	            item->as_button().set_maximized(view->tiled_edges);
                 item->as_button().render(fb, item->get_geometry() + origin, scissor);
-            } else if (item->get_type() == wf::firedecor::DECORATION_AREA_ICON) {
+            } else if (item->get_type() == DECORATION_AREA_ICON) {
 	            render_icon(fb, item->get_geometry() + origin, scissor, bits);
             }
         }
     }
     
-    virtual void simple_render(const wf::framebuffer_t& fb, int x, int y,
-					           const wf::region_t& damage) override {
-        wf::region_t frame = this->cached_region + (wf::point_t){x, y};
+    virtual void simple_render(const framebuffer_t& fb, int x, int y,
+					           const region_t& damage) override {
+        region_t frame = this->cached_region + (point_t){x, y};
         frame &= damage;
 
     	update_layout(DONT_FORCE);
@@ -580,27 +673,27 @@ class simple_decoration_surface : public wf::surface_interface_t,
     }
 
 	// TODO: implement a pinning button.
-    void handle_action(wf::firedecor::decoration_layout_t::action_response_t action) {
+    void handle_action(decoration_layout_t::action_response_t action) {
         switch (action.action) {
-          case wf::firedecor::DECORATION_ACTION_MOVE:
+          case DECORATION_ACTION_MOVE:
             return view->move_request();
 
-          case wf::firedecor::DECORATION_ACTION_RESIZE:
+          case DECORATION_ACTION_RESIZE:
             return view->resize_request(action.edges);
 
-          case wf::firedecor::DECORATION_ACTION_CLOSE:
+          case DECORATION_ACTION_CLOSE:
             return view->close();
 
-          case wf::firedecor::DECORATION_ACTION_TOGGLE_MAXIMIZE:
+          case DECORATION_ACTION_TOGGLE_MAXIMIZE:
             if (view->tiled_edges) {
                 view->tile_request(0);
             } else {
-                view->tile_request(wf::TILED_EDGES_ALL);
+                view->tile_request(TILED_EDGES_ALL);
             }
 
             break;
 
-          case wf::firedecor::DECORATION_ACTION_MINIMIZE:
+          case DECORATION_ACTION_MINIMIZE:
             view->minimize_request(true);
             break;
 
@@ -625,10 +718,10 @@ class simple_decoration_surface : public wf::surface_interface_t,
 
     void unmap() {
         _mapped = false;
-        wf::emit_map_state_change(this);
+        emit_map_state_change(this);
     }
 
-    void resize(wf::dimensions_t dims) {
+    void resize(dimensions_t dims) {
         view->damage();
         size = dims;
 		layout.resize(size.width, size.height, title.dims);
@@ -650,12 +743,12 @@ class simple_decoration_surface : public wf::surface_interface_t,
     }
 };
 
-class simple_decorator_t : public wf::decorator_frame_t_t {
+class simple_decorator_t : public decorator_frame_t_t {
     wayfire_view view;
     nonstd::observer_ptr<simple_decoration_surface> deco;
 
   public:
-    simple_decorator_t(wayfire_view view, wf::firedecor::theme_options options) {
+    simple_decorator_t(wayfire_view view, theme_options options) {
         this->view = view;
 
         auto sub = std::make_unique<simple_decoration_surface>(view, options);
@@ -677,15 +770,15 @@ class simple_decorator_t : public wf::decorator_frame_t_t {
     simple_decorator_t& operator =(const simple_decorator_t&) = delete;
     simple_decorator_t& operator =(simple_decorator_t&&) = delete;
 
-    wf::signal_connection_t on_subsurface_removed = [&] (auto data) {
-        auto ev = static_cast<wf::subsurface_removed_signal*>(data);
+    signal_connection_t on_subsurface_removed = [&] (auto data) {
+        auto ev = static_cast<subsurface_removed_signal*>(data);
         if (ev->subsurface.get() == deco.get()) {
             deco->unmap();
             deco = nullptr;
         }
     };
 
-    virtual wf::geometry_t expand_wm_geometry( wf::geometry_t contained_wm_geometry) override {
+    virtual geometry_t expand_wm_geometry( geometry_t contained_wm_geometry) override {
         contained_wm_geometry.x     -= deco->border_size.left;
         contained_wm_geometry.y     -= deco->border_size.top;
         contained_wm_geometry.width += deco->border_size.left +
@@ -711,8 +804,8 @@ class simple_decorator_t : public wf::decorator_frame_t_t {
         view->damage();
     }
 
-    virtual void notify_view_resized(wf::geometry_t view_geometry) override {
-        deco->resize(wf::dimensions(view_geometry));
+    virtual void notify_view_resized(geometry_t view_geometry) override {
+        deco->resize(dimensions(view_geometry));
     }
 
     virtual void notify_view_tiled() override {}
@@ -726,7 +819,7 @@ class simple_decorator_t : public wf::decorator_frame_t_t {
     }
 };
 
-void init_view(wayfire_view view, wf::firedecor::theme_options options) {
+void init_view(wayfire_view view, theme_options options) {
     auto firedecor = std::make_unique<simple_decorator_t>(view, options);
     view->set_decoration(std::move(firedecor));
 }
@@ -734,3 +827,5 @@ void init_view(wayfire_view view, wf::firedecor::theme_options options) {
 void deinit_view(wayfire_view view) {
     view->set_decoration(nullptr);
 }
+}
+

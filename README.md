@@ -101,7 +101,7 @@ An advanced window decoration plugin for the wayfire window manager.
   - The symbols `title`, `icon`, `maximize`, `minimize`, and `close`, will place their respective symbols on the window;
   - The symbol `p` will introduce a standardized padding, set by the `padding_size` option. The symbol `P` followed by a number, will place that many pixels of padding, for example, `P7` places 7 pixels of padding on the edge;
   - The symbol `|` changes where the symbols are being placed. Normally, they're on the left of the edge, if you place a `|`, they will be on the center, if you place another `|`, they will be placed on the right. Further `|`s will not change position;
-  - The symbol `-` will change the edge the symbols are being placed in. By default, it will be the top edge, and every `-` will change the edge, counter-clockwise. You **Must** end the layout definition with one `-`, even if you don't plan on using the following edge.
+  - The symbol `-` will change the edge the symbols are being placed in. By default, it will be the top edge, and every `-` will change the edge, counter-clockwise. In previous versions of `wayfire-firedecor`, you needed to end the layout with `-`, that is no longer the case.
   - The symbol `a` will initiate/end an accented area, it will start one if there wasn't one already, and it will end one if there was. You can more precisely position accents by using paddings, for example `a P5 title P5 a` will place a padding between each end of the accent, giving some space for the title. All corners will be rounded with this option.
   - The symbol `A` is much like `a`, but it is followed by a string, which tells the program what corners should be rounded in that accent. It follows the pattern of `tr tl bl br` (`t`op and `b`ottom `l`eft and `r`ight). It must be a 1 one word string, containing all the patterns for corners to be rounded. Any string will do, for example:
   `a title A**92tl(!Ubr` will round the `tl` and `br` corners. One thing to note about corners is that they take on the last configuration used in a letter, in the above example, the first `a` could have been an `A` followed by any string, but the configuration would still follow what the second `A` does.
@@ -255,6 +255,19 @@ layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl
 ?̷̛͈͐̃̈́̀̇́̑͛̓͋̌?̴̡̘̯͙̩̂̑̅̆̕?̶͍̣́̅̐̔͂̅͐̿͌͝:
 ![Strange 2](/assets/strange-2.png)
 (very laggy)
+
+### Some ideas for accents
+![top and bottom wrap](/assets/top-and-bottom-wrap.png)
+```ini
+layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl - a P80 Atl - a | | Ablbr - a P80 Abr
+```
+
+![top left and right](/assets/top-left-and-right.png)
+```ini
+layout = a P7 icon p title P7 a | | a P7 minimize p maximize p close P7 a 
+```
+
+![frame](/assets/frame.png)
 
 ## App Icon Debugging
 The plugin will automatically try to retrieve icons from the file system, in order to display them on `icon` symbols on your windows. It will first look for folders matching your `icon_theme`. If it doesn't find the icons there, it will look in the remaining folders (hicolor, adwaita, breeze, in that order). However, sometimes, it just fails, and even if there is an icon for said app, the app's `app_id` is too terrible to find a suitable image, e.g. Osu!lazer has an `app_id` of "dotnet", which is completely unusable.

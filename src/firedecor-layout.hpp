@@ -62,7 +62,8 @@ struct decoration_area_t {
     decoration_area_t(decoration_area_type_t type, wf::geometry_t g);
 
     /** Initialize a new decoration area holding background areas */
-    decoration_area_t(decoration_area_type_t type, wf::geometry_t g, std::string c);
+    decoration_area_t(decoration_area_type_t type, wf::geometry_t g, std::string c,
+                      matrix<int> m);
 
     /** @return The type of the decoration area */
     decoration_area_type_t get_type() const;
@@ -75,6 +76,9 @@ struct decoration_area_t {
 
     /** @return The corners of the decoration area */
     std::string get_corners() const;
+
+    /** @return The transformation matrix of the area */
+    matrix<int> get_m() const;
 
     /** @return The area's button, if the area is a button. Otherwise UB */
     button_t& as_button();
@@ -91,6 +95,9 @@ struct decoration_area_t {
 
     /** For backgrounds and accents only */
     std::string corners;
+
+    /** For accent corners */
+    matrix<int> m;
 };
 
 /**

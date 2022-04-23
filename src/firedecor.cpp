@@ -12,7 +12,7 @@ struct wayfire_decoration_global_cleanup_t {
     wayfire_decoration_global_cleanup_t() = default;
     ~wayfire_decoration_global_cleanup_t() {
         for (auto view : wf::get_core().get_all_views()) {
-            deinit_view(view);
+            wf::firedecor::deinit_view(view);
         }
     }
 
@@ -113,22 +113,22 @@ class wayfire_firedecor_t :
         		    try {
             		    wf::view_matcher_t matcher{theme + "/uses_if"};
             		    if (matcher.matches(view)) {
-                		    init_view(view, get_options(theme));
+                		    wf::firedecor::init_view(view, get_options(theme));
                 		    return;
             		    }
          		    } catch (...) {
          		    }
     		    }
-			    init_view(view, get_options("invalid"));
+			    wf::firedecor::init_view(view, get_options("invalid"));
 		    }
 	    } else {
-		    deinit_view(view);
+		    wf::firedecor::deinit_view(view);
 	    }
     }
 
     void fini() override {
         for (auto& view : output->workspace->get_views_in_layer(wf::ALL_LAYERS)) {
-            deinit_view(view);
+            wf::firedecor::deinit_view(view);
         }
     }
 };

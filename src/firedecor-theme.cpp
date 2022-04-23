@@ -161,29 +161,19 @@ cairo_surface_t*decoration_theme_t::form_title(std::string text,
     return surface;
 }
 
-cairo_surface_t *decoration_theme_t::form_corner(bool active, int r, double scale,
-                                                 double angle, int height) const {
-    double c_r = corner_radius.get_value() * scale;
-	double o_r = c_r - scale * (double)outline_size.get_value() / 2;
+cairo_surface_t *decoration_theme_t::form_corner(bool active, int r, 
+                                                 matrix<double> m, 
+                                                 int height) const {
+    double c_r = corner_radius.get_value() * abs(m.xx);
+	double o_r = c_r - abs(m.xx) * (double)outline_size.get_value() / 2;
 
     const auto format = CAIRO_FORMAT_ARGB32;
     auto *surface = cairo_image_surface_create(format, c_r, height);
     auto cr = cairo_create(surface);
 
-    wf::point_t center, rectangle;;
-    if (angle == 0) {
-        rectangle = { 0, 0 };
-        center = { 0, (int)(height - c_r) };
-    } else if (angle == M_PI / 2) {
-        rectangle = { 0, 0 };
-        center = { (int)c_r, (int)(height - c_r) };
-    } else if (angle == M_PI) {
-        rectangle = { 0, (int)c_r };
-        center = { (int)c_r, (int)c_r };
-    } else {
-        rectangle = { 0, (int)c_r };
-        center = { 0, (int)c_r };
-    }
+    cairo_translate(cr, c_r / 2, (double)height / 2);
+    cairo_scale(cr, m.xx, m.yy);
+    cairo_translate(cr, -c_r / 2, -(double)height / 2);
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
     /* Border */
@@ -191,25 +181,27 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active, int r, double scal
                         inactive_border.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     if (r > 0) {
-        cairo_move_to(cr, center.x, center.y);
-        cairo_arc(cr, center.x, center.y, c_r, angle, angle + M_PI / 2);
-        cairo_line_to(cr, center.x, center.y);
+        cairo_move_to(cr, 0, (int)(height - c_r));
+        cairo_arc(cr, 0, (int)(height - c_r), c_r, 0, M_PI / 2);
+        cairo_fill(cr);
+
+        cairo_rectangle(cr, 0, 0, c_r, height - c_r);
+        cairo_fill(cr);
     } else {
         cairo_rectangle(cr, 0, 0, c_r, height);
+        cairo_fill(cr);
     }
-    cairo_fill(cr);
-
-    cairo_rectangle(cr, rectangle.x, rectangle.y, c_r, height - c_r);
-    cairo_fill(cr);
 
     /* Outline */
 	color = active ? active_outline.get_value() : inactive_outline.get_value();
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
-    cairo_set_line_width(cr, outline_size.get_value() * scale);
+    cairo_set_line_width(cr, outline_size.get_value() * abs(m.xx));
     if (r > 0) {
-        cairo_arc(cr, center.x, center.y, o_r, angle, angle + M_PI / 2);
+        cairo_arc(cr, 0, (int)(height - c_r), o_r, 0, M_PI / 2);
     } else {
-        cairo_rectangle(cr, 0, 0, c_r, height);
+        cairo_move_to(cr, o_r, 0);
+        cairo_line_to(cr, o_r, height - c_r + o_r);
+        cairo_line_to(cr, 0, height - c_r + o_r);
     }
     cairo_stroke(cr);
     cairo_destroy(cr);

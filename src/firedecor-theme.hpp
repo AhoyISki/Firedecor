@@ -18,6 +18,11 @@ struct color_set_t {
 	};
 };
 
+template<typename T = double>
+struct matrix {
+    T xx, xy, yx, yy;
+};
+
 enum orientation_t {
 	HORIZONTAL = 0,
 	VERTICAL = 1
@@ -162,10 +167,10 @@ class decoration_theme_t : private theme_options {
      * @param active The activation state of the window.
      * @param r the radius of the corner.
      * @param scale The scale of the framebuffer.
-     * @param angle The initial angle of the corner.
+     * @param m The matrix to transform the corner.
      * @param height The height of the corner, set by radius or the border size.
      */
-    cairo_surface_t *form_corner(bool active, int r, double scale, double angle,
+    cairo_surface_t *form_corner(bool active, int r, matrix<double> m, 
                                  int height) const;
 
     /**

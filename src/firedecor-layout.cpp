@@ -35,7 +35,7 @@ decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t
 }
 
 decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t g,
-                                     std::string c) {
+                                     std::string c, matrix<int> m) {
     this->type = type;
     this->geometry = g;
     this->corners = c;
@@ -55,6 +55,10 @@ edge_t decoration_area_t::get_edge() const {
 
 std::string decoration_area_t::get_corners() const {
     return corners;
+}
+
+matrix<int> decoration_area_t::get_m() const {
+    return m;
 }
 
 button_t& decoration_area_t::as_button() {
@@ -122,11 +126,11 @@ void decoration_layout_t::create_areas(int width, int height,
     const wf::point_t &title = { title_size.width, title_size.height };
 
     /** Matrix that transforms said elements */
-	struct { int x1 = 1, y1 = 0 , x2 = 0, y2 = 1; } m;
+	matrix<int> m{ 1, 0, 0, 1 };
 
     /** Transformation lambda */
 	auto trans = [&](wf::point_t v) -> wf::point_t {
-    	return { v.x * m.x1 + v.y * m.y1, v.x * m.x2 + v.y * m.y2 };
+    	return { v.x * m.xx + v.y * m.xy, v.x * m.yx + v.y * m.yy };
 	};
     /****/
 
@@ -178,9 +182,9 @@ void decoration_layout_t::create_areas(int width, int height,
 			        }
 
 					if (vec == center) {
-				        shift = (trans(l).x - region_lenght) / 2;
+				        shift = (abs(trans(l).x) - region_lenght) / 2;
 					} else {
-				        shift = trans(l).x - region_lenght;
+				        shift = abs(trans(l).x) - region_lenght;
 					}
 				} else {
 					shift = 0;
@@ -205,7 +209,7 @@ void decoration_layout_t::create_areas(int width, int height,
 				        out_padding = (max_height - icon_size) / 2;
 				        cur_g = {
 				        	o.x + trans(p()).x, o.y + trans(p()).y,
-				        	(m.x1 + m.y1) * icon_size, (m.x2 + m.y2) * icon_size
+				        	(m.xx + m.xy) * icon_size, (m.yx + m.yy) * icon_size
 				        };
 				        layout_areas.push_back(std::make_unique<decoration_area_t>(
 						        DECORATION_AREA_ICON, cur_g, current_edge));
@@ -215,21 +219,25 @@ void decoration_layout_t::create_areas(int width, int height,
 					    std::stringstream num;
 					    num << type.substr(1);
 					    num >> delta;
-			        } else if (type == "a"|| type[0] == 'A' ||
-		                       type == "d" || type == "D") {
+			        } else if (type == "a"|| type[0] == 'A') {
 				        counter = (counter + 1) % 2;
 				        out_padding = counter * edge_height;
 				        b_p2 = { b_o.x + trans(p()).x, b_o.y + trans(p()).y };
+				        if (current_edge == EDGE_RIGHT) {
+    				        std::ofstream test{"/home/mateus/Development/wayfire-firedecor/test", std::ofstream::app};
+    				        test << shift << " " << p().y << std::endl;
+				        }
 				        cur_g = {
     				        std::min(b_p1.x, b_p2.x), std::min(b_p1.y, b_p2.y),
     				        abs(b_p2.x - b_p1.x), abs(b_p2.y - b_p1.y)
 				        };
 				        auto bg = (counter == 0) ? DECORATION_AREA_ACCENT :
 			                     DECORATION_AREA_BACKGROUND;
-	                    if (cur_g.width > 0 && cur_g.height > 0 &&
+	                    if (abs(cur_g.width) > 0 && abs(cur_g.height) > 0 &&
 	                        (shift > min_shift || counter == 0)) {
     				        background_areas.push_back(
-        				        std::make_unique<decoration_area_t>(bg, cur_g, type));
+        				        std::make_unique<decoration_area_t>(bg, cur_g, type,
+        				                                            m));
 	                    }
 				        b_p1 = b_p2;
 				        last_accent = type;
@@ -260,12 +268,12 @@ void decoration_layout_t::create_areas(int width, int height,
 	        b_p2 = { b_f.x + trans(p()).x, b_f.y + trans(p()).y };
 	        wf::geometry_t final_g = {
 		        std::min(b_p1.x, b_p2.x), std::min(b_p1.y, b_p2.y),
-		        (m.x1 + m.y1) * (b_p2.x - b_p1.x), (m.x2 + m.y2) * (b_p2.y - b_p1.y)
+		        (m.xx + m.xy) * (b_p2.x - b_p1.x), (m.yx + m.yy) * (b_p2.y - b_p1.y)
 	        };
 	        if (final_g.width > 0 && final_g.height > 0) {
     	        auto type =  DECORATION_AREA_BACKGROUND;
     	        background_areas.push_back(
-    		        std::make_unique<decoration_area_t>(type, final_g, ""));
+    		        std::make_unique<decoration_area_t>(type, final_g, "", m));
 	        }
 	        counter = 0;
 
@@ -314,7 +322,7 @@ void decoration_layout_t::create_areas(int width, int height,
     }
 }
 
-/** Regenerate layout using the new size */
+/** Regenerate layout using a new size */
 void decoration_layout_t::resize(int width, int height, wf::dimensions_t title_size) {
     max_height = std::max({ title_size.height, icon_size, button_size });
     this->background_areas.clear();
