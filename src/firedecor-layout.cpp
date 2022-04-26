@@ -39,6 +39,7 @@ decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t
     this->type = type;
     this->geometry = g;
     this->corners = c;
+    this->m = m;
 }
 
 decoration_area_type_t decoration_area_t::get_type() const {
@@ -126,7 +127,7 @@ void decoration_layout_t::create_areas(int width, int height,
     const wf::point_t &title = { title_size.width, title_size.height };
 
     /** Matrix that transforms said elements */
-	matrix<int> m{ 1, 0, 0, 1 };
+	matrix<int> m = { 1, 0, 0, 1 };
 
     /** Transformation lambda */
 	auto trans = [&](wf::point_t v) -> wf::point_t {
@@ -223,10 +224,6 @@ void decoration_layout_t::create_areas(int width, int height,
 				        counter = (counter + 1) % 2;
 				        out_padding = counter * edge_height;
 				        b_p2 = { b_o.x + trans(p()).x, b_o.y + trans(p()).y };
-				        if (current_edge == EDGE_RIGHT) {
-    				        std::ofstream test{"/home/mateus/Development/wayfire-firedecor/test", std::ofstream::app};
-    				        test << shift << " " << p().y << std::endl;
-				        }
 				        cur_g = {
     				        std::min(b_p1.x, b_p2.x), std::min(b_p1.y, b_p2.y),
     				        abs(b_p2.x - b_p1.x), abs(b_p2.y - b_p1.y)

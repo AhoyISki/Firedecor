@@ -126,10 +126,8 @@ class simple_decoration_surface : public surface_interface_t,
 
     /** Accent variables */
     struct accent_texture_t {
-        simple_texture_t tr[2];
-        simple_texture_t tl[2];
-        simple_texture_t bl[2];
-        simple_texture_t br[2];
+        simple_texture_t t_trbr[2];
+        simple_texture_t t_tlbl[2];
         int radius;
     };
 
@@ -315,13 +313,13 @@ class simple_decoration_surface : public surface_interface_t,
             abs(accent.width * m.xx + accent.height * m.xy),
             abs(accent.width * m.yx + accent.height * m.yy)
         };
-        
+
         auto full_surface = cairo_image_surface_create(format, accent.width,
                                                        accent.height);
         auto cr = cairo_create(full_surface);
 
         /** This array will be depleted by the absense of a rounded corner */
-        std::string was_rounded[] = { "tr", "br", "bl", "tl" };
+        std::string was_rounded[4] = { "br", "tr", "tl", "bl" };
         if (corner_style != "a") {
             for (int j = 0; j < 4; j++) {
                if (corner_style.find(was_rounded[j]) == std::string::npos) {
@@ -338,9 +336,10 @@ class simple_decoration_surface : public surface_interface_t,
         /** Lambda that creates a rounded or flat corner */
         auto create_corner = [&](int w, int h, int i) {
             if (was_rounded[i] != "") {
-                cairo_arc(cr, w + ((i < 2) ? -r : r), h + ((i % 2 == 0) ? r : -r), r,
-                          M_PI * (i - 1) / 2, M_PI * i / 2);
+                cairo_arc(cr, w + ((i < 2) ? -r : r), h + ((i % 3 == 0) ? r : -r), r,
+                          M_PI_2 * (i - 1), M_PI_2 * i);
             } else {
+                if (i % 2 == 0) { cairo_line_to(cr, w, h); }
                 cairo_line_to(cr, w, h + ((i == 0) ? r : ((i == 2) ? -r : 0)));
             }
         };
@@ -352,7 +351,7 @@ class simple_decoration_surface : public surface_interface_t,
             create_corner(mod_a.width, 0, 0);
             create_corner(mod_a.width, mod_a.height, 1);
         }
-        if (was_rounded[1] == "" && was_rounded[2] == "") {
+        if (was_rounded[2] == "" && was_rounded[3] == "") {
             cairo_line_to(cr, retract.tl, mod_a.height);
             cairo_line_to(cr, retract.bl, 0);
         } else {
@@ -415,36 +414,17 @@ class simple_decoration_surface : public surface_interface_t,
 
                     /** Transformed br accent corner, relative to the view corner */
                     wf::point_t t_br_rel_v = {
-                       c->g.x + (accent.width - retract.br) * m.xx,
-                       c->g.y + c->g.height - accent.height + retract.br * m.yx
+                        (a_origin.x) - c->g.x,
+                        (c->g.y + c->g.height) - (a_origin.y + accent.height)
                     };
+                    std::ofstream test{"/home/mateus/Development/wayfire-firedecor/test", std::ofstream::app};
+                    test << t_br_rel_v << std::endl;
+            
 
-                    /** Translating it to the final correct position */
-                    t_br_rel_v = t_br_rel_v -  a_origin;
-
-                    cairo_move_to(cr_v, t_br_rel_v);
+                    cairo_translate(cr_v, t_br_rel_v.x, t_br_rel_v.y);
                     cairo_append_path(cr_v, master_path);
                     cairo_fill(cr);
                     /****/
-                    
-//                    if (do_round) {
-//                        /** Radius's center relative to the view's corner */
-//                        point_t rc_rel_v;
-//                        rc_rel_v.x = -v_rel_a.x + p[j].x;
-//                        rc_rel_v.y = v_rel_a.y + c->g_rel.height - r + p[j].y;
-//
-//                        cairo_move_to(cr_v, rc_rel_v);
-//                        cairo_arc(cr_v, rc_rel_v, r, angle, angle + M_PI / 2);
-//                        cairo_fill(cr_v);
-//                    } else {
-//                        /** Rectangle's origin, relative to the view's corner */
-//                        point_t reo_rel_v;
-//                        reo_rel_v.x = -v_rel_a.x;
-//                        reo_rel_v.y = v_rel_a.y + c->g_rel.height - r;
-//
-//                        cairo_rectangle(cr_v, reo_rel_v, r, r);
-//                        cairo_fill(cr_v);
-//                    }
 
                     /** Clear the view's corner with the accent rectangles */
                     for (auto cut : cuts) {
@@ -471,30 +451,28 @@ class simple_decoration_surface : public surface_interface_t,
             cairo_set_operator(cr_a, CAIRO_OPERATOR_SOURCE);
 
             wf::point_t t_br = { 
-                (accent.width - retract.br) * m.xx - a_edges[j].x,
-                retract.br * m.yx - a_edges[j].y
+                (r - accent.width) * abs(m.xx) * (i % 2),
+                (r - accent.height) * abs(m.yx) * (i % 2)
             };
+            cairo_translate(cr_a , (double)accent.width / 2, (double)accent.height / 2); 
+            cairo_transform(cr_a , &matrix);
+            cairo_translate(cr_a , -(double)accent.width / 2, -(double)accent.height / 2); 
 
-            cairo_move_to(cr_a, t_br);
+            cairo_translate(cr_a, t_br.x, t_br.y);
             cairo_append_path(cr_a, master_path);
-            //if (do_round) {
-                //cairo_move_to(cr_a, p[j]);
-                //cairo_arc(cr_a, p[j], r, angle, angle + M_PI / 2);
-            //} else {
-                //cairo_rectangle(cr_a, 0, 0, r, r);
-            //}
             cairo_fill(cr_a);
             cairo_destroy(cr_a);
             /****/
         }
         auto& texture = accent_textures.back();
-        cairo_surface_upload_to_texture(surfaces[0], texture.tr[INACTIVE]);
-        cairo_surface_upload_to_texture(surfaces[1], texture.tl[INACTIVE]);
-        cairo_surface_upload_to_texture(surfaces[2], texture.bl[ACTIVE]);
-        cairo_surface_upload_to_texture(surfaces[3], texture.br[ACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[0], texture.t_trbr[INACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[1], texture.t_tlbl[INACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[2], texture.t_trbr[ACTIVE]);
+        cairo_surface_upload_to_texture(surfaces[3], texture.t_tlbl[ACTIVE]);
         texture.radius = r;
 
         for (auto surface : surfaces) { cairo_surface_destroy(surface); }
+        cairo_path_destroy(master_path);
     }
 
     void render_background_area(const framebuffer_t& fb, geometry_t g,
@@ -519,22 +497,21 @@ class simple_decoration_surface : public surface_interface_t,
 
             r = accent_textures.at(i).radius;
 
-            geometry_t c_g[] = { 
-                { g.x + g.width - r, g.y, r, r }, { g.x, g.y, r, r },
-                { g.x, g.y + g.height - r, r, r },
-                { g.x + g.width - r, g.y + g.height - r, r, r }
-            };
+            geometry_t a_edges[2];
+            if (m.xx == 1) {
+                a_edges[0] = { g.x, g.y, r, g.height };
+                a_edges[1] = { g.x + g.width - r, g.y, r, g.height };
+            } else {
+                a_edges[0] = { g.x, g.y, g.width, r };
+                a_edges[1] = { g.x, g.y + g.height - r, g.width, r };
+            }
 
             OpenGL::render_begin(fb);
             fb.logic_scissor(scissor);
-            OpenGL::render_texture(accent_textures.at(i).tr[active].tex, fb,
-                                   c_g[0] + o, glm::vec4(1.0));
-            OpenGL::render_texture(accent_textures.at(i).tl[active].tex, fb,
-                                   c_g[1] + o, glm::vec4(1.0));
-            OpenGL::render_texture(accent_textures.at(i).bl[active].tex, fb,
-                                   c_g[2] + o, glm::vec4(1.0));
-            OpenGL::render_texture(accent_textures.at(i).br[active].tex, fb,
-                                   c_g[3] + o, glm::vec4(1.0));
+            OpenGL::render_texture(accent_textures.at(i).t_trbr[active].tex, fb,
+                                   a_edges[0] + o, glm::vec4(1.0));
+            OpenGL::render_texture(accent_textures.at(i).t_tlbl[active].tex, fb,
+                                   a_edges[1] + o, glm::vec4(1.0));
             /****/
 
             /**** Render the internal rectangles of the accent */
