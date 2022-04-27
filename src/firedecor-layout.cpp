@@ -287,8 +287,8 @@ void decoration_layout_t::create_areas(int width, int height,
 		        current_edge = EDGE_BOTTOM;
 		        m = { 1, 0, 0, 1 };
 		        o = b_o = { 0, height - border_size.bottom };
-		        b_p1 = { width_cut(border_size.left), height - border_size.bottom };
-		        b_f = { width - width_cut(border_size.right), height };
+		        b_p1 = { corner_radius, height - border_size.bottom };
+		        b_f = { width - corner_radius, height };
 		        edge_height = border_size.bottom;
 		        min_shift = corner_radius;
 	        } else {

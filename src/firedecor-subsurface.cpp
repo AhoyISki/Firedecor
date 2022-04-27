@@ -305,6 +305,8 @@ class simple_decoration_surface : public surface_interface_t,
                     retract.tr = r;
                 }
                 i++;
+            } else if (c == '!') {
+                i++;
             }
         }
 
@@ -318,19 +320,39 @@ class simple_decoration_surface : public surface_interface_t,
                                                        accent.height);
         auto cr = cairo_create(full_surface);
 
-        /** This array will be depleted by the absense of a rounded corner */
-        std::string was_rounded[4] = { "br", "tr", "tl", "bl" };
-        if (corner_style != "a") {
-            for (int j = 0; j < 4; j++) {
-               if (corner_style.find(was_rounded[j]) == std::string::npos) {
-                   was_rounded[j] = "";
+        /** A corner indexing array and the string with the final corners to round */
+        std::string c_strs[4] = { "br", "tr", "tl", "bl" };
+        std::string to_round;
+
+        /** Deciding which corners to round, based on the string and on rotation */
+        if (corner_style == "a") {
+            to_round = "brtrtlbl";
+            retract.br = r;
+        } else {
+            /** True mathematical modulo */
+            auto modulo = [](int a, int b) -> int {
+               return a - b * floor((double)a / b);
+            };
+
+            for (int c_to_rotate = 0; auto str : c_strs) {
+               if (corner_style.find(str) != std::string::npos) {
+
+                   /**
+                    * This function effectively rotates the chosen corner.
+                    * When m.xy == 1 (left edge), br becomes tr, tr becomes tl, etc.
+                    * On the right edge, the opposite happens.
+                    * This is to keep the correct corners rounded for the end user.
+                    */
+                   to_round += c_strs[modulo(c_to_rotate - m.xy, 4)];
+                   if (modulo(c_to_rotate - m.xy, 4) == 0) { retract.br = r; }
                }
+               c_to_rotate++;
             }
         }
 
         /** Point of rotation, in case it is needed */
-        int rotation_perp_d = ((m.xy == 1) ? mod_a.height : mod_a.width ) / 2;
-        wf::point_t rotation_point = { rotation_perp_d, rotation_perp_d };
+        int rotation_x_d = ((m.xy == 1) ? mod_a.height : mod_a.width ) / 2;
+        wf::point_t rotation_point = { rotation_x_d, rotation_x_d };
 
         /** Rotation depending on the edge */
         cairo_translate(cr, rotation_point);
@@ -339,7 +361,7 @@ class simple_decoration_surface : public surface_interface_t,
 
         /** Lambda that creates a rounded or flat corner */
         auto create_corner = [&](int w, int h, int i) {
-            if (was_rounded[i] != "") {
+            if (to_round.find(c_strs[i]) != std::string::npos) {
                 cairo_arc(cr, w + ((i < 2) ? -r : r), h + ((i % 3 == 0) ? r : -r), r,
                           M_PI_2 * (i - 1), M_PI_2 * i);
             } else {
@@ -348,14 +370,14 @@ class simple_decoration_surface : public surface_interface_t,
             }
         };
 
-        if (was_rounded[0] == "") { cairo_move_to(cr, mod_a.width - retract.br, 0); }
-        if (was_rounded[0] == "" && was_rounded[1] == "") {
+        cairo_move_to(cr, mod_a.width - retract.br, 0);
+        if (to_round.find("r") == std::string::npos) {
             cairo_line_to(cr, mod_a.width - retract.tr, mod_a.height);
         } else {
             create_corner(mod_a.width, 0, 0);
             create_corner(mod_a.width, mod_a.height, 1);
         }
-        if (was_rounded[2] == "" && was_rounded[3] == "") {
+        if (to_round.find("l") == std::string::npos) {
             cairo_line_to(cr, retract.tl, mod_a.height);
             cairo_line_to(cr, retract.bl, 0);
         } else {
@@ -516,20 +538,18 @@ class simple_decoration_surface : public surface_interface_t,
             /****/
 
             /**** Render the internal rectangles of the accent */
-            geometry_t accent_rects[] = { 
-                { g.x + r, g.y, g.width - 2 * r, g.height },
-                { g.x, g.y + r, r, g.height - 2 * r },
-                { g.x + g.width - r, g.y + r, r, g.height - 2 * r }
-            };
+            wf::geometry_t accent_rect;
+            if (m.xy == 0) {
+                accent_rect = { g.x + r, g.y, g.width - 2 * r, g.height };
+            } else {
+                accent_rect = { g.x, g.y + r, g.width, g.height - 2 * r };
+            }
 
             color_t color = (active) ? theme.get_accent_colors().active :
                                 theme.get_accent_colors().inactive;
             color = alpha_transform(color);
-            for (auto a_r : accent_rects) {
-                if (a_r.width <= 0 || a_r.height <= 0) { continue; }
-                OpenGL::render_rectangle(a_r + o, color,
-                                         fb.get_orthographic_projection());
-            }
+            OpenGL::render_rectangle(accent_rect + o, color,
+                                     fb.get_orthographic_projection());
             /****/
             OpenGL::render_end();
         } else {
