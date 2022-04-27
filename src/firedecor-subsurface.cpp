@@ -264,7 +264,7 @@ class simple_decoration_surface : public surface_interface_t,
 
         int h = std::max({ corner_radius, border_size.top, border_size.bottom });
 
-        geometry_t a_edges[2];
+        wf::geometry_t a_edges[2];
         if (m.xx == 1) {
             a_edges[0] = { 0, 0, r, accent.height };
             a_edges[1] = { accent.width - r, 0, r, accent.height };
@@ -273,7 +273,7 @@ class simple_decoration_surface : public surface_interface_t,
             a_edges[1] = { 0, accent.height - r, accent.width, r };
         }
 
-        geometry_t cuts[] = { 
+        wf::geometry_t cuts[] = { 
            { accent.x + r, accent.y,
              accent.width - 2 * r, accent.height },
            { accent.x, accent.y + r, r, accent.height - 2 * r },
@@ -283,7 +283,7 @@ class simple_decoration_surface : public surface_interface_t,
 
         /**** Creation of the master path, containing all accent edge textures */
         const cairo_matrix_t matrix = {
-            (double)m.xx, (double)m.yx, (double)m.yx, (double)m.yy, 0, 0
+            (double)m.xx, (double)m.xy, (double)m.yx, (double)m.yy, 0, 0
         };
 
         /** Array used to determine if a line starts on the corner or not */
@@ -328,10 +328,14 @@ class simple_decoration_surface : public surface_interface_t,
             }
         }
 
+        /** Point of rotation, in case it is needed */
+        int rotation_perp_d = ((m.xy == 1) ? mod_a.height : mod_a.width ) / 2;
+        wf::point_t rotation_point = { rotation_perp_d, rotation_perp_d };
+
         /** Rotation depending on the edge */
-        cairo_translate(cr, (double)accent.width / 2, (double)accent.height / 2); 
+        cairo_translate(cr, rotation_point);
         cairo_transform(cr, &matrix);
-        cairo_translate(cr, -(double)accent.width / 2, -(double)accent.height / 2); 
+        cairo_translate(cr, -rotation_point);
 
         /** Lambda that creates a rounded or flat corner */
         auto create_corner = [&](int w, int h, int i) {
@@ -372,15 +376,15 @@ class simple_decoration_surface : public surface_interface_t,
                 a_color = theme.get_accent_colors().active;
                 b_color = theme.get_border_colors().active;
             }
-            int width = accent.width * m.xy + r * m.xx;
-            int height = accent.height * m.yy + r * m.yx;
+            int width = a_edges[j].width;
+            int height = a_edges[j].height;
                 
             surfaces[i] = cairo_image_surface_create(format, width, height);
             auto cr_a = cairo_create(surfaces[i]);
 
             /** Background rectangle, behind the accent's corner */
             cairo_set_source_rgba(cr_a, b_color);
-            cairo_rectangle(cr_a, 0, 0, r, r);
+            cairo_rectangle(cr_a, 0, 0, a_edges[j].width, a_edges[j].height);
             cairo_fill(cr_a);
 
             /** Dealing with intersection between the view's corners and accent */
@@ -417,9 +421,6 @@ class simple_decoration_surface : public surface_interface_t,
                         (a_origin.x) - c->g.x,
                         (c->g.y + c->g.height) - (a_origin.y + accent.height)
                     };
-                    std::ofstream test{"/home/mateus/Development/wayfire-firedecor/test", std::ofstream::app};
-                    test << t_br_rel_v << std::endl;
-            
 
                     cairo_translate(cr_v, t_br_rel_v.x, t_br_rel_v.y);
                     cairo_append_path(cr_v, master_path);
@@ -450,13 +451,13 @@ class simple_decoration_surface : public surface_interface_t,
             cairo_set_source_rgba(cr_a, a_color);
             cairo_set_operator(cr_a, CAIRO_OPERATOR_SOURCE);
 
-            wf::point_t t_br = { 
-                (r - accent.width) * abs(m.xx) * (i % 2),
-                (r - accent.height) * abs(m.yx) * (i % 2)
+            wf::point_t t_br = {
+                (r - mod_a.width) * (m.xx * (i % 2) + m.xy * (1 - i % 2)), 0
             };
-            cairo_translate(cr_a , (double)accent.width / 2, (double)accent.height / 2); 
+
+            cairo_translate(cr_a , rotation_point); 
             cairo_transform(cr_a , &matrix);
-            cairo_translate(cr_a , -(double)accent.width / 2, -(double)accent.height / 2); 
+            cairo_translate(cr_a , -rotation_point); 
 
             cairo_translate(cr_a, t_br.x, t_br.y);
             cairo_append_path(cr_a, master_path);
