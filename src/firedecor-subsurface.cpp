@@ -273,13 +273,12 @@ class simple_decoration_surface : public surface_interface_t,
             a_edges[1] = { 0, accent.height - r, accent.width, r };
         }
 
-        wf::geometry_t cuts[] = { 
-           { accent.x + r, accent.y,
-             accent.width - 2 * r, accent.height },
-           { accent.x, accent.y + r, r, accent.height - 2 * r },
-           { accent.x + accent.width - r, accent.y + r, r,
-             accent.height - 2 * r }
-        };
+        wf::geometry_t cut;
+        if (m.xy == 0) { 
+            cut = { accent.x + r, accent.y, accent.width - 2 * r, accent.height };
+        } else {
+            cut = { accent.x, accent.y + r, accent.width, accent.height - 2 * r };
+        }
 
         /**** Creation of the master path, containing all accent edge textures */
         const cairo_matrix_t matrix = {
@@ -445,24 +444,25 @@ class simple_decoration_surface : public surface_interface_t,
                     };
 
                     cairo_translate(cr_v, t_br_rel_v.x, t_br_rel_v.y);
+
+                    cairo_translate(cr_v , rotation_point); 
+                    cairo_transform(cr_v , &matrix);
+                    cairo_translate(cr_v , -rotation_point); 
+
                     cairo_append_path(cr_v, master_path);
                     cairo_fill(cr);
                     /****/
 
-                    /** Clear the view's corner with the accent rectangles */
-                    for (auto cut : cuts) {
-                        if (cut.width <= 0 || cut.height <= 0) { continue; }
+                    /**** Clear the view's corner with the accent rectangles */
+                    /** Bottom of the rectangle relative to the view's corner */
+                    wf::point_t reb_rel_v;
+                    reb_rel_v.y = (c->g.y + c->g.height) - (cut.y + cut.height);
+                    reb_rel_v.x = (cut.x - c->g.x);
 
-                        /** Bottom of the rectangle relative to the view's corner */
-                        point_t reb_rel_v;
-                        reb_rel_v.y = (c->g.y + c->g.height) -
-                                      (cut.y + cut.height);
-                        reb_rel_v.x = (cut.x - c->g.x);
-
-                        cairo_set_operator(cr_v, CAIRO_OPERATOR_CLEAR);
-                        cairo_rectangle(cr_v, reb_rel_v, cut.width, cut.height);
-                        cairo_fill(cr_v);
-                    }
+                    cairo_set_operator(cr_v, CAIRO_OPERATOR_CLEAR);
+                    cairo_rectangle(cr_v, reb_rel_v, cut.width, cut.height);
+                    cairo_fill(cr_v);
+                    /****/
                             
                     cairo_surface_upload_to_texture(c->surf[active], c->tex[active]);
                     cairo_destroy(cr_v);
