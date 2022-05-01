@@ -28,7 +28,7 @@
 		<option name="max_title_size" type="int">
 			<_short>Maximum title size</_short>
 			<_long>Sets the maximum title size, in pixels.</_long>
-			<default>400</default>
+			<default>700</default>
 		</option>
 		<!-- Border -->
 		<option name="border_size" type="string">
