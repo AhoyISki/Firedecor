@@ -200,7 +200,10 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active, int r,
     cairo_set_source_rgba(cr, color.r, color.g, color.b, color.a);
     cairo_set_line_width(cr, outline_size.get_value() * abs(m.xx));
     if (r > 0) {
+        cairo_move_to(cr, o_r, 0);
+        cairo_line_to(cr, o_r, height - c_r);
         cairo_arc(cr, 0, (int)(height - c_r), o_r, 0, M_PI / 2);
+        cairo_stroke(cr);
     } else {
         cairo_move_to(cr, o_r, 0);
         cairo_line_to(cr, o_r, height - c_r + o_r);

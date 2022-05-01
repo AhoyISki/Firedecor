@@ -291,7 +291,7 @@ class simple_decoration_surface : public surface_interface_t,
 		OpenGL::render_end();
     }
 
-    color_t alpha_transform(color_t c) {
+    color_t alpha_trans(color_t c) {
 	    return { c.r * c.a, c.g * c.a, c.b * c.a, c.a };
     }
 
@@ -515,7 +515,6 @@ class simple_decoration_surface : public surface_interface_t,
             }
 
             /**** Final drawing of accent corner, overlaying the drawn rectangle */
-            cairo_set_source_rgba(cr_a, a_color);
             cairo_set_operator(cr_a, CAIRO_OPERATOR_SOURCE);
 
             wf::point_t t_br = {
@@ -526,6 +525,16 @@ class simple_decoration_surface : public surface_interface_t,
             cairo_transform(cr_a , &matrix);
             cairo_translate(cr_a , -rotation_point); 
 
+            auto outline_color = (view->activated) ?
+                                 alpha_trans(theme.get_outline_colors().active) :
+                                 alpha_trans(theme.get_outline_colors().inactive);
+
+            cairo_set_source_rgba(cr_a, outline_color);
+            cairo_rectangle(cr_a, 0, mod_a.height, mod_a.width,
+                            theme.get_outline_size());
+            cairo_fill(cr_a);
+
+            cairo_set_source_rgba(cr_a, a_color);
             cairo_translate(cr_a, t_br.x, t_br.y);
             cairo_append_path(cr_a, master_path);
             cairo_fill(cr_a);
@@ -592,7 +601,7 @@ class simple_decoration_surface : public surface_interface_t,
 
             color_t color = (active) ? theme.get_accent_colors().active :
                                 theme.get_accent_colors().inactive;
-            color = alpha_transform(color);
+            color = alpha_trans(color);
             OpenGL::render_rectangle(accent_rect + o, color,
                                      fb.get_orthographic_projection());
             /****/
@@ -602,7 +611,7 @@ class simple_decoration_surface : public surface_interface_t,
             color_t color = (active) ? theme.get_border_colors().active :
                                 theme.get_border_colors().inactive;
 
-            color = alpha_transform(color);
+            color = alpha_trans(color);
 
             OpenGL::render_begin(fb);
             fb.logic_scissor(scissor);
@@ -618,8 +627,8 @@ class simple_decoration_surface : public surface_interface_t,
 			theme.get_border_colors(), theme.get_outline_colors()
 		};
 
-		colors.border.active = alpha_transform(colors.border.active);
-		colors.border.inactive = alpha_transform(colors.border.inactive);
+		colors.border.active = alpha_trans(colors.border.active);
+		colors.border.inactive = alpha_trans(colors.border.inactive);
 
 		int r = theme.get_corner_radius() * fb.scale;
 		update_corners(colors, r, fb.scale);
@@ -640,17 +649,16 @@ class simple_decoration_surface : public surface_interface_t,
 		fb.logic_scissor(scissor);
 
 		/** Outlines */
-		auto color = (view->activated) ? colors.outline.active :
-	                 colors.outline.inactive;
+		auto color = (view->activated) ? 
+	                 alpha_trans(theme.get_outline_colors().active) :
+		             alpha_trans(theme.get_outline_colors().inactive);
 		for (auto g : std::vector<geometry_t>{
-    		{ rect.x + corners.tl.r, rect.y,
-    		  rect.width - (corners.tl.r + corners.tr.r), outline_size },
-    		{ rect.x + corners.tr.r, rect.x + rect.height - outline_size ,
-    		  rect.width - (corners.bl.r + corners.br.r), outline_size },
-    		{ rect.x, rect.y + corners.tl.r, outline_size,
-    		  rect.height - (corners.tl.r + corners.bl.r) },
-    		{ rect.x + rect.width- outline_size, rect.y + corners.tr.r,
-    		  outline_size, rect.height - (corners.tr.r + corners.br.r) } }) {
+    		{ rect.x + r, rect.y, rect.width - 2 * r, outline_size },
+    		{ rect.x + r, rect.y + rect.height - outline_size,
+    		  rect.width - 2 * r, outline_size },
+    		{ rect.x, rect.y + r, outline_size, rect.height - 2 * r },
+    		{ rect.x + rect.width - outline_size, rect.y + r,
+    		  outline_size, rect.height - 2 * r } }) {
 			OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
 		}
         bool a = view->activated;
