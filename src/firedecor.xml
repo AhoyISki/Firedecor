@@ -13,7 +13,7 @@
 		<option name="font_size" type="int">
 			<_short>Font size</_short>
 			<_long>Sets the font size to use for the title bars.</_long>
-			<default>20</default>
+			<default>21</default>
 		</option>
 		<option name="active_title" type="color">
 			<_short>Title color when window is active</_short>
@@ -28,7 +28,7 @@
 		<option name="max_title_size" type="int">
 			<_short>Maximum title size</_short>
 			<_long>Sets the maximum title size, in pixels.</_long>
-			<default>700</default>
+			<default>750</default>
 		</option>
 		<!-- Border -->
 		<option name="border_size" type="string">
