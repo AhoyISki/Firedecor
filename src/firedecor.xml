@@ -25,6 +25,11 @@
 			<_long>Sets the title color when the window is inactive.</_long>
 			<default>#ffffffff</default>
 		</option>
+		<option name="max_title_size" type="int">
+			<_short>Maximum title size</_short>
+			<_long>Sets the maximum title size, in pixels.</_long>
+			<default>400</default>
+		</option>
 		<!-- Border -->
 		<option name="border_size" type="string">
 			<_short>Border size</_short>

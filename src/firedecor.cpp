@@ -71,6 +71,7 @@ class wayfire_firedecor_t :
             get_option<int>(theme, "font_size"),
         	get_option<wf::color_t>(theme, "active_title"),
         	get_option<wf::color_t>(theme, "inactive_title"),
+        	get_option<int>(theme, "max_title_size"),
 
             get_option<std::string>(theme, "border_size"),
             get_option<wf::color_t>(theme, "active_border"),

@@ -80,6 +80,7 @@ struct theme_options {
     theme_option_t<int> font_size;
 	theme_option_t<wf::color_t> active_title;
 	theme_option_t<wf::color_t> inactive_title;
+	theme_option_t<int> max_title_size;
 
     theme_option_t<std::string> border_size;
     theme_option_t<wf::color_t> active_border;
@@ -120,6 +121,8 @@ class decoration_theme_t : private theme_options {
     std::string get_border_size() const;
     /** @return The font size */
     int get_font_size() const;
+    /** @return The maximum text size, in pixels */
+    int get_max_title_size() const;
 	/** @return The available outline for resizing */
 	int get_outline_size() const;
     /** @return The corner radius */

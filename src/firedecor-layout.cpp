@@ -10,11 +10,20 @@
 
 namespace wf {
 namespace firedecor {
-/** Initialize a new decoration area holding a title or icon */
-decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t g,
-                                     edge_t edge) {
+/** Initialize a new decoration area holding an icon */
+decoration_area_t::decoration_area_t(decoration_area_type_t type,
+                                     wf::geometry_t g, edge_t edge) {
     this->type     = type;
     this->geometry = g;
+    this->edge     = edge;
+}
+
+/** Initialize a new decoration area holding a title */
+decoration_area_t::decoration_area_t(wf::geometry_t g, wf::geometry_t g_dots,
+                                     edge_t edge) {
+    this->type     = DECORATION_AREA_TITLE;
+    this->geometry = g;
+    this->dots_geometry = g_dots;
     this->edge     = edge;
 }
 
@@ -34,6 +43,7 @@ decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t
     this->geometry = g;
 }
 
+/** Initialize a decoration area for background areas */
 decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t g,
                                      std::string c, matrix<int> m) {
     this->type = type;
@@ -48,6 +58,10 @@ decoration_area_type_t decoration_area_t::get_type() const {
 
 wf::geometry_t decoration_area_t::get_geometry() const {
     return geometry;
+}
+
+wf::geometry_t decoration_area_t::get_dots_geometry() const {
+    return dots_geometry;
 }
 
 edge_t decoration_area_t::get_edge() const {
@@ -104,7 +118,8 @@ decoration_layout_t::decoration_layout_t(const decoration_theme_t& theme,
 	{}
 
 void decoration_layout_t::create_areas(int width, int height,
-                                       wf::dimensions_t title_size) {
+                                       wf::dimensions_t title_size,
+                                       wf::dimensions_t dots_size) {
     int count = std::count(layout.begin(), layout.end(), '-');
     std::string layout_str = layout;
     for (int i = 4; i > count; i--) {
@@ -125,6 +140,7 @@ void decoration_layout_t::create_areas(int width, int height,
     auto p = [&]() -> wf::point_t { return { shift, out_padding }; };
     const wf::point_t &l = { width, height - border_size.top - border_size.bottom };
     const wf::point_t &title = { title_size.width, title_size.height };
+    const wf::point_t &dots = { dots_size.width, dots_size.height };
 
     /** Matrix that transforms said elements */
 	matrix<int> m = { 1, 0, 0, 1 };
@@ -150,7 +166,6 @@ void decoration_layout_t::create_areas(int width, int height,
 
     /** The cutoff lenghts for the background */ 
     int corner_h = std::max({ border_size.top, border_size.bottom, corner_radius });
-    auto width_cut = [&](int len) { return std::max(corner_radius, len); };
 	/****/
 
     while (stream >> current_symbol) {
@@ -191,7 +206,7 @@ void decoration_layout_t::create_areas(int width, int height,
 					shift = 0;
 				}
 
-		        wf::geometry_t cur_g;
+		        wf::geometry_t cur_g, cur_dots_g;
 		        for (auto type : vec) {
 			        int delta = 0;
 
@@ -202,9 +217,15 @@ void decoration_layout_t::create_areas(int width, int height,
 					        o.x + trans(p()).x, o.y + trans(p()).y,
 				            trans(title).x, trans(title).y
 				        };
+				        wf::point_t dots_o = { title_size.width, 0 };
+				        dots_o = dots_o + p();
+				        cur_dots_g = {
+    				        o.x + trans(dots_o).x, o.y + trans(dots_o).y,
+    				        trans(dots).x, trans(dots).y
+				        };
 
 				        layout_areas.push_back(std::make_unique<decoration_area_t>(
-						        DECORATION_AREA_TITLE, cur_g, current_edge));
+						        cur_g, cur_dots_g, current_edge));
 			        } else if (type == "icon") {
 				        delta = icon_size;
 				        out_padding = (max_height - icon_size) / 2;
@@ -320,12 +341,13 @@ void decoration_layout_t::create_areas(int width, int height,
 }
 
 /** Regenerate layout using a new size */
-void decoration_layout_t::resize(int width, int height, wf::dimensions_t title_size) {
+void decoration_layout_t::resize(int width, int height, wf::dimensions_t title_size,
+                                 wf::dimensions_t dots_size) {
     max_height = std::max({ title_size.height, icon_size, button_size });
     this->background_areas.clear();
     this->layout_areas.clear();
 
-    create_areas(width, height, title_size);
+    create_areas(width, height, title_size, dots_size);
 
 	/* Areas for resizing only, used for movement area calculation */
     int top_resize    = std::min(std::max(border_size.top - max_height, 7),

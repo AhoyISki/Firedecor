@@ -46,17 +46,34 @@ class simple_decoration_surface : public surface_interface_t,
 		dimensions_t title_size = {
     		(int)(title.dims.width * scale), (int)(title.dims.height * scale)
         };
+		dimensions_t dots_size = {
+    		(int)(title.dims.width * scale), (int)(title.dims.height * scale)
+        };
 
 		auto o = HORIZONTAL;
         surface = theme.form_title(title.text, title_size, ACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.hor[ACTIVE]);
         surface = theme.form_title(title.text, title_size, INACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.hor[INACTIVE]);
+        if (!title.dots_set) {
+            surface = theme.form_title("...", dots_size, ACTIVE, o);
+            cairo_surface_upload_to_texture(surface, title.hor_dots[ACTIVE]);
+            surface = theme.form_title("...", dots_size, INACTIVE, o);
+            cairo_surface_upload_to_texture(surface, title.hor_dots[INACTIVE]);
+        }
 		o = VERTICAL;
 		surface = theme.form_title(title.text, title_size, ACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.ver[ACTIVE]);
         surface = theme.form_title(title.text, title_size, INACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.ver[INACTIVE]);
+        if (!title.dots_set) {
+            surface = theme.form_title("...", dots_size, ACTIVE, o);
+            cairo_surface_upload_to_texture(surface, title.ver_dots[ACTIVE]);
+            surface = theme.form_title("...", dots_size, INACTIVE, o);
+            cairo_surface_upload_to_texture(surface, title.ver_dots[INACTIVE]);
+
+            title.dots_set = true;
+        }
         cairo_surface_destroy(surface); 
 
         title_needs_update = false;
@@ -72,31 +89,44 @@ class simple_decoration_surface : public surface_interface_t,
     }
 
     void update_layout(bool force) {
-        auto title_colors = theme.get_title_colors();
-
-        if ((title.colors != title_colors) || force) {
-            /* Updating the cached variables */
-            title.colors = title_colors;
+        if ((title.colors != theme.get_title_colors()) || force) {
+            /** Updating the cached variables */
+            title.colors = theme.get_title_colors();
 	        title.text = (theme.get_debug_mode()) ? view->get_app_id() :
 	        										view->get_title();
 
-	        title.dims = theme.get_text_size(title.text, size.width);
+	        wf::dimensions_t cur_size = theme.get_text_size(title.text, size.width);
+
+	        title.dims.height = cur_size.height;
+
+	        if (cur_size.width <= theme.get_max_title_size()) {
+    	        title.dims.width = cur_size.width;
+    	        title.too_big = false;
+    	        title.dots_dims = { 0, 0 };
+	        } else {
+                wf::dimensions_t dots_size = theme.get_text_size("...", size.width);
+
+    	        title.dims.width = theme.get_max_title_size() - dots_size.width;
+    	        title.too_big = true;
+    	        title.dots_dims = dots_size;
+	        }
 
 		    title_needs_update = true;
 
-            /* Necessary in order to immediately place areas correctly */
-    		layout.resize(size.width, size.height, title.dims);
+            /** Necessary in order to immediately place areas correctly */
+    		layout.resize(size.width, size.height, title.dims, title.dots_dims);
         }
 
     }
 
     /** Title variables */
     struct {
-        simple_texture_t hor[2];
-        simple_texture_t ver[2];
+        simple_texture_t hor[2], hor_dots[2];
+        simple_texture_t ver[2], ver_dots[2];
         std::string text = "";
         color_set_t colors;
-        dimensions_t dims;
+        dimensions_t dims, dots_dims;
+        bool dots_set = false, too_big = true;
     } title;
 
     bool title_needs_update = false;
@@ -218,22 +248,30 @@ class simple_decoration_surface : public surface_interface_t,
     }
 
     void render_title(const framebuffer_t& fb, geometry_t geometry,
-                      edge_t edge, geometry_t scissor) {
+                      geometry_t dots_geometry, edge_t edge, geometry_t scissor) {
 	    if (title_needs_update) {
     	    update_title(fb.scale);
 	    }
 
-	    simple_texture_t *texture;
+	    simple_texture_t *texture, *dots_texture;
 	    uint32_t bits = 0;
 	    if (edge == EDGE_TOP || edge == EDGE_BOTTOM) {
 	        bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y;
 	        texture = &title.hor[view->activated];
+	        dots_texture = &title.hor_dots[view->activated];
 	    } else {
     	    texture = &title.ver[view->activated];
+	        dots_texture = &title.ver_dots[view->activated];
 	    }
+
 		OpenGL::render_begin(fb);
         fb.logic_scissor(scissor);
         OpenGL::render_texture(texture->tex, fb, geometry, glm::vec4(1.0f), bits);
+        if (title.too_big) {
+            OpenGL::render_rectangle(dots_geometry, (wf::color_t){ 1.0, 0.0, 0.0, 1.0 }, fb.get_orthographic_projection());
+//            OpenGL::render_texture(dots_texture->tex, fb, dots_geometry,
+//                                   glm::vec4(1.0f), bits);
+        }
 		OpenGL::render_end();
     }
 
@@ -419,7 +457,7 @@ class simple_decoration_surface : public surface_interface_t,
                 if (in.width == 0 || in.height == 0) { continue; }
 
                 /**** Rectangle to cut the background from the accent's corner */
-                /* View's corner position relative to the accent's corner */
+                /** View's corner position relative to the accent's corner */
                 point_t v_rel_a = { 
                     c->g.x - a_edge.x, c->g.y - a_edge.y
                 };
@@ -594,7 +632,7 @@ class simple_decoration_surface : public surface_interface_t,
 		OpenGL::render_begin(fb);
 		fb.logic_scissor(scissor);
 
-		/* Outlines */
+		/** Outlines */
 		auto color = (view->activated) ? colors.outline.active :
 	                 colors.outline.inactive;
 		for (auto g : std::vector<geometry_t>{
@@ -619,7 +657,7 @@ class simple_decoration_surface : public surface_interface_t,
 
     void render_scissor_box(const framebuffer_t& fb, point_t origin,
                             const wlr_box& scissor) {
-	    /* Draw the background (corners and border) */
+	    /** Draw the background (corners and border) */
         wlr_box geometry{origin.x, origin.y, size.width, size.height};
         render_background(fb, geometry, scissor);
 
@@ -633,7 +671,7 @@ class simple_decoration_surface : public surface_interface_t,
             }
 	        if (item->get_type() == DECORATION_AREA_TITLE) {
                 render_title(fb, item->get_geometry() + origin, 
-                			 item->get_edge(), scissor);
+                			 item->get_dots_geometry(), item->get_edge(), scissor);
             } else if (item->get_type() == DECORATION_AREA_BUTTON) {
 	            item->as_button().set_active(view->activated);
 	            item->as_button().set_maximized(view->tiled_edges);
@@ -739,7 +777,7 @@ class simple_decoration_surface : public surface_interface_t,
     void resize(dimensions_t dims) {
         view->damage();
         size = dims;
-		layout.resize(size.width, size.height, title.dims);
+		layout.resize(size.width, size.height, title.dims, title.dots_dims);
         if (!view->fullscreen) {
             this->cached_region = layout.calculate_region();
         }
