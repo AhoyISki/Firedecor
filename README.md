@@ -39,9 +39,10 @@ An advanced window decoration plugin for the wayfire window manager.
 <details><summary>Font options</summary>
 
 - `font` will set what font will be used for titles. Default is `sans-serif`;
-- `font_size` will set the font size, in pixels, for the title. Default is `20`;
+- `font_size` will set the font size, in pixels, for the title. Default is `21`;
 - `active_title` will set the color for the font of active windows. Default is `1.0 1.0 1.0 1.0`;
 - `inactive_title` will set the color for the font of inactive windows. Default is `1.0 1.0 1.0 1.0`;
+- `max_title_size` will set a maximum title size, in pixels. If the title is bigger than this value, it will be capped so that the title, plus `...` can fit in the maximum title size. The default is `750`;
 
 </details>
 
@@ -125,7 +126,7 @@ An advanced window decoration plugin for the wayfire window manager.
 <details><summary>Other options</summary>
 
 - `ignore_views` is of `criteria` type, and determines witch windows will be ignored for decorations. In the future, I plan on adding the ability to create multiple themes and use them selectively, for example, a light and dark theme.
-- `debug_mode` turns the titles of windows into their respective `app_id`s. This is used when the plugin fails at finding the icon for an app. More in [App Icon Debugging](#app-icon-debugging). Default is `false`;
+- `debug_mode` turns the titles of windows into their respective `app_id`s, followed by the maximum pixel size of the current font, which often differs from the `font_size`. This is used when the plugin fails at finding the icon for an app, or if you want more precision in the positioning of the decorations. More in [App Icon Debugging](#app-icon-debugging). Default is `false`;
 - `round_on` chooses which corners will be rounded. `tr` means top right, `tl` is top left, `bl` is bottom left, `br` is bottom right, and `all` is all of them, e.g. `tl br` will round the top left and bottom right corners. Default is `all`;
 
 </details>
@@ -274,7 +275,6 @@ layout = a P7 icon p title P7 a | | a P7 minimize p maximize p close P7 a
 border_size = 10
 layout = a P100 Atl!\\ | | a P100 Atr/ - a P90 A!\\ | | a P90 A/ - a P100 Abl!/ | | a P100 Abr\\ - a P90 A!\\ | | a P90 A/
 ```
-
 
 ## App Icon Debugging
 The plugin will automatically try to retrieve icons from the file system, in order to display them on `icon` symbols on your windows. It will first look for folders matching your `icon_theme`. If it doesn't find the icons there, it will look in the remaining folders (hicolor, adwaita, breeze, in that order). However, sometimes, it just fails, and even if there is an icon for said app, the app's `app_id` is too terrible to find a suitable image, e.g. Osu!lazer has an `app_id` of "dotnet", which is completely unusable.
