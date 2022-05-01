@@ -33,8 +33,11 @@ std::string decoration_theme_t::get_border_size() const {
 int decoration_theme_t::get_outline_size() const {
     return outline_size.get_value();
 }
-int decoration_theme_t::get_font_size()const {
+int decoration_theme_t::get_font_size() const {
 	return font_size.get_value();
+}
+int decoration_theme_t::get_max_title_size() const {
+    return max_title_size.get_value();
 }
 int decoration_theme_t::get_corner_radius() const {
 	return corner_radius.get_value();
@@ -523,7 +526,7 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 				if (line.rfind(".svg") != std::string::npos) {
 					return surface_svg(path, icon_size.get_value());
 				} else if (line.rfind(".png") != std::string::npos) {
-    				return surface_svg(path, icon_size.get_value());
+    				return surface_png(path, icon_size.get_value());
 				}
 			}
 		}
