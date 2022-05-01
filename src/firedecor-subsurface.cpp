@@ -93,10 +93,15 @@ class simple_decoration_surface : public surface_interface_t,
         if ((title.colors != theme.get_title_colors()) || force) {
             /** Updating the cached variables */
             title.colors = theme.get_title_colors();
-	        title.text = (theme.get_debug_mode()) ? view->get_app_id() :
-	        										view->get_title();
+	        title.text = (theme.get_debug_mode()) ? "a" : view->get_title();
 
 	        wf::dimensions_t cur_size = theme.get_text_size(title.text, size.width);
+
+	        if (theme.get_debug_mode()) {
+    	        title.text = view->get_app_id() + " " +
+    	                     std::to_string(cur_size.height) + "px";
+    	        cur_size = theme.get_text_size(title.text, size.width);
+	        }
 
 	        title.dims.height = cur_size.height;
 
