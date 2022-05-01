@@ -45,11 +45,12 @@ decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t
 
 /** Initialize a decoration area for background areas */
 decoration_area_t::decoration_area_t(decoration_area_type_t type, wf::geometry_t g,
-                                     std::string c, matrix<int> m) {
+                                     std::string c, matrix<int> m, edge_t edge) {
     this->type = type;
     this->geometry = g;
     this->corners = c;
     this->m = m;
+    this->edge = edge;
 }
 
 decoration_area_type_t decoration_area_t::get_type() const {
@@ -129,7 +130,7 @@ void decoration_layout_t::create_areas(int width, int height,
     std::vector<std::string> left, center, right;
     std::string current_symbol;
 
-    edge_t current_edge = EDGE_TOP;
+    edge_t cur_edge = EDGE_TOP;
     std::string current_position = "left";
     wf::point_t o = { 0, border_size.top - max_height };
 
@@ -225,7 +226,7 @@ void decoration_layout_t::create_areas(int width, int height,
 				        };
 
 				        layout_areas.push_back(std::make_unique<decoration_area_t>(
-						        cur_g, cur_dots_g, current_edge));
+						        cur_g, cur_dots_g, cur_edge));
 			        } else if (type == "icon") {
 				        delta = icon_size;
 				        out_padding = (max_height - icon_size) / 2;
@@ -234,7 +235,7 @@ void decoration_layout_t::create_areas(int width, int height,
 				        	(m.xx + m.xy) * icon_size, (m.yx + m.yy) * icon_size
 				        };
 				        layout_areas.push_back(std::make_unique<decoration_area_t>(
-						        DECORATION_AREA_ICON, cur_g, current_edge));
+						        DECORATION_AREA_ICON, cur_g, cur_edge));
 			        } else if (type == "p") {
 				        delta = padding_size;
 			        } else if (type[0] == 'P') {
@@ -255,7 +256,7 @@ void decoration_layout_t::create_areas(int width, int height,
 	                        (shift > min_shift || counter == 0)) {
     				        background_areas.push_back(
         				        std::make_unique<decoration_area_t>(bg, cur_g, type,
-        				                                            m));
+        				                                            m, cur_edge));
 	                    }
 				        b_p1 = b_p2;
 				        last_accent = type;
@@ -290,12 +291,13 @@ void decoration_layout_t::create_areas(int width, int height,
 	        if (final_g.width > 0 && final_g.height > 0) {
     	        auto type =  DECORATION_AREA_BACKGROUND;
     	        background_areas.push_back(
-    		        std::make_unique<decoration_area_t>(type, final_g, "", m));
+    		        std::make_unique<decoration_area_t>(type, final_g, "", m,
+    		                                            cur_edge));
 	        }
 	        counter = 0;
 
-	        if (current_edge == EDGE_TOP) {
-		        current_edge = EDGE_LEFT;
+	        if (cur_edge == EDGE_TOP) {
+		        cur_edge = EDGE_LEFT;
 		        m = { 0, 1, -1, 0 };
 		        o = { border_size.left - max_height, height - border_size.bottom };
                 b_o = { 0, height - border_size.bottom };
@@ -303,8 +305,8 @@ void decoration_layout_t::create_areas(int width, int height,
 		        b_f = { border_size.left, corner_h };
 		        edge_height = border_size.left;
 		        min_shift = corner_radius - border_size.bottom;
-	        } else if (current_edge == EDGE_LEFT) {
-		        current_edge = EDGE_BOTTOM;
+	        } else if (cur_edge == EDGE_LEFT) {
+		        cur_edge = EDGE_BOTTOM;
 		        m = { 1, 0, 0, 1 };
 		        o = b_o = { 0, height - border_size.bottom };
 		        b_p1 = { corner_radius, height - border_size.bottom };
@@ -312,7 +314,7 @@ void decoration_layout_t::create_areas(int width, int height,
 		        edge_height = border_size.bottom;
 		        min_shift = corner_radius;
 	        } else {
-		        current_edge = EDGE_RIGHT;
+		        cur_edge = EDGE_RIGHT;
 		        m = { 0, -1, 1, 0 };
 		        o = { width - border_size.right + max_height, border_size.top };
 		        b_o = { width, border_size.top };

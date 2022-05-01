@@ -296,7 +296,7 @@ class simple_decoration_surface : public surface_interface_t,
     }
 
     void form_accent_corners(int r, geometry_t accent, std::string corner_style,
-                             matrix<int> m) {
+                             matrix<int> m, edge_t edge) {
         const auto format = CAIRO_FORMAT_ARGB32;
         cairo_surface_t *surfaces[4];
         double angle = 0;
@@ -453,6 +453,26 @@ class simple_decoration_surface : public surface_interface_t,
             cairo_rectangle(cr_a, 0, 0, a_edges[j].width, a_edges[j].height);
             cairo_fill(cr_a);
 
+            /**** Outline, done early so it can also be cropped off */
+            /** Translation to the correct rotation */
+            cairo_translate(cr_a , rotation_point); 
+            cairo_transform(cr_a , &matrix);
+            cairo_translate(cr_a , -rotation_point); 
+
+            int o_size = theme.get_outline_size();
+            auto outline_color = (view->activated) ?
+                                 alpha_trans(theme.get_outline_colors().active) :
+                                 alpha_trans(theme.get_outline_colors().inactive);
+
+
+            /** Draw outline on the bottom in case it is in the bottom edge */
+            int h_offset = (edge == EDGE_BOTTOM) ? mod_a.height : o_size;
+
+            cairo_set_source_rgba(cr_a, outline_color);
+            cairo_rectangle(cr_a, 0, mod_a.height - h_offset, mod_a.width, o_size);
+            cairo_fill(cr_a);
+            /****/
+
             /** Dealing with intersection between the view's corners and accent */
             for (auto *c : { &corners.tr, &corners.tl, &corners.bl, &corners.br } ) {
 
@@ -521,19 +541,6 @@ class simple_decoration_surface : public surface_interface_t,
                 (r - mod_a.width) * (m.xx * (i % 2) + m.xy * (1 - i % 2)), 0
             };
 
-            cairo_translate(cr_a , rotation_point); 
-            cairo_transform(cr_a , &matrix);
-            cairo_translate(cr_a , -rotation_point); 
-
-            auto outline_color = (view->activated) ?
-                                 alpha_trans(theme.get_outline_colors().active) :
-                                 alpha_trans(theme.get_outline_colors().inactive);
-
-            cairo_set_source_rgba(cr_a, outline_color);
-            cairo_rectangle(cr_a, 0, mod_a.height, mod_a.width,
-                            theme.get_outline_size());
-            cairo_fill(cr_a);
-
             cairo_set_source_rgba(cr_a, a_color);
             cairo_translate(cr_a, t_br.x, t_br.y);
             cairo_append_path(cr_a, master_path);
@@ -555,10 +562,10 @@ class simple_decoration_surface : public surface_interface_t,
     void render_background_area(const framebuffer_t& fb, geometry_t g,
                                 point_t rect, geometry_t scissor,
                                 std::string rounded, unsigned long i,
-                                decoration_area_type_t type, matrix<int> m) {
+                                decoration_area_type_t type, matrix<int> m,
+                                edge_t edge) {
         /** The view's origin */                            
         point_t o = { rect.x, rect.y };
-        bool active = view->activated;
 
         if (type == DECORATION_AREA_ACCENT) {
             /**** Render the corners of an accent */
@@ -569,7 +576,7 @@ class simple_decoration_surface : public surface_interface_t,
                 accent_textures.resize(i + 1);
                 r = std::min({ ceil((double)g.height / 2), ceil((double)g.width / 2),
                                (double)corner_radius});
-                form_accent_corners(r, g, rounded, m);
+                form_accent_corners(r, g, rounded, m, edge);
             }
 
             r = accent_textures.at(i).radius;
@@ -585,10 +592,10 @@ class simple_decoration_surface : public surface_interface_t,
 
             OpenGL::render_begin(fb);
             fb.logic_scissor(scissor);
-            OpenGL::render_texture(accent_textures.at(i).t_trbr[active].tex, fb,
-                                   a_edges[0] + o, glm::vec4(1.0));
-            OpenGL::render_texture(accent_textures.at(i).t_tlbl[active].tex, fb,
-                                   a_edges[1] + o, glm::vec4(1.0));
+            OpenGL::render_texture(accent_textures.at(i).t_trbr[view->activated].tex,
+                                   fb, a_edges[0] + o, glm::vec4(1.0));
+            OpenGL::render_texture(accent_textures.at(i).t_tlbl[view->activated].tex,
+                                   fb, a_edges[1] + o, glm::vec4(1.0));
             /****/
 
             /**** Render the internal rectangles of the accent */
@@ -599,23 +606,39 @@ class simple_decoration_surface : public surface_interface_t,
                 accent_rect = { g.x, g.y + r, g.width, g.height - 2 * r };
             }
 
-            color_t color = (active) ? theme.get_accent_colors().active :
-                                theme.get_accent_colors().inactive;
-            color = alpha_trans(color);
+            color_t color = (view->activated) ? 
+                            alpha_trans(theme.get_accent_colors().active) :
+                            alpha_trans(theme.get_accent_colors().inactive);
             OpenGL::render_rectangle(accent_rect + o, color,
                                      fb.get_orthographic_projection());
             /****/
             OpenGL::render_end();
         } else {
             /**** Render a single rectangle when the area is a background */
-            color_t color = (active) ? theme.get_border_colors().active :
-                                theme.get_border_colors().inactive;
+            color_t color = (view->activated) ? 
+                            alpha_trans(theme.get_border_colors().active) :
+                            alpha_trans(theme.get_border_colors().inactive);
+    		color_t o_color = (view->activated) ? 
+    	                      alpha_trans(theme.get_outline_colors().active) :
+    		                  alpha_trans(theme.get_outline_colors().inactive);
 
-            color = alpha_trans(color);
+            wf::geometry_t g_o;
+            int o_s = theme.get_outline_size();
+            if (edge == wf::firedecor::EDGE_TOP) {
+                g_o = { g.x, g.y, g.width, o_s };
+            } else if (edge == wf::firedecor::EDGE_LEFT) {
+                g_o = { g.x, g.y, o_s, g.height };
+            } else if (edge == wf::firedecor::EDGE_BOTTOM) {
+                g_o = { g.x, g.y + g.height - o_s, g.width, o_s };
+            } else if (edge == wf::firedecor::EDGE_RIGHT) {
+                g_o = { g.x + g.width - o_s, g.y, o_s, g.height };
+            }
+            g_o = g_o + o;
 
             OpenGL::render_begin(fb);
             fb.logic_scissor(scissor);
             OpenGL::render_rectangle(g + o, color, fb.get_orthographic_projection());
+            OpenGL::render_rectangle(g_o, o_color, fb.get_orthographic_projection());
             OpenGL::render_end();
             /****/
         }
@@ -641,7 +664,7 @@ class simple_decoration_surface : public surface_interface_t,
 		for (auto area : layout.get_background_areas()) {
     		render_background_area(fb, area->get_geometry(), rect_o, scissor,
     		                       area->get_corners(), i, area->get_type(),
-    		                       area->get_m());
+    		                       area->get_m(), area->get_edge());
     		i++;
 		}
 
@@ -652,15 +675,15 @@ class simple_decoration_surface : public surface_interface_t,
 		auto color = (view->activated) ? 
 	                 alpha_trans(theme.get_outline_colors().active) :
 		             alpha_trans(theme.get_outline_colors().inactive);
-		for (auto g : std::vector<geometry_t>{
-    		{ rect.x + r, rect.y, rect.width - 2 * r, outline_size },
-    		{ rect.x + r, rect.y + rect.height - outline_size,
-    		  rect.width - 2 * r, outline_size },
-    		{ rect.x, rect.y + r, outline_size, rect.height - 2 * r },
-    		{ rect.x + rect.width - outline_size, rect.y + r,
-    		  outline_size, rect.height - 2 * r } }) {
-			OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
-		}
+		//for (auto g : std::vector<geometry_t>{
+    	//	{ rect.x + r, rect.y, rect.width - 2 * r, outline_size },
+    	//	{ rect.x + r, rect.y + rect.height - outline_size,
+    	//	  rect.width - 2 * r, outline_size },
+    	//	{ rect.x, rect.y + r, outline_size, rect.height - 2 * r },
+    	//	{ rect.x + rect.width - outline_size, rect.y + r,
+    	//	  outline_size, rect.height - 2 * r } }) {
+		//	OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
+		//}
         bool a = view->activated;
         point_t o = { rect.x, rect.y };
 		/** Rendering all corners */

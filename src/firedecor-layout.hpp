@@ -66,13 +66,20 @@ struct decoration_area_t {
 
     /**
      * Initialize a new decoration area where the edge does not matter
+     * @param type The type of the area.
      * @param g The geometry of the area.
      */
     decoration_area_t(decoration_area_type_t type, wf::geometry_t g);
 
-    /** Initialize a new decoration area holding background areas */
+    /** Initialize a new decoration area holding background areas
+     *
+     * @param g The geometry of the area.
+     * @param type The type of the area.
+     * @param c The parameters given to the area, if it is of accent type.
+     * @param m The transformation matrix
+     */
     decoration_area_t(decoration_area_type_t type, wf::geometry_t g, std::string c,
-                      matrix<int> m);
+                      matrix<int> m, edge_t edge);
 
     /** @return The type of the decoration area */
     decoration_area_type_t get_type() const;
