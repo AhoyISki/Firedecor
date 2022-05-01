@@ -30,7 +30,7 @@ An advanced window decoration plugin for the wayfire window manager.
 - [x] Multiple corner radii *Implemented as either the corner is there, or it is not;
 - [x] Implement multiple themes.
 - [x] Add accent colors to be used on anywhere on edges;
-- [ ] Implement a maximum title size with potentially animated title scrolling;
+- [x] Implement a maximum title size with potentially animated title scrolling;
 - [ ] Declare a minimum window size so the decorations can not look disgusting on small windows;
 - [ ] Implement shadows.
 
