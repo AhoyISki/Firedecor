@@ -262,10 +262,9 @@ void decoration_layout_t::create_areas(int width, int height,
 			        } else {
 				        delta = button_size;
 				        out_padding = (max_height - button_size) / 2;
-				        if (current_edge == EDGE_LEFT) { shift += delta; }
 				        cur_g = { 
 					       	o.x + trans(p()).x, o.y + trans(p()).y,
-					       	button_size, button_size
+					       	(m.xx + m.xy) * button_size, (m.yx + m.yy) * button_size
 				       	};
 
 				        button_type_t button = (type == "minimize") ?
