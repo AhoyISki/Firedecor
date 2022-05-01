@@ -47,7 +47,8 @@ class simple_decoration_surface : public surface_interface_t,
     		(int)(title.dims.width * scale), (int)(title.dims.height * scale)
         };
 		dimensions_t dots_size = {
-    		(int)(title.dims.width * scale), (int)(title.dims.height * scale)
+    		(int)(title.dots_dims.width * scale),
+    		(int)(title.dots_dims.height * scale)
         };
 
 		auto o = HORIZONTAL;
@@ -55,7 +56,7 @@ class simple_decoration_surface : public surface_interface_t,
         cairo_surface_upload_to_texture(surface, title.hor[ACTIVE]);
         surface = theme.form_title(title.text, title_size, INACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.hor[INACTIVE]);
-        if (!title.dots_set) {
+        if (!title.dots_set && title.dots_dims.width > 0) {
             surface = theme.form_title("...", dots_size, ACTIVE, o);
             cairo_surface_upload_to_texture(surface, title.hor_dots[ACTIVE]);
             surface = theme.form_title("...", dots_size, INACTIVE, o);
@@ -66,7 +67,7 @@ class simple_decoration_surface : public surface_interface_t,
         cairo_surface_upload_to_texture(surface, title.ver[ACTIVE]);
         surface = theme.form_title(title.text, title_size, INACTIVE, o);
         cairo_surface_upload_to_texture(surface, title.ver[INACTIVE]);
-        if (!title.dots_set) {
+        if (!title.dots_set && title.dots_dims.width > 0) {
             surface = theme.form_title("...", dots_size, ACTIVE, o);
             cairo_surface_upload_to_texture(surface, title.ver_dots[ACTIVE]);
             surface = theme.form_title("...", dots_size, INACTIVE, o);
@@ -267,10 +268,11 @@ class simple_decoration_surface : public surface_interface_t,
 		OpenGL::render_begin(fb);
         fb.logic_scissor(scissor);
         OpenGL::render_texture(texture->tex, fb, geometry, glm::vec4(1.0f), bits);
+        std::ofstream test{"/home/mateus/Development/wayfire-firedecor/test", std::ofstream::app};
+        test << "title: " << geometry << std::endl;
         if (title.too_big) {
-            OpenGL::render_rectangle(dots_geometry, (wf::color_t){ 1.0, 0.0, 0.0, 1.0 }, fb.get_orthographic_projection());
-//            OpenGL::render_texture(dots_texture->tex, fb, dots_geometry,
-//                                   glm::vec4(1.0f), bits);
+            OpenGL::render_texture(dots_texture->tex, fb, dots_geometry,
+                                   glm::vec4(1.0f), bits);
         }
 		OpenGL::render_end();
     }
@@ -663,15 +665,16 @@ class simple_decoration_surface : public surface_interface_t,
 
         auto renderables = layout.get_renderable_areas();
         for (auto item : renderables) {
-            int32_t bits;
+            int32_t bits = 0;
             if (item->get_edge() == EDGE_LEFT) {
                 bits = OpenGL::TEXTURE_TRANSFORM_INVERT_Y; 
             } else if (item->get_edge() == EDGE_RIGHT) {
                 bits = OpenGL::TEXTURE_TRANSFORM_INVERT_X;
             }
 	        if (item->get_type() == DECORATION_AREA_TITLE) {
-                render_title(fb, item->get_geometry() + origin, 
-                			 item->get_dots_geometry(), item->get_edge(), scissor);
+                render_title(fb, item->get_geometry() + origin,
+                			 item->get_dots_geometry() + origin, item->get_edge(),
+                             scissor);
             } else if (item->get_type() == DECORATION_AREA_BUTTON) {
 	            item->as_button().set_active(view->activated);
 	            item->as_button().set_maximized(view->tiled_edges);

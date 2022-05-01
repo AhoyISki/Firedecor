@@ -454,6 +454,7 @@ cairo_surface_t *decoration_theme_t::surface_svg(std::string path, int  size) co
 	g_object_unref(svg);
 	g_object_unref(file);
 
+
 	return surface;
 }
 
@@ -480,13 +481,13 @@ cairo_surface_t * decoration_theme_t::surface_png(std::string path, int size) co
 std::vector<std::string> get_desktops( std::string path ) {
     std::vector<std::string> desktops;
 
-    if ( not exists( path ) ) {
+    if (!exists(path)) {
         return desktops;
     }
 
-    for (const auto& entry : std::filesystem::directory_iterator( path ) ) {
-        if ( entry.is_regular_file() and entry.path().extension() == ".desktop" ) {
-            desktops.push_back( entry.path() );
+    for (const auto& entry : std::filesystem::directory_iterator(path)) {
+        if (entry.is_regular_file() && entry.path().extension() == ".desktop") {
+            desktops.push_back(entry.path());
         }
     }
 

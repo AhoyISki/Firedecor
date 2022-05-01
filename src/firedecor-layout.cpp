@@ -211,7 +211,7 @@ void decoration_layout_t::create_areas(int width, int height,
 			        int delta = 0;
 
 			        if (type == "title") {
-				        delta = title_size.width;
+				        delta = title_size.width + dots.x;
 				        out_padding = (max_height - title_size.height) / 2;
 				        cur_g = { 
 					        o.x + trans(p()).x, o.y + trans(p()).y,
