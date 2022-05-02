@@ -286,7 +286,7 @@ layout = P7 icon p title p a | | A p minimize p maximize p close P7 - a | | A - 
 ```ini
 layout = a | icon p title | minimize p maximize p close P7 a - - P5 a | | a P5
 ```
-- Connecting outlines with accents for cool effects:
+- Connecting outlines with accents for cool effects (I think this one looks really cool):
 ![accent outlines](/assets/accent-outlines.png)
 ```ini
 layout = | a P15 icon p title P15 A\/ |
