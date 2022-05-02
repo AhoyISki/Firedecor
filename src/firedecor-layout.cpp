@@ -242,7 +242,7 @@ void decoration_layout_t::create_areas(int width, int height,
 					    std::stringstream num;
 					    num << type.substr(1);
 					    num >> delta;
-			        } else if (type == "a"|| type[0] == 'A') {
+			        } else if (type == "a" || type[0] == 'A') {
 				        counter = (counter + 1) % 2;
 				        out_padding = counter * edge_height;
 				        b_p2 = { b_o.x + trans(p()).x, b_o.y + trans(p()).y };
@@ -289,7 +289,7 @@ void decoration_layout_t::create_areas(int width, int height,
 		        (m.xx + m.xy) * (b_p2.x - b_p1.x), (m.yx + m.yy) * (b_p2.y - b_p1.y)
 	        };
 	        if (final_g.width > 0 && final_g.height > 0) {
-    	        auto type =  DECORATION_AREA_BACKGROUND;
+    	        auto type = DECORATION_AREA_BACKGROUND;
     	        background_areas.push_back(
     		        std::make_unique<decoration_area_t>(type, final_g, "", m,
     		                                            cur_edge));

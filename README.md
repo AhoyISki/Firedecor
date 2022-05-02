@@ -260,20 +260,36 @@ layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl
 (very laggy)
 
 ### Some ideas for accents
-![top and bottom wrap](/assets/top-and-bottom-wrap.png)
-```ini
-layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl - a P80 Atl - a | | Ablbr - a P80 Abr
-```
-
+- Selective accents:
 ![top left and right](/assets/top-left-and-right.png)
 ```ini
 layout = a P7 icon p title P7 a | | a P7 minimize p maximize p close P7 a 
 ```
-
-![frame](/assets/framed.png)
+- Connecting accents:
+![top and bottom wrap](/assets/top-and-bottom-wrap.png)
+```ini
+layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl - a P80 Atl - a | | Ablbr - a P80 Abr
+```
+- Framed outline:
+![framed](/assets/framed.png)
 ```ini
 border_size = 10
 layout = a P100 Atl!\\ | | a P100 Atr/ - a P90 A!\\ | | a P90 A/ - a P100 Abl!/ | | a P100 Abr\\ - a P90 A!\\ | | a P90 A/
+```
+- Partial outlines using the same color for accents and the background:
+![partial outline](/assets/partial-outline.png)
+```ini
+layout = P7 icon p title p a | | A p minimize p maximize p close P7 - a | | A - a | | Ablbr - a | | A
+```
+- Scroll-like decoration using visible outlines with an invisible background:
+![scroll](/assets/scroll.png)
+```ini
+layout = a | icon p title | minimize p maximize p close P7 a - - P5 a | | a P5
+```
+- Connecting outlines with accents for cool effects:
+![accent outlines](/assets/accent-outlines.png)
+```ini
+layout = | a P15 icon p title P15 A\/ |
 ```
 
 ## App Icon Debugging
