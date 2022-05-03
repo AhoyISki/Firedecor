@@ -34,7 +34,7 @@ class simple_decoration_surface : public surface_interface_t,
 	bool _mapped = true;
     wayfire_view view;
 
-    signal_connection_t title_set = [=] (signal_data_t *data) {
+    signal_connection_t title_set = [=, this] (signal_data_t *data) {
         if (get_signaled_view(data) == view) {
             update_layout(FORCE);
             view->damage(); // trigger re-render
@@ -233,7 +233,7 @@ class simple_decoration_surface : public surface_interface_t,
 
     simple_decoration_surface(wayfire_view view, theme_options options)
       : theme{options}, 
-    	layout{theme, [=] (wlr_box box) {this->damage_surface_box(box); }} {
+    	layout{theme, [=, this] (wlr_box box) {this->damage_surface_box(box); }} {
         this->view = view;
         view->connect_signal("title-changed", &title_set);
 
@@ -656,8 +656,6 @@ class simple_decoration_surface : public surface_interface_t,
 		int r = theme.get_corner_radius() * fb.scale;
 		update_corners(colors, r, fb.scale);
 
-		int outline_size = theme.get_outline_size();
-
 		/** Borders */
 		unsigned long i = 0;
 		point_t rect_o = { rect.x, rect.y };
@@ -672,18 +670,6 @@ class simple_decoration_surface : public surface_interface_t,
 		fb.logic_scissor(scissor);
 
 		/** Outlines */
-		auto color = (view->activated) ? 
-	                 alpha_trans(theme.get_outline_colors().active) :
-		             alpha_trans(theme.get_outline_colors().inactive);
-		//for (auto g : std::vector<geometry_t>{
-    	//	{ rect.x + r, rect.y, rect.width - 2 * r, outline_size },
-    	//	{ rect.x + r, rect.y + rect.height - outline_size,
-    	//	  rect.width - 2 * r, outline_size },
-    	//	{ rect.x, rect.y + r, outline_size, rect.height - 2 * r },
-    	//	{ rect.x + rect.width - outline_size, rect.y + r,
-    	//	  outline_size, rect.height - 2 * r } }) {
-		//	OpenGL::render_rectangle(g, color, fb.get_orthographic_projection());
-		//}
         bool a = view->activated;
         point_t o = { rect.x, rect.y };
 		/** Rendering all corners */
