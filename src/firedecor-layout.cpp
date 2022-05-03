@@ -338,6 +338,7 @@ void decoration_layout_t::create_areas(int width, int height,
 		        right.push_back(current_symbol);
 	        }
         }
+        
     }
 }
 

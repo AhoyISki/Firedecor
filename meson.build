@@ -15,7 +15,7 @@ project(
 
 wayfire    = dependency('wayfire')
 wf_config  = dependency('wf-config')
-wlroots    = dependency('wlroots', version: ['>=0.16.0', '<0.17.0'])
+wlroots    = dependency('wlroots')
 rsvg       = dependency('librsvg-2.0')
 pixman     = dependency('pixman-1')
 cairo      = dependency('cairo')
