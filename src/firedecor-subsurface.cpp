@@ -626,12 +626,16 @@ class simple_decoration_surface : public surface_interface_t,
             int o_s = theme.get_outline_size();
             if (edge == wf::firedecor::EDGE_TOP) {
                 g_o = { g.x, g.y, g.width, o_s };
+                g = { g.x, g.y + o_s, g.width, g.height - o_s };
             } else if (edge == wf::firedecor::EDGE_LEFT) {
                 g_o = { g.x, g.y, o_s, g.height };
+                g = { g.x + o_s, g.y, g.width - o_s, g.height };
             } else if (edge == wf::firedecor::EDGE_BOTTOM) {
                 g_o = { g.x, g.y + g.height - o_s, g.width, o_s };
+                g = { g.x, g.y, g.width, g.height - o_s };
             } else if (edge == wf::firedecor::EDGE_RIGHT) {
                 g_o = { g.x + g.width - o_s, g.y, o_s, g.height };
+                g = { g.x, g.y, g.width - o_s, g.height };
             }
             g_o = g_o + o;
 

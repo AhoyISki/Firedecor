@@ -178,7 +178,7 @@ cairo_surface_t *decoration_theme_t::form_corner(bool active, int r,
     cairo_scale(cr, m.xx, m.yy);
     cairo_translate(cr, -c_r / 2, -(double)height / 2);
 
-    cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
+    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
     /* Border */
 	wf::color_t color = active ? active_border.get_value() :
                         inactive_border.get_value();
