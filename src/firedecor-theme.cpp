@@ -442,18 +442,29 @@ std::string get_real_name(std::string path) {
 
 cairo_surface_t *decoration_theme_t::surface_svg(std::string path, int  size) const {
 	auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
+	auto surface_rsvg = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, size, size);
 	auto cr = cairo_create(surface);
+	auto cr_rsvg = cairo_create(surface_rsvg);
 
 	GFile *file = g_file_new_for_path(path.c_str());
 	RsvgHandle *svg = rsvg_handle_new_from_gfile_sync(file, RSVG_HANDLE_FLAGS_NONE,
 	                                                  NULL, NULL);
-	RsvgRectangle rect { 0, (double)size, (double)size, -(double)size };
-	rsvg_handle_render_document(svg, cr, &rect, nullptr);
+	RsvgRectangle rect { 0, 0, (double)size, (double)size };
+	rsvg_handle_render_document(svg, cr_rsvg, &rect, nullptr);
+	cairo_destroy(cr_rsvg);
+
+    cairo_translate(cr, (double)size / 2, (double)size / 2);
+    cairo_scale(cr, 1.0, -1.0);
+    cairo_translate(cr, -(double)size / 2, -(double)size / 2);
+
+    cairo_set_source_surface(cr, surface_rsvg, 0, 0);
+    cairo_paint(cr);
+	cairo_surface_destroy(surface_rsvg);
+    
 	cairo_destroy(cr);
 
 	g_object_unref(svg);
 	g_object_unref(file);
-
 
 	return surface;
 }
@@ -656,7 +667,7 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
     				"128x128/", "256x256/"
     		}) {
         		for (auto icon_name : icon_names) {
-            		for (auto e : { ".svg", ".exe" }) {
+            		for (auto e : { ".svg", ".png" }) {
                 		if (auto icon_path = path + res + "apps/" + icon_name + e;
                 			exists(icon_path)) {
                     		icon_found = true;
@@ -672,14 +683,16 @@ cairo_surface_t *decoration_theme_t::form_icon(std::string app_id) const {
 
         /** Absolute last resorts */
 		for (auto icon_name : icon_names) {
-    		for (auto e : { ".svg", ".exe" }) {
-        		if (auto icon_path = "/usr/share/pixmaps" + icon_name + e;
+    		for (auto e : { ".svg", ".png" }) {
+        		if (auto icon_path = "/usr/share/pixmaps/" + icon_name + e;
         			exists(icon_path)) {
             		icon_found = true;
             		icon_file_out << app_id + " " + icon_path << std::endl;
             		break;
         		} 
+        		if (icon_found) { break; }
     		}
+    		if (icon_found) { break; }
 		}
     		
 
