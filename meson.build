@@ -29,13 +29,13 @@ add_project_arguments(['-DWLR_USE_UNSTABLE'], language: ['cpp', 'c'])
 add_project_arguments(['-DWAYFIRE_PLUGIN'], language: ['cpp', 'c'])
 add_project_link_arguments(['-rdynamic'], language:'cpp')
 
+install_data('src/executable.svg', install_dir: join_paths(get_option('prefix'), get_option('datadir'), 'firedecor'))
+
 subdir('src')
 subdir('metadata')
 
-install_data('src/firedecor.xml', install_dir: join_paths(get_option('prefix'), 'share/wayfire/metadata'))
-install_data('src/executable.svg', install_dir: join_paths(get_option('prefix'), get_option('datadir'), 'firedecor'))
-
 summary = [
+
 	'',
 	'----------------',
 	'firedecor @0@'.format(meson.project_version()),
