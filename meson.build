@@ -29,7 +29,7 @@ add_project_arguments(['-DWLR_USE_UNSTABLE'], language: ['cpp', 'c'])
 add_project_arguments(['-DWAYFIRE_PLUGIN'], language: ['cpp', 'c'])
 add_project_link_arguments(['-rdynamic'], language:'cpp')
 
-install_data('src/executable.svg', install_dir: join_paths(get_option('prefix'), get_option('datadir'), 'firedecor'))
+install_data('src/executable.svg', install_dir: join_paths(get_option('datadir'), 'firedecor'))
 
 subdir('src')
 subdir('metadata')
