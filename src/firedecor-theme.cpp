@@ -258,8 +258,6 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
         }
 	}
 
-	auto border_color = (active) ? active_border.get_value() : inactive_border.get_value();
-		
     cairo_surface_t *button_surface = cairo_image_surface_create(
         CAIRO_FORMAT_ARGB32, button_size.get_value(), button_size.get_value());
 
@@ -314,13 +312,12 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
 
     /** Draw the border */
     cairo_set_line_width(cr, 1.0);
-    cairo_set_source_rgba(cr, border_color.r, border_color.g, border_color.b, line / 2);
+    cairo_set_source_rgba(cr, 0.00, 0.00, 0.00, line / 2);
     double r = (double)button_size.get_value() / 2 - 0.5 * 1.0;
     cairo_arc(cr, (double)button_size.get_value() / 2, (double)button_size.get_value() / 2, r, 0, 2 * M_PI);
     cairo_stroke(cr);
 
     /** Draw the icon  */
-    cairo_set_source_rgba(cr, 0.00, 0.00, 0.00, line / 2);
     //cairo_set_antialias(cr, CAIRO_ANTIALIAS_NONE);
     if (hover != 0) {
         cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
