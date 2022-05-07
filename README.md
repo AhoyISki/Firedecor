@@ -1,5 +1,5 @@
-# wayfire-firedecor
-An advanced window decoration plugin for the wayfire window manager.
+# Firedecor
+An advanced window decoration plugin for the Wayfire window manager.
 
 ## Dependencies
 - `wayfire` (duh)
@@ -13,7 +13,7 @@ An advanced window decoration plugin for the wayfire window manager.
   ```
 - Building from source:
   ```
-  git clone https://github.com/AhoyISki/wayfire-firedecor
+  git clone https://github.com/AhoyISki/Firedecor
   cd wayfire-firedecor
   meson build
   meson compile -C build
