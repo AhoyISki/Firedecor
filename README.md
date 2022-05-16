@@ -235,7 +235,7 @@ round_on = tr tl
 
 layout = | icon P4 title | minimize p maximize p close p
 ```
-![Personal layout](/src/personal-layout.png)
+![Personal layout](/assets/personal-layout.png)
 
 </details>
 
