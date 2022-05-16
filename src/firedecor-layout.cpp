@@ -132,7 +132,7 @@ void decoration_layout_t::create_areas(int width, int height,
 
     edge_t cur_edge = EDGE_TOP;
     std::string current_position = "left";
-    wf::point_t o = { 0, border_size.top - max_height };
+    wf::point_t o = { 0, (border_size.top - max_height) / 2 };
 
 	/** The values that are used to determine the updated geometry for areas */
     int shift = 0, out_padding = 0;
@@ -299,7 +299,8 @@ void decoration_layout_t::create_areas(int width, int height,
 	        if (cur_edge == EDGE_TOP) {
 		        cur_edge = EDGE_LEFT;
 		        m = { 0, 1, -1, 0 };
-		        o = { border_size.left - max_height, height - border_size.bottom };
+		        o = { (border_size.left - max_height) / 2,
+                      height - border_size.bottom };
                 b_o = { 0, height - border_size.bottom };
 		        b_p1 = { 0, height - corner_h };
 		        b_f = { border_size.left, corner_h };
@@ -308,7 +309,7 @@ void decoration_layout_t::create_areas(int width, int height,
 	        } else if (cur_edge == EDGE_LEFT) {
 		        cur_edge = EDGE_BOTTOM;
 		        m = { 1, 0, 0, 1 };
-		        o = b_o = { 0, height - border_size.bottom };
+		        o = b_o = { 0, height - (border_size.bottom + max_height) / 2 };
 		        b_p1 = { corner_radius, height - border_size.bottom };
 		        b_f = { width - corner_radius, height };
 		        edge_height = border_size.bottom;
@@ -316,7 +317,8 @@ void decoration_layout_t::create_areas(int width, int height,
 	        } else {
 		        cur_edge = EDGE_RIGHT;
 		        m = { 0, -1, 1, 0 };
-		        o = { width - border_size.right + max_height, border_size.top };
+		        o = { width - (border_size.right + max_height) / 2,
+		              border_size.top };
 		        b_o = { width, border_size.top };
 		        b_p1 = { width, corner_h };
 		        b_f = { width - border_size.right, height - corner_h };
