@@ -277,7 +277,8 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
     double base_qty;
 
     /** Coloured base on hover/press. Don't compare float to 0 */
-    if (fabs(hover) > 1e-3 || (inactive_buttons.get_value() && active)) {
+    if (fabs(hover) > 1e-3 || (inactive_buttons.get_value() && active) ||
+        !inactive_buttons.get_value()) {
         switch (button) {
           case BUTTON_CLOSE:
             base = { 242.0 / 255.0, 80.0 / 255.0, 86.0 / 255.0, 1.0 };
