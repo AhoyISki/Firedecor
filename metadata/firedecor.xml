@@ -18,12 +18,12 @@
 		<option name="active_title" type="color">
 			<_short>Title color when window is active</_short>
 			<_long>Sets the title color when the window is active.</_long>
-			<default>#ffffffff</default>
+			<default>#1d1f21ff</default>
 		</option>
 		<option name="inactive_title" type="color">
 			<_short>Title color when window is inactive</_short>
 			<_long>Sets the title color when the window is inactive.</_long>
-			<default>#ffffffff</default>
+			<default>#1d1f21ff</default>
 		</option>
 		<option name="max_title_size" type="int">
 			<_short>Maximum title size</_short>
@@ -34,22 +34,22 @@
 		<option name="border_size" type="string">
 			<_short>Border size</_short>
 			<_long>Sets the border size in pixels.</_long>
-			<default>30 10</default>
+			<default>35 10</default>
 		</option>
 		<option name="active_border" type="color">
 			<_short>Color when window is active</_short>
 			<_long>Sets the color when the window is active.</_long>
-			<default>#222222aa</default>
+			<default>#1d1f21e6</default>
 		</option>
 		<option name="inactive_border" type="color">
 			<_short>Color when window is inactive</_short>
 			<_long>Sets the color when the window is inactive.</_long>
-			<default>#333333dd</default>
+			<default>#1d1f21e6</default>
 		</option>
 		<option name="corner_radius" type="int">
 			<_short>Radius of rounded corners</_short>
 			<_long>Sets the radius of the decoration corners.</_long>
-			<default>0</default>
+			<default>15</default>
 		</option>
 		<!-- Outline -->
 		<option name="outline_size" type="int">
@@ -71,7 +71,7 @@
 		<option name="button_size" type="int">
 			<_short>Button size to be used</_short>
 			<_long>Sets the size to be used for the buttons.</_long>
-			<default>20</default>
+			<default>18</default>
 		</option>
 		<option name="inactive_buttons" type="bool">
 			<_short>Button style to be used</_short>
@@ -81,7 +81,7 @@
 		<option name="button_style" type="string">
 			<_short>Button style to be used</_short>
 			<_long>Sets the style to be used for the buttons.</_long>
-			<default>wayfire</default>
+			<default>simple</default>
 		</option>
 		<!-- Icon -->
 		<option name="icon_size" type="int">
@@ -98,23 +98,23 @@
 		<option name="active_accent" type="color">
 			<_short>Color when window is active</_short>
 			<_long>Sets the outline color when the window is active.</_long>
-			<default>#ffffffff</default>
+			<default>#f5f5f5ff</default>
 		</option>
 		<option name="inactive_accent" type="color">
 			<_short>Outline color when window is inactive</_short>
 			<_long>Sets the outline color when the window is inactive.</_long>
-			<default>#ffffffff</default>
+			<default>#e1dffeff</default>
 		</option>
 		<!-- Layout -->
 		<option name="layout" type="string">
 			<_short>The layout to be used for decoration placement</_short>
 			<_long>Sets the order and positioning of title, icon and buttons</_long>
-			<default>P5 title | | minimize p maximize p close P5 -</default>
+			<default>a | icon P4 title | minimize p maximize p close p | Atrtl -</default>
 		</option>
 		<option name="padding_size" type="int">
 			<_short>The size for the universal padding symbol "p"</_short>
 			<_long>Sets the size for padding, which can then be placed in any part of the layut with "p"</_long>
-			<default>2</default>
+			<default>8</default>
 		</option>
 		<!-- Other -->
 		<option name="ignore_views" type="string">

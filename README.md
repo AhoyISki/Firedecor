@@ -162,28 +162,31 @@ Here's what the default configuration would look like:
 ```ini
 [firedecor]
 font = sans-serif
-font_size = 20
-active_font = 1.0 1.0 1.0 1.0
-inactive_font = 1.0 1.0 1.0 1.0
+font_size = 21
+active_font = \#1d1f21ff
+inactive_font = \#1d1f21ff
 
-border_size = 30 10
-active_border = 0.13 0.13 0.13 0.67
-inactive_border = 0.2 0.2 0.2 0.87
-corner_radius = 0
+border_size = 35 10
+active_border = \#1d1f21e6
+inactive_border = \#1d1f21e6
+corner_radius = 15
 
 outline_size = 0
-active_outline = 0.0 0.0 0.0 1.0
-inactive_outline = 0.0 0.0 0.0 1.0
+active_outline = \#000000ff
+inactive_outline = \#000000ff
 
-button_size = 0
+button_size = 18
 inactive_buttons = false
-button_style = wayfire
+button_style = simple
 
 icon_size = 20
 icon_theme = hicolor
 
-layout = P5 title | | minimize p maximize p close P5 -
-padding_size = 2
+active_accent = \#f5f5f5ff
+inactive_accent = \#e1dfe1ff
+
+layout = a | icon P4 title | minimize p maximize p close p Atrtl -
+padding_size = 8
 
 ignore_views = none
 debug_mode = false
@@ -191,7 +194,7 @@ debug_mode = false
 
 </details>
 
-paste this into your `wayfire.ini` and add firedecor to your active plugins to get started.
+It's supposed to give off a "macOS" feel. Paste this into your `wayfire.ini` and add firedecor to your active plugins to get started.
 
 This is my own configuration, feel free to copy it if you want
 <details><summary>My own config</summary>
@@ -199,38 +202,37 @@ This is my own configuration, feel free to copy it if you want
 ```ini
 [firedecor]
 font = Clear Sans
+active_title = \#c5c8c6ff
+inactive_title = \#c5c8c6ff
+
+active_accent = \#18171aff
+inactive_accent = \#1d1f21ff
+
+ignore_views = title contains "steam" | title contains "Steam"
+extra_themes = Discord Firefox
+
+[Discord]
+uses_if = app_id is "discord"
+
+active_border = \#202225ff
+inactive_border = \#1d1f21ff
+border_size = 35 0
+round_on = tr tl
+
+layout = | icon P4 title | minimize p maximize p close p
+
+[Firefox]
+uses_if = app_id is "firefox"
+
 active_title = \#1d1f21ff
 inactive_title = \#1d1f21ff
 
-button_style = firedecor
-inactive_buttons = true
-
-border_size = 30 10
-corner_radius = 15
-active_border = 0.113 0.121 0.139 0.9
-inactive_border = 0.113 0.121 0.129 0.9
-
-active_accent = \#efedf8ee
-inactive_accent = \#aaa5b3ee
-
-layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl
-
-extra_themes = firefox discord
-
-[firefox]
-uses_if = app_id is "firefox"
-
-active_border = 1.0 1.0 1.0 1.0
-inactive_border = 1.0 1.0 1.0 1.0
-
+active_border = \#f0f0f4ff
+inactive_border = \#e1dfe1ff
+border_size = 35 0
 round_on = tr tl
 
-[discord]
-uses_if = app_id is "discord"
-active_border = 0.125 0.133 0.145 1.0
-inactive_border = 0.125 0.133 0.145 1.0
-
-round_on = tr tl
+layout = | icon P4 title | minimize p maximize p close p
 ```
 
 </details>
