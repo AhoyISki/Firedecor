@@ -191,6 +191,7 @@ padding_size = 8
 ignore_views = none
 debug_mode = false
 ```
+![Default layout](/assets/default-layout.png)
 
 </details>
 
@@ -234,6 +235,7 @@ round_on = tr tl
 
 layout = | icon P4 title | minimize p maximize p close p
 ```
+![Personal layout](/src/personal-layout.png)
 
 </details>
 
@@ -244,14 +246,6 @@ Using:
 ```ini
 border_size = 10 30 10 10
 layout = - P5 title | | minimize p maximize p close P5 -
-```
-
-My personal layout:
-![Personal layout](/assets/personal-layout.png)
-```ini
-border_size = 30 5
-corner_radius = 15
-layout = a | icon p title | P7 minimize p maximize p close P7 Atrtl
 ```
 
 ???:
