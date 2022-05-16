@@ -81,7 +81,7 @@
 		<option name="normal_min" type="color">
 			<_short>Minimize button color when it is not hovered</_short>
 			<_long>Sets the minimize button color when the button isn't hovered.</_long>
-			<default>#fac636ff</default>
+			<default>#c89e2bff</default>
 		</option>
 		<option name="hovered_min" type="color">
 			<_short>Minimize button color when it is hovered</_short>
@@ -91,7 +91,7 @@
 		<option name="normal_max" type="color">
 			<_short>Maximize button color when it is not hovered</_short>
 			<_long>Sets the maximize button color when the button isn't hovered.</_long>
-			<default>#39ea49ff</default>
+			<default>#2ebb3aff</default>
 		</option>
 		<option name="hovered_max" type="color">
 			<_short>Maximize button color when it is hovered</_short>
@@ -101,7 +101,7 @@
 		<option name="normal_close" type="color">x
 			<_short>Close button color when it is not hovered</_short>
 			<_long>Sets the close button color when the button isn't hovered.</_long>
-			<default>#f25056ff</default>
+			<default>#c24045ff</default>
 		</option>
 		<option name="hovered_close" type="color">
 			<_short>Close button color when it is hovered</_short>

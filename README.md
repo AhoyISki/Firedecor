@@ -75,7 +75,7 @@ An advanced window decoration plugin for the Wayfire window manager.
   1. Create the folder `~/.config/firedecor/button-styles/`;
   2. In it, create a folder with the name `my_theme`;
   3. Place figures for the buttons. They'll have to be called something like `type-status.png`, where `type` can be `close`, `minimize`, or `toggle-maximize`, and `status` can be `hovered`, `pressed`, or nothing. E.g. close.png, toggle-maximize-hover.png, minimize-pressed.png. Additionally, if `inactive_buttons` is set to `true`, you have to add a additional images with the `status` of `inactive`. You **Must** provide an image for each of the `type`s and `status`es listed above, so 9 images if `inactive_buttons == false`, and 12 images if `inactive_buttons == true`. The images can be equal to each other, if you don't want do differentiate between different `type`s or `status`es, just make sure that every entry is placed.
- - `normal_min`, `normal_max`, and `normal_close` set their respective button colors when the button isn't hovered. Default values are `#fac636ff`, `#39ea49ff`, and `#f25056ff`, respectively.
+ - `normal_min`, `normal_max`, and `normal_close` set their respective button colors when the button isn't hovered. Default values are `#c89e2bff`, `#2ebb3aff`, and `#c24045ff`, respectively.
  - `hovered_min`, `hovered_max`, and `hovered_close` set their respective button colors when the button is hovered. Default values are `#ffe450ff`, `#60fc79ff`, and `#ff6572ff`, respectively.
  - `inactive_buttons` is a `bool` that tells the plugin to draw buttons differently, depending on them being in an active or an inactive window. Default is `false`; The default is `wayfire`;
 
@@ -178,12 +178,12 @@ inactive_outline = \#000000ff
 
 button_size = 18
 button_style = simple
-normal_min = \#fac636ff
-hovered_min = \#ffe450ff
-normal_max = \#39ea49ff
-hovered_max = \#60fc79ff
-normal_close = \#f25056ff
-hovered_close = \#ff6572ff
+normal_min = \#c89e2bff
+hovered_min = \#fac636ff
+normal_max = \#2ebb3aff
+hovered_max = \#39ea49ff
+normal_close = \#c24045ff
+hovered_close = \#f25056ff
 inactive_buttons = false
 
 icon_size = 20
