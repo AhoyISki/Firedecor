@@ -272,7 +272,7 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
 
     cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
-	color_t base;
+	color_t base, hovered;
     double line;
     double base_qty;
 
@@ -281,13 +281,16 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
         !inactive_buttons.get_value()) {
         switch (button) {
           case BUTTON_CLOSE:
-            base = { 242.0 / 255.0, 80.0 / 255.0, 86.0 / 255.0, 1.0 };
+            base = normal_close.get_value();
+            hovered = hovered_close.get_value();
             break;
           case BUTTON_TOGGLE_MAXIMIZE:
-            base = { 57.0 / 255.0, 234.0 / 255.0, 73.0 / 255.0, 1.0 };
+            base = normal_max.get_value();
+            hovered = hovered_max.get_value();
             break;
           case BUTTON_MINIMIZE:
-            base = { 250.0 / 255.0, 198.0 / 255.0, 54.0 / 255.0, 1.0 };
+            base = normal_min.get_value();
+            hovered = hovered_min.get_value();
             break;
           default:
             assert(false);
@@ -303,9 +306,9 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
 
     /** Draw the base */
     cairo_set_source_rgba(cr,
-        base.r * (base_qty + (1.0 - base_qty) * hover),
-        base.g * (base_qty + (1.0 - base_qty) * hover),
-        base.b * (base_qty + (1.0 - base_qty) * hover),
+        base.r * (1.0 - hover) + hovered.r * hover,
+        base.g * (1.0 - hover) + hovered.g * hover,
+        base.b * (1.0 - hover) + hovered.b * hover,
         base.a);
     cairo_arc(cr, (double)button_size.get_value() / 2, (double)button_size.get_value() / 2,
               (double)button_size.get_value() / 2, 0, 2 * M_PI);

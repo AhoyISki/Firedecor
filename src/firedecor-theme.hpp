@@ -93,6 +93,12 @@ struct theme_options {
 
 	theme_option_t<int> button_size;
     theme_option_t<std::string> button_style;
+    theme_option_t<wf::color_t> normal_min;
+    theme_option_t<wf::color_t> hovered_min;
+    theme_option_t<wf::color_t> normal_max;
+    theme_option_t<wf::color_t> hovered_max;
+    theme_option_t<wf::color_t> normal_close;
+    theme_option_t<wf::color_t> hovered_close;
     theme_option_t<bool> inactive_buttons;
 
 	theme_option_t<int> icon_size;

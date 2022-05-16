@@ -40,8 +40,8 @@ An advanced window decoration plugin for the Wayfire window manager.
 
 - `font` will set what font will be used for titles. Default is `sans-serif`;
 - `font_size` will set the font size, in pixels, for the title. Default is `21`;
-- `active_title` will set the color for the font of active windows. Default is `1.0 1.0 1.0 1.0`;
-- `inactive_title` will set the color for the font of inactive windows. Default is `1.0 1.0 1.0 1.0`;
+- `active_title` will set the color for the font of active windows. Default is `\#1d1f21ff`;
+- `inactive_title` will set the color for the font of inactive windows. Default is `\#1d1f21ff`;
 - `max_title_size` will set a maximum title size, in pixels. If the title is bigger than this value, it will be capped so that the title, plus `...` can fit in the maximum title size. The default is `750`;
 
 </details>
@@ -49,8 +49,8 @@ An advanced window decoration plugin for the Wayfire window manager.
 <details><summary>Border options</summary>
 
 - `border_size` can take up to 4 parameters. If one is used, it will be the border size for every edge of the windows. If 2 parameters are used, the first one determines the size of the top edge, and the second one determines the size of the remaining edges. If 3 are used, the first one will be used for all edges. If 4 parameters are used, they are used in the following order: top, left, bottom, right. Default is `30 10`;
-- `active_border` will set the color for the border of active windows. Default is `0.13 0.13 0.13 0.67`;
-- `inactive_border` will set the color for the border of inactive windows. Default is `0.2 0.2 0.2 0.87`;
+- `active_border` will set the color for the border of active windows. Default is `#1d1f21e6`;
+- `inactive_border` will set the color for the border of inactive windows. Default is `#1d1f21e6`;
 - `corner_radius` will set the radius for the corners of the windows. Use 0 for no radius. Default is `0`;
 
 </details>
@@ -58,15 +58,14 @@ An advanced window decoration plugin for the Wayfire window manager.
 <details><summary>Outline options</summary>
 
 - `outline_size` will set the size for the outline of the window. Default is 0;
-- `active_outline` will set the color for the outline of active windows. Default is `0.0 0.0 0.0 1.0`;
-- `inactive_outline` will set the color for the outline of inactive windows. Default is `0.0 0.0 0.0 1.0`;
+- `active_outline` will set the color for the outline of active windows. Default is `#000000ff`;
+- `inactive_outline` will set the color for the outline of inactive windows. Default is `#000000ff`;
 
 </details>
 
 <details><summary>Button options</summary>
 
 - `button_size` will set the size of the buttons, in pixels. Default is 20;
-- `inactive_buttons` is a `bool` that tells the plugin to draw buttons differently, depending on them being in an active or an inactive window. Default is `false`;
 - `button_style` is a string that sets the style used for the buttons. By default, there are 3 styles:
   - `wayfire`, witch is similar to the one used by wayfire by default;
   - `firedecor`, my own spin on a buttons style, with animated symbols that change in size, and a different maximize symbol;
@@ -76,7 +75,9 @@ An advanced window decoration plugin for the Wayfire window manager.
   1. Create the folder `~/.config/firedecor/button-styles/`;
   2. In it, create a folder with the name `my_theme`;
   3. Place figures for the buttons. They'll have to be called something like `type-status.png`, where `type` can be `close`, `minimize`, or `toggle-maximize`, and `status` can be `hovered`, `pressed`, or nothing. E.g. close.png, toggle-maximize-hover.png, minimize-pressed.png. Additionally, if `inactive_buttons` is set to `true`, you have to add a additional images with the `status` of `inactive`. You **Must** provide an image for each of the `type`s and `status`es listed above, so 9 images if `inactive_buttons == false`, and 12 images if `inactive_buttons == true`. The images can be equal to each other, if you don't want do differentiate between different `type`s or `status`es, just make sure that every entry is placed.
-  The default is `wayfire`;
+ - `normal_min`, `normal_max`, and `normal_close` set their respective button colors when the button isn't hovered. Default values are `#fac636ff`, `#39ea49ff`, and `#f25056ff`, respectively.
+ - `hovered_min`, `hovered_max`, and `hovered_close` set their respective button colors when the button is hovered. Default values are `#ffe450ff`, `#60fc79ff`, and `#ff6572ff`, respectively.
+ - `inactive_buttons` is a `bool` that tells the plugin to draw buttons differently, depending on them being in an active or an inactive window. Default is `false`; The default is `wayfire`;
 
 </details>
 
@@ -90,8 +91,8 @@ An advanced window decoration plugin for the Wayfire window manager.
 <details><summary>Accent options</summary>
 
 - Accents are areas in the decoration's background that you want to be colored differently, they are placed in the layout, seen on the section below;
-- `active_accent` sets the color for active accents. Default is `#ffffffff`.
-- `inactive_accent` sets the color for inactive accents. Default is `#ffffffff`.
+- `active_accent` sets the color for active accents. Default is `#f5f5f5ff`.
+- `inactive_accent` sets the color for inactive accents. Default is `#e1dffeff`.
 
 </details>
 
@@ -176,8 +177,14 @@ active_outline = \#000000ff
 inactive_outline = \#000000ff
 
 button_size = 18
-inactive_buttons = false
 button_style = simple
+normal_min = \#fac636ff
+hovered_min = \#ffe450ff
+normal_max = \#39ea49ff
+hovered_max = \#60fc79ff
+normal_close = \#f25056ff
+hovered_close = \#ff6572ff
+inactive_buttons = false
 
 icon_size = 20
 icon_theme = hicolor

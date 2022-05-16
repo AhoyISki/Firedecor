@@ -84,6 +84,12 @@ class wayfire_firedecor_t :
 
         	get_option<int>(theme, "button_size"),
             get_option<std::string>(theme, "button_style"),
+            get_option<wf::color_t>(theme, "normal_min"),
+            get_option<wf::color_t>(theme, "hovered_min"),
+            get_option<wf::color_t>(theme, "normal_max"),
+            get_option<wf::color_t>(theme, "hovered_max"),
+            get_option<wf::color_t>(theme, "normal_close"),
+            get_option<wf::color_t>(theme, "hovered_close"),
             get_option<bool>(theme, "inactive_buttons"),
 
         	get_option<int>(theme, "icon_size"),
