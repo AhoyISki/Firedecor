@@ -42,7 +42,6 @@ class simple_decoration_surface : public surface_interface_t,
     };
 
     void update_title(double scale) {
-		cairo_surface_t *surface;
 		dimensions_t title_size = {
     		(int)(title.dims.width * scale), (int)(title.dims.height * scale)
         };
@@ -52,31 +51,26 @@ class simple_decoration_surface : public surface_interface_t,
         };
 
 		auto o = HORIZONTAL;
-        surface = theme.form_title(title.text, title_size, ACTIVE, o);
-        cairo_surface_upload_to_texture(surface, title.hor[ACTIVE]);
-        surface = theme.form_title(title.text, title_size, INACTIVE, o);
-        cairo_surface_upload_to_texture(surface, title.hor[INACTIVE]);
-        if (!title.dots_set && title.dots_dims.width > 0) {
-            surface = theme.form_title("...", dots_size, ACTIVE, o);
-            cairo_surface_upload_to_texture(surface, title.hor_dots[ACTIVE]);
-            surface = theme.form_title("...", dots_size, INACTIVE, o);
-            cairo_surface_upload_to_texture(surface, title.hor_dots[INACTIVE]);
-        }
-		o = VERTICAL;
-		surface = theme.form_title(title.text, title_size, ACTIVE, o);
-        cairo_surface_upload_to_texture(surface, title.ver[ACTIVE]);
-        surface = theme.form_title(title.text, title_size, INACTIVE, o);
-        cairo_surface_upload_to_texture(surface, title.ver[INACTIVE]);
-        if (!title.dots_set && title.dots_dims.width > 0) {
-            surface = theme.form_title("...", dots_size, ACTIVE, o);
-            cairo_surface_upload_to_texture(surface, title.ver_dots[ACTIVE]);
-            surface = theme.form_title("...", dots_size, INACTIVE, o);
-            cairo_surface_upload_to_texture(surface, title.ver_dots[INACTIVE]);
+		std::string text = title.text;
+		int count = 0;
+		wf::dimensions_t size = title_size;
 
-            title.dots_set = true;
-        }
-        cairo_surface_destroy(surface); 
+        for (auto texture : { title.hor, title.ver,
+                        title.hor_dots, title.ver_dots }) {
+            for (auto state : { ACTIVE, INACTIVE }) {
+        		cairo_surface_t *surface;
+                surface = theme.form_title(text, size, state, o);
+                cairo_surface_upload_to_texture(surface, texture[state]);
+                cairo_surface_destroy(surface); 
+            }
 
+            o = (o == HORIZONTAL) ? VERTICAL : HORIZONTAL;
+            if (count == 1) { 
+                text = "...";
+                size = dots_size;
+            }
+            count++;
+        };
         title_needs_update = false;
     }
 
