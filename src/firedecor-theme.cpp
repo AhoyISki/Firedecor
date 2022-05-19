@@ -514,7 +514,7 @@ std::string get_from_desktop(std::string path, std::string var) {
 	std::string line;
 	while(std::getline(input_file, line)) {
 		if (auto index = line.find(var); index != std::string::npos) {
-			return (line.substr(index + var.length() + 1));
+			return (line.substr(index + var.length()));
 		}
 	}
 	if (var == "Icon") {
