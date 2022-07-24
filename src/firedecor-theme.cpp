@@ -219,7 +219,7 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
                                                  bool active, bool maximized) const {
 	if ((std::string)button_style.get_value() != "wayfire" &&
 		(std::string)button_style.get_value() != "firedecor" &&
-	    (std::string)button_style.get_value() != "minimal") {
+	    (std::string)button_style.get_value() != "simple") {
 		std::string directory = (std::string)getenv("HOME") +
 								"/.config/firedecor/button-styles/" +
 						   	    (std::string)button_style.get_value() + "/";
