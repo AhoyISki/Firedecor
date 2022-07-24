@@ -123,7 +123,7 @@ wf::dimensions_t decoration_theme_t::get_text_size(std::string text, int width) 
     return { text_size.width, text_size.height };
 }
 
-cairo_surface_t*decoration_theme_t::form_title(std::string text,
+cairo_surface_t* decoration_theme_t::form_title(std::string text,
     wf::dimensions_t title_size, bool active, orientation_t orientation) const {
     const auto format = CAIRO_FORMAT_ARGB32;
     cairo_surface_t* surface;
@@ -252,9 +252,9 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
             assert(false);
         }
         if (auto full_path = path + "png"; exists(full_path)) {
-            surface_png(full_path, button_size.get_value());
+            return surface_png(full_path, button_size.get_value());
         } else if (auto full_path = path + "svg"; exists(full_path)) {
-            surface_svg(full_path, button_size.get_value());
+            return surface_svg(full_path, button_size.get_value());
         }
 	}
 
