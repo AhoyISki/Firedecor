@@ -247,7 +247,7 @@ class simple_decoration_surface : public surface_interface_t,
         return size;
     }
 
-    void render_title(const framebuffer_t& fb, geometry_t geometry,
+    void render_title(const render_target_t& fb, geometry_t geometry,
                       geometry_t dots_geometry, edge_t edge, geometry_t scissor) {
 	    if (title_needs_update) {
     	    update_title(fb.scale);
@@ -276,7 +276,7 @@ class simple_decoration_surface : public surface_interface_t,
 		OpenGL::render_end();
     }
 
-    void render_icon(const framebuffer_t& fb, geometry_t g,
+    void render_icon(const render_target_t& fb, geometry_t g,
                      const geometry_t& scissor, int32_t bits) {
         update_icon();
 		OpenGL::render_begin(fb);
@@ -553,7 +553,7 @@ class simple_decoration_surface : public surface_interface_t,
         cairo_path_destroy(master_path);
     }
 
-    void render_background_area(const framebuffer_t& fb, geometry_t g,
+    void render_background_area(const render_target_t& fb, geometry_t g,
                                 point_t rect, geometry_t scissor,
                                 std::string rounded, unsigned long i,
                                 decoration_area_type_t type, matrix<int> m,
@@ -642,7 +642,7 @@ class simple_decoration_surface : public surface_interface_t,
         }
     }
 
-	void render_background(const framebuffer_t& fb, geometry_t rect,
+	void render_background(const render_target_t& fb, geometry_t rect,
 	                       const geometry_t& scissor) {
 		edge_colors_t colors = {
 			theme.get_border_colors(), theme.get_outline_colors()
@@ -677,7 +677,7 @@ class simple_decoration_surface : public surface_interface_t,
 		OpenGL::render_end();
 	}
 
-    void render_scissor_box(const framebuffer_t& fb, point_t origin,
+    void render_scissor_box(const render_target_t& fb, point_t origin,
                             const wlr_box& scissor) {
 	    /** Draw the background (corners and border) */
         wlr_box geometry{origin.x, origin.y, size.width, size.height};
@@ -705,7 +705,7 @@ class simple_decoration_surface : public surface_interface_t,
         }
     }
     
-    virtual void simple_render(const framebuffer_t& fb, int x, int y,
+    virtual void simple_render(const render_target_t& fb, int x, int y,
 					           const region_t& damage) override {
         region_t frame = this->cached_region + (point_t){x, y};
         frame &= damage;
