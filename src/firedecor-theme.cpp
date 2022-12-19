@@ -355,53 +355,59 @@ cairo_surface_t *decoration_theme_t::form_button(button_type_t button, double ho
     } else if ((std::string)button_style.get_value() == "firedecor") {
 	    switch (button) {
 		  case BUTTON_CLOSE:
-			cairo_set_line_width(cr, 1.5);
-			/* Line from top left to bottom right */
-			cairo_move_to(cr, (double)button_size.get_value() / 2, (double)button_size.get_value() / 2);
-			cairo_rel_move_to(cr, -0.25 * button_size.get_value() * hover,
-			                  -0.25 * button_size.get_value() * hover);
-	        cairo_rel_line_to(cr, 0.5 * button_size.get_value() * hover,
-	                      	  0.5 * button_size.get_value() * hover);
-	        /* Line from bottom left to top right */
-			cairo_move_to(cr, (double)button_size.get_value() / 2, (double)button_size.get_value() / 2);
-			cairo_rel_move_to(cr, -0.25 * button_size.get_value() * hover,
-			                  0.25 * button_size.get_value() * hover);
-	        cairo_rel_line_to(cr, 0.5 * button_size.get_value() * hover,
-	                      	  -0.5 * button_size.get_value() * hover);
-	        cairo_stroke(cr);
+            {
+              cairo_set_line_width(cr, 1.5);
+              /* Line from top left to bottom right */
+              cairo_move_to(cr, (double)button_size.get_value() / 2, (double)button_size.get_value() / 2);
+              cairo_rel_move_to(cr, -0.25 * button_size.get_value() * hover,
+                                -0.25 * button_size.get_value() * hover);
+              cairo_rel_line_to(cr, 0.5 * button_size.get_value() * hover,
+                                0.5 * button_size.get_value() * hover);
+              /* Line from bottom left to top right */
+              cairo_move_to(cr, (double)button_size.get_value() / 2, (double)button_size.get_value() / 2);
+              cairo_rel_move_to(cr, -0.25 * button_size.get_value() * hover,
+                                0.25 * button_size.get_value() * hover);
+              cairo_rel_line_to(cr, 0.5 * button_size.get_value() * hover,
+                                -0.5 * button_size.get_value() * hover);
+              cairo_stroke(cr);
+            }
 	        break;
 	      case BUTTON_TOGGLE_MAXIMIZE:
-			cairo_set_line_width(cr, 1.5);
-		    wf::pointf_t north_east_arrow_pos, south_west_arrow_pos;
-		    if (maximized) {
-			    north_east_arrow_pos = { 0.28 * button_size.get_value(), 0.72 * button_size.get_value() };
-			    south_west_arrow_pos = { 0.72 * button_size.get_value(), 0.28 * button_size.get_value() };
-		    } else {
-			    north_east_arrow_pos = { 0.563 * button_size.get_value(), 0.437 * button_size.get_value() };
-			    south_west_arrow_pos = { 0.437 * button_size.get_value(), 0.563 * button_size.get_value() };
-		    }
-			    
-		    /* Top right arrow */
-			cairo_move_to(cr, north_east_arrow_pos.x, north_east_arrow_pos.y);
-			cairo_rel_move_to(cr, -0.175 * button_size.get_value() * hover,
-			                  -0.175 * button_size.get_value() * hover);
-			cairo_rel_line_to(cr, 0.35 * button_size.get_value() * hover, 0);
-			cairo_rel_line_to(cr, 0, 0.35 * button_size.get_value() * hover);
-			cairo_stroke(cr);
-			/* Bottom left arrow */
-			cairo_move_to(cr, south_west_arrow_pos.x, south_west_arrow_pos.y);
-			cairo_rel_move_to(cr, -0.175 * button_size.get_value() * hover,
-			                  -0.175 * button_size.get_value() * hover);
-			cairo_rel_line_to(cr, 0, 0.35 * button_size.get_value() * hover);
-			cairo_rel_line_to(cr, 0.35 * button_size.get_value() * hover, 0);
-			cairo_stroke(cr);
+            {
+              cairo_set_line_width(cr, 1.5);
+              wf::pointf_t north_east_arrow_pos, south_west_arrow_pos;
+              if (maximized) {
+                  north_east_arrow_pos = { 0.28 * button_size.get_value(), 0.72 * button_size.get_value() };
+                  south_west_arrow_pos = { 0.72 * button_size.get_value(), 0.28 * button_size.get_value() };
+              } else {
+                  north_east_arrow_pos = { 0.563 * button_size.get_value(), 0.437 * button_size.get_value() };
+                  south_west_arrow_pos = { 0.437 * button_size.get_value(), 0.563 * button_size.get_value() };
+              }
+                  
+              /* Top right arrow */
+              cairo_move_to(cr, north_east_arrow_pos.x, north_east_arrow_pos.y);
+              cairo_rel_move_to(cr, -0.175 * button_size.get_value() * hover,
+                                -0.175 * button_size.get_value() * hover);
+              cairo_rel_line_to(cr, 0.35 * button_size.get_value() * hover, 0);
+              cairo_rel_line_to(cr, 0, 0.35 * button_size.get_value() * hover);
+              cairo_stroke(cr);
+              /* Bottom left arrow */
+              cairo_move_to(cr, south_west_arrow_pos.x, south_west_arrow_pos.y);
+              cairo_rel_move_to(cr, -0.175 * button_size.get_value() * hover,
+                                -0.175 * button_size.get_value() * hover);
+              cairo_rel_line_to(cr, 0, 0.35 * button_size.get_value() * hover);
+              cairo_rel_line_to(cr, 0.35 * button_size.get_value() * hover, 0);
+              cairo_stroke(cr);
+            }
 			break;
 		  case BUTTON_MINIMIZE:
-	        cairo_set_line_width(cr, 2.0);
-			cairo_move_to(cr, (double)button_size.get_value() / 2, (double)button_size.get_value() / 2);
-			cairo_rel_move_to(cr, -0.25 * button_size.get_value() * hover, 0);
-			cairo_rel_line_to(cr, 0.5 * button_size.get_value() * hover, 0);
-			cairo_stroke(cr);
+            {
+              cairo_set_line_width(cr, 2.0);
+              cairo_move_to(cr, (double)button_size.get_value() / 2, (double)button_size.get_value() / 2);
+              cairo_rel_move_to(cr, -0.25 * button_size.get_value() * hover, 0);
+              cairo_rel_line_to(cr, 0.5 * button_size.get_value() * hover, 0);
+              cairo_stroke(cr);
+            }
 			break;
 	    }
     }
