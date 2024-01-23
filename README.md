@@ -14,7 +14,7 @@ An advanced window decoration plugin for the Wayfire window manager.
 - Building from source:
   ```
   git clone https://github.com/AhoyISki/Firedecor
-  cd wayfire-firedecor
+  cd Firedecor
   meson build
   meson compile -C build
   sudo meson install -C build
