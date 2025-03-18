@@ -1,3 +1,6 @@
+**NOTE**: As I am no longer interested in wayfire (or window managers in general),
+this will has been archived, and will no longer be maintained.
+
 # Firedecor
 An advanced window decoration plugin for the Wayfire window manager.
 
